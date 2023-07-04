@@ -29,7 +29,6 @@ class GraphID:
         symmetry_tol=0.1,
         topology_only=False,
         force_supercell=1,
-        comp_dim=False,
     ):
         """
         comp_dim: include composition and dimensionality as the prefix
@@ -45,7 +44,6 @@ class GraphID:
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
         self.force_supercell = force_supercell
-        self.comp_dim = comp_dim
 
     # def get_graph_I#
 
@@ -68,12 +66,11 @@ class GraphID:
         return gid
 
     def elaborate_comp_dim(self, sg, gid):
-        if self.comp_dim:
-            dim = get_dimensionality_larsen(sg)
-            gid = f"{dim}D-{gid}"
+        dim = get_dimensionality_larsen(sg)
+        gid = f"{dim}D-{gid}"
 
-            if not self.topology_only:
-                gid = f"{sg.structure.composition.reduced_formula}-{gid}"
+        if not self.topology_only:
+            gid = f"{sg.structure.composition.reduced_formula}-{gid}"
 
         return gid
 
@@ -164,12 +161,8 @@ class GraphID:
             strc.make_supercell([self.force_supercell, self.force_supercell, self.force_supercell])
             sg = StructureGraph.with_local_env_strategy(strc, self.nn)
 
-        elif self.comp_dim:
-            sg = StructureGraph.with_local_env_strategy(structure, self.nn)
-        else:
-            sg = StructureGraph.with_local_env_strategy(structure, self.nn)
-            # sg = self.expand_for_multi_bonds(sg)
-            sg = self.expand_for_low_dimensionality(sg)
+
+        sg = StructureGraph.with_local_env_strategy(structure, self.nn)
 
         use_previous_cs = False
 

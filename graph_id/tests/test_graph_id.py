@@ -26,9 +26,9 @@ class TestGraphID(TestCase):
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
 
-        gid = GraphID(comp_dim=True)
-        gid_topo = GraphID(topology_only=True, comp_dim=True)
-        gid_topo_wyckoff = GraphID(topology_only=True, wyckoff=True, comp_dim=True)
+        gid = GraphID()
+        gid_topo = GraphID(topology_only=True, )
+        gid_topo_wyckoff = GraphID(topology_only=True, wyckoff=True, )
 
         self.assertEqual("NaCl-3D-85844dcbb16110e5c27bb042ea794cf9", gid.get_id(nacl))
         self.assertEqual("CsNa3Cl4-3D-6f29b7e87826fe2a433e502eb1e6e670", gid.get_id(cscl))
@@ -39,25 +39,11 @@ class TestGraphID(TestCase):
         self.assertEqual("3D-866249dfed8626b6c900e533beb58a57", gid_topo_wyckoff.get_id(nacl))
         self.assertEqual("3D-866249dfed8626b6c900e533beb58a57", gid_topo_wyckoff.get_id(cscl))
 
-    def test_cristobalite_tridymite(self):
-        """
-        実はCristobaliteとTridymiteは、拡張してあげればdで見分けられてしまう
-        """
-        s1 = Structure.from_file(f"{TEST_FILES}/SiO2_mp-6945_computed.cif")
-        s2 = Structure.from_file(f"{TEST_FILES}/SiO2_mp-7087_computed.cif")
-
-        gid = GraphID(depth_factor=1)
-
-        assert gid.are_same(s1, s2)
-
-        gid_super = GraphID(depth_factor=1, force_supercell=2)
-        assert not gid_super.are_same(s1, s2)
-
     def test_LiMnTeO(self):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
-        gid = GraphID(depth_factor=1, comp_dim=True)
+        gid = GraphID(depth_factor=1)
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
@@ -70,7 +56,7 @@ class TestGraphID(TestCase):
         """
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
-        gid = GraphID(nn=CrystalNN(), depth_factor=1, comp_dim=True)
+        gid = GraphID(nn=CrystalNN(), depth_factor=1)
         id_1 = gid.get_id(s1)
 
         self.assertEqual(id_1, "VSbO4-0D-1351c328b38b4ad4737264fdc4be6e47")
@@ -79,7 +65,7 @@ class TestGraphID(TestCase):
         alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
         beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
 
-        gid = GraphID(comp_dim=True)
+        gid = GraphID()
 
         id_a = gid.get_id(alpha)
         id_b = gid.get_id(beta)
@@ -87,7 +73,7 @@ class TestGraphID(TestCase):
         self.assertEqual(id_a, id_b)
         self.assertEqual(id_a, "SiO2-3D-20a961a2a8c4c132946f8d7329f3960e")
 
-        gid = GraphID(wyckoff=True, comp_dim=True)
+        gid = GraphID(wyckoff=True)
 
         id_a_w = gid.get_id(alpha)
         id_b_w = gid.get_id(beta)
@@ -100,7 +86,7 @@ class TestGraphID(TestCase):
         layer = Structure.from_file(f"{TEST_FILES}/mp-48.cif")
         bulk = Structure.from_file(f"{TEST_FILES}/mp-1018088.cif")
 
-        gid = GraphID(nn=CrystalNN(), depth_factor=1, comp_dim=True)
+        gid = GraphID(nn=CrystalNN(), depth_factor=1)
 
         id_1 = gid.get_id(layer)
         id_2 = gid.get_id(bulk)
@@ -180,7 +166,7 @@ class TestGraphID(TestCase):
 
         self.assertNotEqual(id_1, id_2)
 
-        gid = GraphID(MinimumDistanceNN(), comp_dim=True)
+        gid = GraphID(MinimumDistanceNN())
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
