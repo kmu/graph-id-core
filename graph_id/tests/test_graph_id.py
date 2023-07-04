@@ -1,23 +1,23 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphID
+from graph_id.core.graph_id import GraphIDGenerator
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
 
-class TestGraphID(TestCase):
+class TestGraphIDGenerator(TestCase):
     def test_diameter_0(self):
         si = Structure.from_file(f"{TEST_FILES}/mp-1056579.cif")
         sr = Structure.from_file(f"{TEST_FILES}/mp-1056418.cif")
-        gid = GraphID()
+        gid = GraphIDGenerator()
 
         assert not gid.are_same(si, sr)
 
     def test_version(self):
-        gid = GraphID()
+        gid = GraphIDGenerator()
         self.assertTrue(gid.version > "0.0.0")
 
     def test_NaCl(self):
@@ -25,11 +25,11 @@ class TestGraphID(TestCase):
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
 
-        gid = GraphID()
-        gid_topo = GraphID(
+        gid = GraphIDGenerator()
+        gid_topo = GraphIDGenerator(
             topology_only=True,
         )
-        gid_topo_wyckoff = GraphID(
+        gid_topo_wyckoff = GraphIDGenerator(
             topology_only=True,
             wyckoff=True,
         )
@@ -47,7 +47,7 @@ class TestGraphID(TestCase):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
-        gid = GraphID(depth_factor=1)
+        gid = GraphIDGenerator(depth_factor=1)
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
@@ -60,7 +60,7 @@ class TestGraphID(TestCase):
         """
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
-        gid = GraphID(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
         id_1 = gid.get_id(s1)
 
         self.assertEqual(id_1, "VSbO4-0D-1351c328b38b4ad4737264fdc4be6e47")
@@ -69,7 +69,7 @@ class TestGraphID(TestCase):
         alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
         beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
 
-        gid = GraphID()
+        gid = GraphIDGenerator()
 
         id_a = gid.get_id(alpha)
         id_b = gid.get_id(beta)
@@ -77,7 +77,7 @@ class TestGraphID(TestCase):
         self.assertEqual(id_a, id_b)
         self.assertEqual(id_a, "SiO2-3D-20a961a2a8c4c132946f8d7329f3960e")
 
-        gid = GraphID(wyckoff=True)
+        gid = GraphIDGenerator(wyckoff=True)
 
         id_a_w = gid.get_id(alpha)
         id_b_w = gid.get_id(beta)
@@ -90,7 +90,7 @@ class TestGraphID(TestCase):
         layer = Structure.from_file(f"{TEST_FILES}/mp-48.cif")
         bulk = Structure.from_file(f"{TEST_FILES}/mp-1018088.cif")
 
-        gid = GraphID(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
 
         id_1 = gid.get_id(layer)
         id_2 = gid.get_id(bulk)
@@ -118,7 +118,7 @@ class TestGraphID(TestCase):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1008681.cif")
 
-        gid = GraphID(MinimumDistanceNN())
+        gid = GraphIDGenerator(MinimumDistanceNN())
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
@@ -148,7 +148,7 @@ class TestGraphID(TestCase):
 
         # self.assertNotEqual(sg1.get_graph_id4(), sg2.get_graph_id4())
 
-        gid = GraphID(MinimumDistanceNN())
+        gid = GraphIDGenerator(MinimumDistanceNN())
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
@@ -163,14 +163,14 @@ class TestGraphID(TestCase):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-121.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-611219.cif")
 
-        gid = GraphID(MinimumDistanceNN())
+        gid = GraphIDGenerator(MinimumDistanceNN())
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
 
         self.assertNotEqual(id_1, id_2)
 
-        gid = GraphID(MinimumDistanceNN())
+        gid = GraphIDGenerator(MinimumDistanceNN())
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)

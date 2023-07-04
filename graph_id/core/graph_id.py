@@ -18,7 +18,7 @@ def blake(s):
     return blake2b(s.encode()).hexdigest()
 
 
-class GraphID:
+class GraphIDGenerator:
     def __init__(
         self,
         nn=None,

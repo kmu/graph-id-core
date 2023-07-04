@@ -2,7 +2,7 @@ import argparse
 import csv
 from datetime import datetime
 
-from graph_id import GraphID
+from graph_id import GraphIDGenerator
 from pymatgen.core import Structure
 from tabulate import tabulate
 
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-p", "--parallel", help="parallel execution", action="store_true")
 
-    gid = GraphID()
+    gid = GraphIDGenerator()
     args = parser.parse_args()
 
     table = []
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
         table.append([my_id, fname])
 
-    t_headers = ["GraphID", "Filename"]
+    t_headers = ["GraphIDGenerator", "Filename"]
 
     print(tabulate(table, headers=t_headers))
 
