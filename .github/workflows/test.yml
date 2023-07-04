@@ -42,8 +42,7 @@ jobs:
       run: poetry run pytest
 
     - name: Format
-      run: |
-         poetry run pysen run format
+      run: poetry run pysen run format
       if: matrix.python-version == '3.9'
     - name: git settings
       run: |
@@ -65,6 +64,5 @@ jobs:
         git push origin ${{ steps.extract_branch.outputs.BRANCH_NAME }}
       if: matrix.python-version == '3.9'
     - name: Pysen lint
-      run: |
-        poetry run pysen run lint
+      run: poetry run pysen run lint
       if: matrix.python-version == '3.9'
