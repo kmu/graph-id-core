@@ -2,12 +2,11 @@ import functools
 
 import networkx as nx
 import numpy as np
+from graph_id.analysis.compositional_sequence import CompositionalSequence
 from networkx.algorithms.distance_measures import diameter
 from pymatgen.analysis.graphs import StructureGraph as PmgStructureGraph
 from pymatgen.core import Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
-from graph_id.analysis.compositional_sequence import CompositionalSequence
 
 
 class SiteOnlySpeciesString:
@@ -165,7 +164,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                     use_previous_cs=use_previous_cs or wyckoff,
                 )
 
-                for this_depth in range(depth):
+                for _ in range(depth):
                     for c_site in cs.get_current_starting_sites():
                         nsites = get_connected_sites_light(c_site[0], c_site[1])
                         cs.count_composition_for_neighbors(nsites)

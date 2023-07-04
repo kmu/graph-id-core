@@ -1,13 +1,12 @@
 import argparse
-from graph_id import GraphID
-from tabulate import tabulate
-from pymatgen.core import Structure
-from datetime import datetime
 import csv
+from datetime import datetime
 
+from graph_id import GraphID
+from pymatgen.core import Structure
+from tabulate import tabulate
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GraphID: graph-based ID for materails")
 
     parser.add_argument(

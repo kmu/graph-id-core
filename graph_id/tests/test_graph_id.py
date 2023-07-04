@@ -1,10 +1,9 @@
 import os
 from unittest import TestCase
 
+from graph_id.core.graph_id import GraphID
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
-
-from graph_id.core.graph_id import GraphID
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
@@ -27,8 +26,13 @@ class TestGraphID(TestCase):
         cscl.replace(0, Element("Cs"))
 
         gid = GraphID()
-        gid_topo = GraphID(topology_only=True, )
-        gid_topo_wyckoff = GraphID(topology_only=True, wyckoff=True, )
+        gid_topo = GraphID(
+            topology_only=True,
+        )
+        gid_topo_wyckoff = GraphID(
+            topology_only=True,
+            wyckoff=True,
+        )
 
         self.assertEqual("NaCl-3D-85844dcbb16110e5c27bb042ea794cf9", gid.get_id(nacl))
         self.assertEqual("CsNa3Cl4-3D-6f29b7e87826fe2a433e502eb1e6e670", gid.get_id(cscl))
