@@ -118,8 +118,6 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         sym_dataset = sga.get_symmetry_dataset()
 
         if sym_dataset is None:
-            # sym_dataset is empty for some structures.
-            # see src/matfinder_works/fw/tests/test_data/disordered.cif for example
             self.set_elemental_labels()
             return None
 
