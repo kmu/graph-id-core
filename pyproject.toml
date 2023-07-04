@@ -13,6 +13,7 @@ pymatgen = "^2023.6.28"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 pysen = {version = "^0.10.4", extras = ["lint"]}
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
