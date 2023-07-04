@@ -28,7 +28,6 @@ class GraphID:
         additional_depth=1,
         symmetry_tol=0.1,
         topology_only=False,
-        force_supercell=1,
     ):
         """
         comp_dim: include composition and dimensionality as the prefix
@@ -43,7 +42,6 @@ class GraphID:
         self.depth_factor = depth_factor
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
-        self.force_supercell = force_supercell
 
     # def get_graph_I#
 
@@ -156,14 +154,7 @@ class GraphID:
         return False
 
     def prepare_structure_graph(self, structure):
-        if self.force_supercell > 1:
-            strc = structure.copy()
-            strc.make_supercell([self.force_supercell, self.force_supercell, self.force_supercell])
-            sg = StructureGraph.with_local_env_strategy(strc, self.nn)
-
-
         sg = StructureGraph.with_local_env_strategy(structure, self.nn)
-
         use_previous_cs = False
 
         compound = sg.structure

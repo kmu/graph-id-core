@@ -13,7 +13,7 @@ class TestGraphID(TestCase):
     def test_diameter_0(self):
         si = Structure.from_file(f"{TEST_FILES}/mp-1056579.cif")
         sr = Structure.from_file(f"{TEST_FILES}/mp-1056418.cif")
-        gid = GraphID(depth_factor=1, force_supercell=2)
+        gid = GraphID()
 
         assert not gid.are_same(si, sr)
 
