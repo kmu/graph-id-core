@@ -2,6 +2,7 @@
 .DS_Store
 .coverage*
 cmake-build-debug
+setup.py
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,cmake
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,cmake
