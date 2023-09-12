@@ -3,8 +3,13 @@ project(graph_id LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_subdirectory(pybind11)
-pybind11_add_module(graph_id_cpp cpp/main.cpp)
+add_subdirectory(library/pybind11)
+pybind11_add_module(graph_id_cpp
+        cpp/main.cpp
+        cpp/near_neighbor.cpp
+        cpp/near_neighbor.h
+        cpp/wrapper.h
+)
 target_compile_definitions(graph_id_cpp
         PRIVATE VERSION_INFO=${VERSION_INFO})
 target_compile_options(graph_id_cpp  PRIVATE
