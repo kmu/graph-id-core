@@ -1,11 +1,12 @@
 #include <pybind11/pybind11.h>
-#include "near_neighbor.h"
-#include "wrapper.h"
 
 #define VALUE(string) #string
 #define TO_LITERAL(string) VALUE(string)
 
 namespace py = pybind11;
+
+void init_near_neighbor(py::module &m);
+void init_structure(py::module &m);
 
 PYBIND11_MODULE(graph_id_cpp, m) {
     // モジュールの初期化
