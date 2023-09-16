@@ -6,12 +6,16 @@
 namespace py = pybind11;
 
 void init_near_neighbor(py::module &m);
-void init_structure(py::module &m);
+void init_core(py::module &m);
+void init_structure_graph(py::module &m);
+void init_graph_id(py::module &m);
 
 PYBIND11_MODULE(graph_id_cpp, m) {
     // モジュールの初期化
+    init_core(m);
     init_near_neighbor(m);
-    init_structure(m);
+    init_structure_graph(m);
+    init_graph_id(m);
 
     // pyproject.toml に定義した version を __version__ に設定する。
 #ifdef VERSION_INFO

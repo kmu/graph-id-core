@@ -2,7 +2,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include "wrapper.h"
+#include "core.h"
 
 namespace py = pybind11;
 
@@ -28,7 +28,7 @@ public:
     // サブクラスで実装される get_all_nn_info_cpp を呼び出し、その結果を list[list[dict]] に変換して返す。
     py::list get_all_nn_info(py::object &structure);
 
-    virtual std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) = 0;
+    virtual std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const = 0;
 };
 
 class MinimumDistanceNN : public NearNeighbor {
@@ -47,7 +47,7 @@ public:
 
     bool molecules_allowed() override { return false; };
 
-    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) override;
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
 void init_near_neighbor(py::module &m);

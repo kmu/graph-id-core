@@ -1,7 +1,7 @@
 #include "near_neighbor.h"
 #include <vector>
 #include <pybind11/stl.h>
-#include "wrapper.h"
+#include "core.h"
 
 
 py::list NearNeighbor::get_all_nn_info(py::object &structure) {
@@ -24,19 +24,19 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
 }
 
 
-std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cpp(const Structure &structure) {
+std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
     // TODO: implement this
     return std::vector<std::vector<NearNeighborInfo>>(structure.sites.size());
 }
 
 
 void init_near_neighbor(pybind11::module &m) {
-    py::class_<NearNeighbor>(m, "NearNeighbor")
+    py::class_<NearNeighbor, std::shared_ptr<NearNeighbor>>(m, "NearNeighbor")
             .def_property_readonly("structures_allowed", &NearNeighbor::structures_allowed)
             .def_property_readonly("molecules_allowed", &NearNeighbor::molecules_allowed)
             .def("get_all_nn_info", &NearNeighbor::get_all_nn_info);
 
-    py::class_<MinimumDistanceNN, NearNeighbor>(m, "MinimumDistanceNN")
+    py::class_<MinimumDistanceNN, std::shared_ptr<MinimumDistanceNN>, NearNeighbor>(m, "MinimumDistanceNN")
             .def(py::init<double, double, double>(),
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0,
