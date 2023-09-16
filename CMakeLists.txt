@@ -17,6 +17,9 @@ pybind11_add_module(graph_id_cpp
 )
 target_compile_definitions(graph_id_cpp
         PRIVATE VERSION_INFO=${VERSION_INFO})
+target_include_directories(graph_id_cpp
+        PRIVATE library/eigen
+)
 target_compile_options(graph_id_cpp  PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
