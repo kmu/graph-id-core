@@ -26,7 +26,7 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
 
 std::vector<std::string> GraphIDGenerator::get_component_ids(const Structure &structure) const {
     // TODO
-    return std::vector<std::string>(structure.sites.size());
+    return std::vector<std::string>(structure.count);
 }
 
 bool GraphIDGenerator::are_same(const Structure &structure1, const Structure &structure2) const {

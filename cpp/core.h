@@ -3,10 +3,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 #include <utility>
 
 namespace py = pybind11;
+
+const double pi = 3.1415926535897932384626433832795028841971;
 
 // Typed wrapper of python list.
 // py::object::cast<T>() is used to convert python object to C++ object.
@@ -120,6 +124,10 @@ public:
         return obj.attr("angles").cast<std::tuple<double, double, double>>();
     }
 
+    std::array<bool, 3> pbc() {
+        return obj.attr("pbc").cast<std::array<bool, 3>>();
+    }
+
     bool is_orthogonal() {
         return obj.attr("is_orthogonal").cast<bool>();
     }
@@ -150,46 +158,47 @@ public:
     }
 };
 
+
 struct Lattice {
+    Lattice() = default;
+
     explicit Lattice(PymatgenLattice l) {
-        const auto m = l.matrix();
-        this->matrix = {{
-                                {m.at(0, 0), m.at(0, 1), m.at(0, 2)},
-                                {m.at(1, 0), m.at(1, 1), m.at(1, 2)},
-                                {m.at(2, 0), m.at(2, 1), m.at(2, 2)},
-                        }};
+        auto m = l.matrix();
+        matrix <<
+               m.at(0, 0), m.at(1, 0), m.at(2, 0),
+                m.at(0, 1), m.at(1, 1), m.at(2, 1),
+                m.at(0, 2), m.at(1, 2), m.at(2, 2);
+        inv_matrix = matrix.inverse();
+        pbc = l.pbc();
     }
 
-    std::array<std::array<double, 3>, 3> matrix{};
-};
-
-struct Site {
-    explicit Site(PymatgenSite s) : x(s.x()), y(s.y()), z(s.z()), species_string(s.species_string()) {}
-
-    double x, y, z;
-    std::string species_string;
-};
-
-struct PeriodicSite {
-    explicit PeriodicSite(PymatgenPeriodicSite s) :
-            a(s.a()), b(s.b()), c(s.c()), x(s.x()), y(s.y()), z(s.z()),
-            species_string(s.species_string()) {}
-
-    double a, b, c, x, y, z;
-    std::string species_string;
+    // Eigen は Fortran 配列のように列優先だが、numpy は行優先なので Pymatgen の行列を転地して格納する。
+    Eigen::Matrix3d matrix;
+    Eigen::Matrix3d inv_matrix;
+    std::array<bool, 3> pbc{true, true, true};
 };
 
 // C++ でいちいち python のオブジェクトにアクセスするオーバーヘッドを避けるために使う PymatgenStructure のコピー。
 struct Structure {
-    explicit Structure(PymatgenStructure s) : lattice(s.lattice()) {
-        this->sites.reserve(s.sites().size());
-        for (auto site: s.sites()) {
-            this->sites.emplace_back(site);
+    Structure() = default;
+
+    explicit Structure(PymatgenStructure s) {
+        auto l = s.lattice();
+        lattice = Lattice(l);
+        const int n = s.sites().size();
+        site_xyz.resize(3, n);
+        species_strings.reserve(n);
+        for (int i = 0; i < n; i++) {
+            auto site = s.sites()[i];
+            site_xyz.col(i) << site.x(), site.y(), site.z();
+            species_strings.emplace_back(site.species_string());
         }
     }
 
+    int count{0};
     Lattice lattice;
-    std::vector<PeriodicSite> sites;
+    Eigen::Matrix3Xd site_xyz;
+    std::vector<std::string> species_strings;
 };
 
 

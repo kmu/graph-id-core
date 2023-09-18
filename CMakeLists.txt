@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5...3.26)
 project(graph_id LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(library/pybind11)
 pybind11_add_module(graph_id_cpp
@@ -21,6 +22,15 @@ target_include_directories(graph_id_cpp
         PRIVATE library/eigen
 )
 target_compile_options(graph_id_cpp  PRIVATE
+        # 警告をできるだけ出力する
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
+
+# リリースビルド時に最適化を有効にする
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    target_compile_options(graph_id_cpp PRIVATE
+            $<$<CXX_COMPILER_ID:MSVC>:/O2 /Ob2 /Oi /Ot /Oy /GL /Gw /GF /GS- /Gy /fp:fast /arch:AVX2>
+            $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3 -march=native -mfma -ffast-math>
+    )
+endif ()

@@ -25,7 +25,7 @@ public:
     }
 
     static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure) {
-        const auto n = structure->sites.size();
+        const auto n = structure->count;
         return StructureGraph{
                 structure,
                 std::vector<std::vector<NearNeighborInfo>>(n),
