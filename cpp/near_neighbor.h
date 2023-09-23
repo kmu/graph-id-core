@@ -45,7 +45,7 @@ public:
 
     bool structures_allowed() override { return true; };
 
-    bool molecules_allowed() override { return false; };
+    bool molecules_allowed() override { return true; };
 
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };

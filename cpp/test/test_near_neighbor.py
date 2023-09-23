@@ -5,7 +5,7 @@ import glob
 import os.path
 
 import numpy as np
-from pymatgen.core import Structure, Lattice
+from pymatgen.core import Structure, Lattice, Molecule
 
 from imports import graph_id_cpp
 from pymatgen.analysis.local_env import MinimumDistanceNN
@@ -28,11 +28,14 @@ class TestNN(unittest.TestCase):
     def assert_nn_info_single(self, a, b, msg):
         self.assertAlmostEqual(a["weight"], b["weight"], msg=msg)
         self.assertEqual(a["site_index"], b["site_index"], msg=msg)
-        self.assertListEqual(list(a["image"]), list(b["image"]), msg=msg)
+        if a["image"] is None:
+            self.assertIsNone(b["image"], msg=msg)
+        else:
+            self.assertListEqual(list(a["image"]), list(b["image"]), msg=msg)
         # self.assertEqual(a["site"], b["site"], msg=msg) site は未対応
 
     def sort(self, a):
-        return sorted(a, key=lambda x: (x["site_index"], x["image"][0], x["image"][1], x["image"][2]))
+        return sorted(a, key=lambda x: ((x["site_index"], *x["image"]) if x["image"] else x["site_index"]))
 
 
 class TestNNHelper(unittest.TestCase):
@@ -113,6 +116,9 @@ class TestMinimumDistanceNN(TestNN):
     def test_structure_allowed(self):
         self.assertTrue(graph_id_cpp.MinimumDistanceNN().structures_allowed)
 
+    def test_molecule_allowed(self):
+        self.assertTrue(graph_id_cpp.MinimumDistanceNN().molecules_allowed)
+
     def test_structures(self):
         for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
             with self.subTest(p.split("/")[-1]):
@@ -124,6 +130,16 @@ class TestMinimumDistanceNN(TestNN):
                     print(e)
                     self.skipTest("pymatgen error")
                 self.assert_nn_info(cpp_result, pymatgen_result)
+
+    def test_molecules(self):
+        m = Molecule(['H', 'H'], [[0, 0, 0], [0, 0, 1]])
+        cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(m)
+        try:
+            pymatgen_result = MinimumDistanceNN().get_all_nn_info(m)
+        except Exception as e:
+            print(e)
+            self.skipTest("pymatgen error")
+        self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_structures_get_all_sites(self):
         for p in glob.glob(os.path.join(test_file_dir, "*.cif")):

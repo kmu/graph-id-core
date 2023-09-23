@@ -10,6 +10,20 @@
 
 py::list NearNeighbor::get_all_nn_info(py::object &structure) {
     auto s = structure.cast<PymatgenStructure>();
+    auto pymatgen = py::module_::import("pymatgen.core");
+    const bool is_structure = py::isinstance(structure, pymatgen.attr("Structure"));
+    const bool is_molecule = py::isinstance(structure, pymatgen.attr("Molecule"));
+    if (is_structure) {
+        if (!this->structures_allowed()) {
+            throw std::domain_error("This class does not support structures.");
+        }
+    } else if (is_molecule) {
+        if (!this->molecules_allowed()) {
+            throw std::domain_error("This class does not support molecules.");
+        }
+    } else {
+        throw std::domain_error("argument must be pymatgen.core.Structure or pymatgen.core.Molecule.");
+    }
     const auto result = this->get_all_nn_info_cpp(Structure(s));
     py::list arr;
     for (const auto &infos: result) {
@@ -18,7 +32,11 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
             py::dict d;
             d["site_index"] = info.site_index;
             d["weight"] = info.weight;
-            d["image"] = info.image;
+            if (is_structure) {
+                d["image"] = info.image;
+            } else {
+                d["image"] = py::none();
+            }
             inner.append(d);
         }
         arr.append(inner);

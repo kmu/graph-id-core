@@ -116,6 +116,10 @@ public:
 
     explicit PymatgenLattice(py::object obj) : obj(std::move(obj)) {};
 
+    bool is_none() {
+        return obj.is_none();
+    }
+
     std::tuple<double, double, double> lengths() {
         return obj.attr("lengths").cast<std::tuple<double, double, double>>();
     }
@@ -150,7 +154,11 @@ public:
     explicit PymatgenStructure(py::object obj) : obj(std::move(obj)) {};
 
     PymatgenLattice lattice() {
-        return PymatgenLattice(obj.attr("lattice"));
+        if (py::hasattr(obj, "lattice")) {
+            return PymatgenLattice(obj.attr("lattice"));
+        } else {
+            return PymatgenLattice(py::none());
+        }
     }
 
     List<PymatgenPeriodicSite> sites() {
@@ -163,13 +171,21 @@ struct Lattice {
     Lattice() = default;
 
     explicit Lattice(PymatgenLattice l) {
-        auto m = l.matrix();
-        matrix <<
-               m.at(0, 0), m.at(1, 0), m.at(2, 0),
-                m.at(0, 1), m.at(1, 1), m.at(2, 1),
-                m.at(0, 2), m.at(1, 2), m.at(2, 2);
-        inv_matrix = matrix.inverse();
-        pbc = l.pbc();
+        if (l.is_none()) {
+            matrix << 1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1;
+            inv_matrix = matrix;
+            pbc = {false, false, false};
+        } else {
+            auto m = l.matrix();
+            matrix <<
+                   m.at(0, 0), m.at(1, 0), m.at(2, 0),
+                    m.at(0, 1), m.at(1, 1), m.at(2, 1),
+                    m.at(0, 2), m.at(1, 2), m.at(2, 2);
+            inv_matrix = matrix.inverse();
+            pbc = l.pbc();
+        }
     }
 
     // Eigen は Fortran 配列のように列優先だが、numpy は行優先なので Pymatgen の行列を転地して格納する。
@@ -179,6 +195,7 @@ struct Lattice {
 };
 
 // C++ でいちいち python のオブジェクトにアクセスするオーバーヘッドを避けるために使う PymatgenStructure のコピー。
+// Molecule も透過的に扱える
 struct Structure {
     Structure() = default;
 
