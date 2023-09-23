@@ -185,10 +185,10 @@ struct Structure {
     explicit Structure(PymatgenStructure s) {
         auto l = s.lattice();
         lattice = Lattice(l);
-        const int n = s.sites().size();
-        site_xyz.resize(3, n);
-        species_strings.reserve(n);
-        for (int i = 0; i < n; i++) {
+        count = int(s.sites().size());
+        site_xyz.resize(3, count);
+        species_strings.reserve(count);
+        for (int i = 0; i < count; i++) {
             auto site = s.sites()[i];
             site_xyz.col(i) << site.x(), site.y(), site.z();
             species_strings.emplace_back(site.species_string());

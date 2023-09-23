@@ -16,7 +16,6 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
         py::list inner;
         for (const auto &info: infos) {
             py::dict d;
-            d["site"] = s.sites()[info.site_index].obj;
             d["site_index"] = info.site_index;
             d["weight"] = info.weight;
             d["image"] = info.image;
@@ -29,15 +28,79 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
 
 
 std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
-    // TODO: implement this
-    Eigen::Matrix<double, 20, 20> X = Eigen::MatrixXd::Zero(3, 3);
-    Eigen::FullPivLU<Eigen::Matrix<double, 20, 20>> lu(X);
-    Eigen::Matrix3Xd Y;
-    return std::vector<std::vector<NearNeighborInfo>>(structure.count);
+    const Eigen::Matrix3Xd frac = structure.lattice.inv_matrix * structure.site_xyz;
+    const auto nn = find_near_neighbors(
+            structure.site_xyz,
+            frac,
+            structure.site_xyz,
+            frac,
+            this->cutoff,
+            structure.lattice
+    );
+    assert(int(nn.size()) == structure.count);
+    if (this->get_all_sites) {
+        std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+        for (int i = 0; i < structure.count; ++i) {
+            if (nn[i].empty()) continue;
+            Eigen::VectorXd d2(nn[i].size());
+            for (int j = 0; j < int(nn[i].size()); ++j) {
+                d2(j) = nn[i][j].distances2;
+            }
+            const Eigen::VectorXd d = d2.array().sqrt();
+            for (int j = 0; j < int(nn[i].size()); ++j) {
+                if (nn[i][j].distances2 < 1e-8) continue;
+                result[i].emplace_back(NearNeighborInfo{
+                        nn[i][j].all_coords_idx,
+                        std::sqrt(nn[i][j].distances2),
+                        nn[i][j].image
+                });
+            }
+        }
+        return result;
+    } else {
+        std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+        for (int i = 0; i < structure.count; ++i) {
+            if (nn[i].empty()) continue;
+            Eigen::VectorXd d2(nn[i].size());
+            for (int j = 0; j < int(nn[i].size()); ++j) {
+                if (nn[i][j].distances2 < 1e-8) {
+                    d2(j) = 9999;
+                } else {
+                    d2(j) = nn[i][j].distances2;
+                }
+            }
+            const Eigen::VectorXd d = d2.array().sqrt();
+            const double min_distance = d.minCoeff();
+            const double r = (1 + this->tol) * min_distance;
+            for (int j = 0; j < int(nn[i].size()); ++j) {
+                if (nn[i][j].distances2 > 1e-8 && d(j) < r) {
+                    result[i].emplace_back(NearNeighborInfo{
+                            nn[i][j].all_coords_idx,
+                            min_distance / d(j),
+                            nn[i][j].image
+                    });
+                }
+            }
+        }
+        return result;
+    }
 }
 
 
-std::vector<FindNearNeighborsResult> find_near_neighbors(
+/// pymatgen.optimization.neighbors.find_points_in_spheres と同じ処理を行う。
+/// Python から利用する際はオーバーヘッドを考慮すると pymatgen で実装されたものを使ったほうが速いことが多い。
+/// 原子の座標と中心点の座標を行列で与えると、中心点からの距離が r 以下の原子の情報を返す。
+///
+/// \param all_coords 原子のデカルト座標
+/// \param all_frac_coords 原子の分数座標
+/// \param center_coords 中心点のデカルト座標
+/// \param center_frac_coords 中心点の分数座標
+/// \param r 半径
+/// \param lattice 格子
+/// \param min_r
+/// \param tol
+/// \return 中心点の数と同じ要素数の配列を返す。i 番目のリストは i 番目の中心点から距離が r 以下の原子の情報を含む。
+std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
         const Eigen::Matrix3Xd &all_coords,
         const Eigen::Matrix3Xd &all_frac_coords,
         const Eigen::Matrix3Xd &center_coords,
@@ -56,26 +119,30 @@ std::vector<FindNearNeighborsResult> find_near_neighbors(
         const auto res = find_near_neighbors(all_coords, all_frac_coords, center_coords, center_frac_coords,
                                              min_r + tol, lattice, min_r, tol);
         const double r2 = r * r;
-        std::vector<FindNearNeighborsResult> result;
-        for (const auto &x: res) {
-            if (x.distances2 <= r2) {
-                result.emplace_back(x);
+        std::vector<std::vector<FindNearNeighborsResult>> result(res.size());
+        for (size_t i = 0; i < res.size(); ++i) {
+            for (const auto &x: res[i]) {
+                if (x.distances2 <= r2) {
+                    result[i].emplace_back(x);
+                }
             }
         }
+        return result;
     }
 
-    std::vector<FindNearNeighborsResult> result;
+
     const double r2 = r * r;
     const long n_center = center_coords.cols();
     const long n_total = all_coords.cols();
     const double ledge = std::max(0.1, r);
+    std::vector<std::vector<FindNearNeighborsResult>> result(n_center);
     Eigen::Vector3d valid_max = center_coords.rowwise().maxCoeff();
     Eigen::Vector3d valid_min = center_coords.rowwise().minCoeff();
     valid_max.array() += (r + tol);
     valid_min.array() -= (r + tol);
 
     Eigen::Matrix3Xd reciprocal_lattice = get_reciprocal_lattice(lattice.matrix);
-    Eigen::Vector3d max_r = (r + 0.15) * reciprocal_lattice.rowwise().norm() / (2 * pi);
+    Eigen::Vector3d max_r = (r) * reciprocal_lattice.colwise().norm() / (2 * pi);
     max_r = Eigen::ceil(max_r.array());
 
     Eigen::Vector3i min_bound, max_bound;
@@ -117,7 +184,7 @@ std::vector<FindNearNeighborsResult> find_near_neighbors(
 
     // if no valid neighbors were found return empty
     if (indices.empty()) {
-        return {};
+        return result;
     }
 
     Eigen::Matrix3Xd expanded_coords = Eigen::Map<Eigen::Matrix3Xd>(
@@ -140,23 +207,23 @@ std::vector<FindNearNeighborsResult> find_near_neighbors(
     auto cube_neighbors = get_cube_neighbors(n_cube);
 
     for (int i = 0; i < n_center; ++i) {
-        for (const int cube_index: cube_neighbors[center_indices(i)]) {
-            for (const int j: atom_indices[cube_index]) {
-                const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-                if (d2 < r2) {
-                    const int all_coords_idx = std::get<0>(indices[j]);
-                    auto offset = std::get<1>(indices[j]);
-                    offset[0] -= int(offset_correction(0, all_coords_idx));
-                    offset[1] -= int(offset_correction(1, all_coords_idx));
-                    offset[2] -= int(offset_correction(2, all_coords_idx));
-                    result.emplace_back(FindNearNeighborsResult{
-                            all_coords_idx,
-                            i,
-                            offset,
-                            d2
-                    });
-                }
+//        for (const int cube_index: cube_neighbors[center_indices(i)]) {
+//            for (const int j: atom_indices[cube_index]) {
+        for (int j = 0; j < expanded_coords.cols(); ++j) {
+            const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
+            if (d2 < r2) {
+                const int all_coords_idx = std::get<0>(indices[j]);
+                auto offset = std::get<1>(indices[j]);
+                offset[0] -= int(offset_correction(0, all_coords_idx));
+                offset[1] -= int(offset_correction(1, all_coords_idx));
+                offset[2] -= int(offset_correction(2, all_coords_idx));
+                result[i].emplace_back(FindNearNeighborsResult{
+                        all_coords_idx,
+                        offset,
+                        d2
+                });
             }
+            //}
         }
     }
 
@@ -283,14 +350,20 @@ void init_near_neighbor(pybind11::module &m) {
         l.pbc = {pbc.x() != 0, pbc.y() != 0, pbc.z() != 0};
         const auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
 
-        Eigen::VectorXi res1(res.size()), res2(res.size());
-        Eigen::MatrixX3d res_offset(res.size(), 3);
-        Eigen::VectorXd distances(res.size());
-        for (int i = 0; i < int(res.size()); ++i) {
-            res1(i) = res[i].center_coords_idx;
-            res2(i) = res[i].all_coords_idx;
-            res_offset.row(i) = Eigen::Vector3d(res[i].image[0], res[i].image[1], res[i].image[2]);
-            distances(i) = std::sqrt(res[i].distances2);
+        size_t total = 0;
+        for (const auto &vec: res) total += vec.size();
+        Eigen::VectorXi res1(total), res2(total);
+        Eigen::MatrixX3d res_offset(total, 3);
+        Eigen::VectorXd distances(total);
+        int i = 0;
+        for (int res_i = 0; res_i < int(res.size()); ++res_i) {
+            for (const auto &x: res[res_i]) {
+                res1(i) = res_i;
+                res2(i) = x.all_coords_idx;
+                res_offset.row(i) = Eigen::Vector3d(x.image[0], x.image[1], x.image[2]);
+                distances(i) = std::sqrt(x.distances2);
+                i++;
+            }
         }
 
         return py::make_tuple(res1, res2, res_offset, distances);

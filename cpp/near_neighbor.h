@@ -51,12 +51,12 @@ public:
 };
 
 struct FindNearNeighborsResult {
-    int all_coords_idx, center_coords_idx;
+    int all_coords_idx;
     std::array<int, 3> image;
     double distances2;
 };
 
-std::vector<FindNearNeighborsResult> find_near_neighbors(
+std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
         const Eigen::Matrix3Xd &all_coords,
         const Eigen::Matrix3Xd &all_frac_coords,
         const Eigen::Matrix3Xd &center_coords,
@@ -76,8 +76,11 @@ std::pair<Eigen::Vector3i, Eigen::Vector3i> get_bounds(
 );
 
 Eigen::VectorXi three_to_one(const Eigen::Matrix3Xi &label3d, const Eigen::Vector3i &n_cube);
+
 int three_to_one1(const Eigen::Vector3i &label, const Eigen::Vector3i &n_cube);
+
 Eigen::Matrix3Xi one_to_three(const Eigen::VectorXi &label1d, const Eigen::Vector3i &n_cube);
+
 Eigen::Vector3i one_to_three1(int label, const Eigen::Vector3i &n_cube);
 
 std::vector<std::vector<int>> get_cube_neighbors(const Eigen::Vector3i &n_cube);
