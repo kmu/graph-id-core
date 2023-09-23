@@ -6,6 +6,11 @@
 #include "near_neighbor.h"
 #include "core.h"
 
+std::string blake2b(const std::string &s);
+
+// グラフの直径を計算する
+int graph_diameter(const std::vector<std::vector<NearNeighborInfo>> &graph);
+
 class StructureGraph {
 public:
     std::shared_ptr<const Structure> structure;
@@ -15,23 +20,15 @@ public:
 
     std::vector<std::string> labels;
 
+    int graph_diameter;
+
     ~StructureGraph() = default;
 
-    static StructureGraph
-    with_local_env_strategy(const std::shared_ptr<const Structure> &structure, const NearNeighbor &strategy) {
-        auto sg = with_empty_graph(structure);
-        sg.graph = strategy.get_all_nn_info_cpp(*structure);
-        return sg;
-    }
+    static StructureGraph with_local_env_strategy(
+            const std::shared_ptr<const Structure> &structure,
+            const NearNeighbor &strategy);
 
-    static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure) {
-        const auto n = structure->count;
-        return StructureGraph{
-                structure,
-                std::vector<std::vector<NearNeighborInfo>>(n),
-                std::vector<std::string>(n),
-        };
-    }
+    static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure);
 
     void set_elemental_labels();
 

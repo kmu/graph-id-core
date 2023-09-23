@@ -149,11 +149,13 @@ public:
 // Wrapper of pymatgen.core.IStructure class
 class PymatgenStructure {
 public:
-    py::object obj;
+    mutable py::object obj;
+
+    PymatgenStructure() = default;
 
     explicit PymatgenStructure(py::object obj) : obj(std::move(obj)) {};
 
-    PymatgenLattice lattice() {
+    PymatgenLattice lattice() const {
         if (py::hasattr(obj, "lattice")) {
             return PymatgenLattice(obj.attr("lattice"));
         } else {
@@ -161,8 +163,16 @@ public:
         }
     }
 
-    List<PymatgenPeriodicSite> sites() {
+    List<PymatgenPeriodicSite> sites() const {
         return List<PymatgenPeriodicSite>(obj.attr("sites"));
+    }
+
+    PymatgenStructure copy() const {
+        return PymatgenStructure(obj.attr("copy")());
+    }
+
+    bool is_none() const {
+        return obj.is_none();
     }
 };
 
@@ -199,7 +209,7 @@ struct Lattice {
 struct Structure {
     Structure() = default;
 
-    explicit Structure(PymatgenStructure s) {
+    explicit Structure(PymatgenStructure s) : py_structure(s) {
         auto l = s.lattice();
         lattice = Lattice(l);
         count = int(s.sites().size());
@@ -216,6 +226,7 @@ struct Structure {
     Lattice lattice;
     Eigen::Matrix3Xd site_xyz;
     std::vector<std::string> species_strings;
+    PymatgenStructure py_structure;
 };
 
 

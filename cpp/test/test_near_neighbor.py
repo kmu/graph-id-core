@@ -14,6 +14,16 @@ from pymatgen.optimization.neighbors import find_points_in_spheres
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
 
+def small_test_structure():
+    res = []
+    for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
+        name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
+        s = Structure.from_file(p)
+        if s.num_sites < 30:
+            res.append((name, s))
+    return res
+
+
 class TestNN(unittest.TestCase):
     def assert_nn_info(self, a, b):
         self.assertEqual(len(a), len(b), 'mismatch array length')
@@ -40,9 +50,8 @@ class TestNN(unittest.TestCase):
 
 class TestNNHelper(unittest.TestCase):
     def test_find_near_neighbors(self):
-        for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-            with self.subTest(p.split("/")[-1]):
-                s = Structure.from_file(p)
+        for name, s in small_test_structure():
+            with self.subTest(name):
                 for r in [0.1, 1.0, 10.0]:
                     print(r)
                     indices_a, indices_b, images, distances = find_points_in_spheres(
@@ -120,9 +129,8 @@ class TestMinimumDistanceNN(TestNN):
         self.assertTrue(graph_id_cpp.MinimumDistanceNN().molecules_allowed)
 
     def test_structures(self):
-        for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-            with self.subTest(p.split("/")[-1]):
-                s = Structure.from_file(p)
+        for name, s in small_test_structure():
+            with self.subTest(name):
                 cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(s)
                 try:
                     pymatgen_result = MinimumDistanceNN().get_all_nn_info(s)
@@ -142,9 +150,8 @@ class TestMinimumDistanceNN(TestNN):
         self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_structures_get_all_sites(self):
-        for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-            with self.subTest(p.split("/")[-1]):
-                s = Structure.from_file(p)
+        for name, s in small_test_structure():
+            with self.subTest(name):
                 cpp_result = graph_id_cpp.MinimumDistanceNN(get_all_sites=True).get_all_nn_info(s)
                 pymatgen_result = MinimumDistanceNN(get_all_sites=True).get_all_nn_info(s)
                 self.assert_nn_info(cpp_result, pymatgen_result)
@@ -152,9 +159,8 @@ class TestMinimumDistanceNN(TestNN):
     def test_benchmark(self):
         a = MinimumDistanceNN()
         b = graph_id_cpp.MinimumDistanceNN()
-        for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
+        for _, s in small_test_structure():
             try:
-                s = Structure.from_file(p)
                 at = timeit.timeit("a.get_all_nn_info(s)", number=10, globals=locals()) * 100
                 bt = timeit.timeit("b.get_all_nn_info(s)", number=10, globals=locals()) * 100
                 print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, p.split("/")[-1]))

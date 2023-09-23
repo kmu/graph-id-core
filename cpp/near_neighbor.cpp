@@ -339,6 +339,15 @@ std::vector<std::vector<int>> get_cube_neighbors(const Eigen::Vector3i &n_cube) 
 }
 
 void init_near_neighbor(pybind11::module &m) {
+    py::class_<NearNeighborInfo>(m, "NearNeighborInfo")
+            .def(py::init<int, double, std::array<int, 3>>(),
+                 py::arg("site_index"),
+                 py::arg("weight"),
+                 py::arg("image") = std::array<int, 3>{0, 0, 0})
+            .def_property_readonly("site_index", [](const NearNeighborInfo &self) { return self.site_index; })
+            .def_property_readonly("weight", [](const NearNeighborInfo &self) { return self.weight; })
+            .def_property_readonly("image", [](const NearNeighborInfo &self) { return self.image; });
+
     py::class_<NearNeighbor, std::shared_ptr<NearNeighbor>>(m, "NearNeighbor")
             .def_property_readonly("structures_allowed", &NearNeighbor::structures_allowed)
             .def_property_readonly("molecules_allowed", &NearNeighbor::molecules_allowed)
