@@ -209,41 +209,63 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
             expanded_coords_vec.data(), 3, int(expanded_coords_vec.size()) / 3);
     Eigen::Vector3i n_cube = Eigen::ceil((valid_max - valid_min).array() / ledge).cast<int>();
     int n_cube_all = n_cube.prod();
-    Eigen::Matrix3Xi all_indices3 = Eigen::floor(
-            ((expanded_coords.colwise() - valid_min).array() + 1e-8) / ledge).cast<int>();
-    Eigen::VectorXi all_indices = three_to_one(all_indices3, n_cube);
-    Eigen::Matrix3Xi center_indices3 = Eigen::floor(
-            ((center_coords.colwise() - valid_min).array() + 1e-8) / ledge).cast<int>();
-    Eigen::VectorXi center_indices = three_to_one(center_indices3, n_cube);
 
-    // atom_indices[i] は i 番目のセルに含まれる原子の indices のリスト
-    std::vector<std::vector<int>> atom_indices(n_cube_all);
-    for (int i = 0; i < int(indices.size()); ++i) {
-        atom_indices[all_indices(i)].push_back(i);
-    }
+    // 分割数が少なすぎる時は分割すると逆に効率が悪くなるので分割しない
+    if (n_cube_all >= 50) {
+        Eigen::Matrix3Xi all_indices3 = Eigen::floor(
+                ((expanded_coords.colwise() - valid_min).array() + 1e-8) / ledge).cast<int>();
+        Eigen::VectorXi all_indices = three_to_one(all_indices3, n_cube);
+        Eigen::Matrix3Xi center_indices3 = Eigen::floor(
+                ((center_coords.colwise() - valid_min).array() + 1e-8) / ledge).cast<int>();
+        Eigen::VectorXi center_indices = three_to_one(center_indices3, n_cube);
 
-    auto cube_neighbors = get_cube_neighbors(n_cube);
+        // atom_indices[i] は i 番目のセルに含まれる原子の indices のリスト
+        std::vector<std::vector<int>> atom_indices(n_cube_all);
+        for (int i = 0; i < int(indices.size()); ++i) {
+            atom_indices[all_indices(i)].push_back(i);
+        }
 
-    for (int i = 0; i < n_center; ++i) {
-//        for (const int cube_index: cube_neighbors[center_indices(i)]) {
-//            for (const int j: atom_indices[cube_index]) {
-        for (int j = 0; j < expanded_coords.cols(); ++j) {
-            const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-            if (d2 < r2) {
-                const int all_coords_idx = std::get<0>(indices[j]);
-                auto offset = std::get<1>(indices[j]);
-                offset[0] -= int(offset_correction(0, all_coords_idx));
-                offset[1] -= int(offset_correction(1, all_coords_idx));
-                offset[2] -= int(offset_correction(2, all_coords_idx));
-                result[i].emplace_back(FindNearNeighborsResult{
-                        all_coords_idx,
-                        offset,
-                        d2
-                });
+        auto cube_neighbors = get_cube_neighbors(n_cube);
+
+        for (int i = 0; i < n_center; ++i) {
+            for (const int cube_index: cube_neighbors[center_indices(i)]) {
+                for (const int j: atom_indices[cube_index]) {
+                    const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
+                    if (d2 < r2) {
+                        const int all_coords_idx = std::get<0>(indices[j]);
+                        auto offset = std::get<1>(indices[j]);
+                        offset[0] -= int(offset_correction(0, all_coords_idx));
+                        offset[1] -= int(offset_correction(1, all_coords_idx));
+                        offset[2] -= int(offset_correction(2, all_coords_idx));
+                        result[i].emplace_back(FindNearNeighborsResult{
+                                all_coords_idx,
+                                offset,
+                                d2
+                        });
+                    }
+                }
             }
-            //}
+        }
+    } else {
+        for (int i = 0; i < n_center; ++i) {
+            for (int j = 0; j < expanded_coords.cols(); ++j) {
+                const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
+                if (d2 < r2) {
+                    const int all_coords_idx = std::get<0>(indices[j]);
+                    auto offset = std::get<1>(indices[j]);
+                    offset[0] -= int(offset_correction(0, all_coords_idx));
+                    offset[1] -= int(offset_correction(1, all_coords_idx));
+                    offset[2] -= int(offset_correction(2, all_coords_idx));
+                    result[i].emplace_back(FindNearNeighborsResult{
+                            all_coords_idx,
+                            offset,
+                            d2
+                    });
+                }
+            }
         }
     }
+
 
     return result;
 }

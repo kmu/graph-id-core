@@ -14,12 +14,12 @@ from pymatgen.optimization.neighbors import find_points_in_spheres
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
 
-def small_test_structure():
+def small_test_structure(max_sites=30):
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
-        if s.num_sites < 30:
+        if s.num_sites <= max_sites:
             res.append((name, s))
     return res
 
@@ -159,13 +159,13 @@ class TestMinimumDistanceNN(TestNN):
     def test_benchmark(self):
         a = MinimumDistanceNN()
         b = graph_id_cpp.MinimumDistanceNN()
-        for _, s in small_test_structure():
+        for name, s in small_test_structure():
             try:
                 at = timeit.timeit("a.get_all_nn_info(s)", number=10, globals=locals()) * 100
                 bt = timeit.timeit("b.get_all_nn_info(s)", number=10, globals=locals()) * 100
-                print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, p.split("/")[-1]))
-            except:
-                pass
+                print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, name))
+            except Exception as e:
+                print(e)
 
 
 if __name__ == "__main__":

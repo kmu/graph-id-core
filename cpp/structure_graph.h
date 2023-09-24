@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <utility>
 #include <vector>
 #include <pybind11/pybind11.h>
@@ -17,6 +18,10 @@ public:
 
     // 連結リスト形式のグラフ
     std::vector<std::vector<NearNeighborInfo>> graph;
+
+    // from, to, jiamge のタプルから graph[from] の NearNeighborInfo への index へのマップ
+    // graph_map[from, to, image] = index のとき、graph[from][index] が to への NearNeighborInfo である。
+    std::map<std::tuple<int, int, std::array<int, 3>>, int> graph_map;
 
     std::vector<std::string> labels;
 
@@ -39,6 +44,15 @@ public:
             bool wyckoff,
             int additional_depth,
             int depth_factor
+    );
+
+private:
+    void add_edge(
+            int from,
+            std::array<int, 3> from_image,
+            int to,
+            std::array<int, 3> to_image,
+            double weight
     );
 };
 
