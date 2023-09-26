@@ -2,7 +2,7 @@
 
 std::string blake2b(const std::string &s) {
     py::object hashlib = py::module_::import("hashlib");
-    return hashlib("blake2b")(py::bytes(s)).attr("hexdigest")().cast<std::string>();
+    return hashlib.attr("blake2b")(py::bytes(s)).attr("hexdigest")().cast<std::string>();
 }
 
 StructureGraph StructureGraph::with_local_env_strategy(
@@ -122,7 +122,6 @@ void StructureGraph::set_cc_diameter() {
             }
         }
         this->cc_diameter.push_back(d_max);
-        this->cc_cs.emplace_back("");
     }
 }
 
@@ -161,9 +160,40 @@ void StructureGraph::set_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
         int additional_depth,
-        int depth_factor
+        int depth_factor,
+        bool use_previous_cs
 ) {
+    cc_cs.resize(0);
 
+    for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
+        std::vector<std::string> cs_list;
+        cs_list.reserve(cc_nodes[cc_i].size());
+
+        const int depth = cc_diameter[cc_i] * depth_factor + additional_depth;
+
+        for (const int focused_site_i: cc_nodes[cc_i]) {
+            if (PyErr_CheckSignals()) throw py::error_already_set();
+            CompositionalSequence cs;
+            cs.hash_cs = hash_cs;
+            cs.focused_site_i = focused_site_i;
+            cs.labels = &labels;
+            cs.use_previous_sites = use_previous_cs || wyckoff;
+            cs.new_sites = {{focused_site_i, {0, 0, 0}}};
+            cs.seen_sites.emplace(cs.new_sites[0]);
+
+            for (int di = 0; di < depth; ++di) {
+                for (const auto &c_site: cs.get_current_starting_sites()) {
+                    for (auto nni: graph[std::get<0>(c_site)]) {
+                        for (int i = 0; i < 3; ++i) nni.image[i] += std::get<1>(c_site)[i];
+                        cs.count_composition_for_neighbors(nni);
+                    }
+                }
+                cs.finalize_this_depth();
+            }
+            cs_list.emplace_back(cs.string());
+        }
+        cc_cs.emplace_back(std::move(cs_list));
+    }
 }
 
 py::object StructureGraph::to_py() const {
@@ -183,6 +213,60 @@ py::object StructureGraph::to_py() const {
     return sg;
 }
 
+std::string CompositionalSequence::string() const {
+    if (hash_cs) {
+        return (*labels)[focused_site_i] + "-" + cs_for_hashing;
+    } else {
+        return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
+    }
+}
+
+
+std::vector<std::tuple<int, std::array<int, 3>>> CompositionalSequence::get_current_starting_sites() {
+    const auto ret = std::move(new_sites);
+    new_sites = {};
+    return ret;
+}
+
+
+void CompositionalSequence::count_composition_for_neighbors(const std::vector<NearNeighborInfo> &neighbors) {
+    for (const auto &nni: neighbors) {
+        count_composition_for_neighbors(nni);
+    }
+}
+
+void CompositionalSequence::count_composition_for_neighbors(const NearNeighborInfo &nni) {
+    const std::tuple<int, std::array<int, 3>> t = std::make_tuple(nni.site_index, nni.image);
+    if (seen_sites.find(t) == seen_sites.end()) {
+        seen_sites.insert(t);
+        new_sites.emplace_back(t);
+        this->composition_counter[(*labels)[nni.site_index]] += 1;
+    }
+}
+
+
+void CompositionalSequence::finalize_this_depth() {
+    auto formula = get_sorted_composition_list_form();
+    if (hash_cs) {
+        cs_for_hashing = blake2b(cs_for_hashing + "-" + join_string("", formula));
+    } else {
+        compositional_seq.emplace_back(join_string("", formula));
+    }
+}
+
+
+std::vector<std::string> CompositionalSequence::get_sorted_composition_list_form() const {
+    std::vector<std::string> ret;
+    ret.reserve(composition_counter.size());
+    for (const auto &t: composition_counter) {
+        if (t.second > 0) {
+            ret.emplace_back(t.first + std::to_string(t.second));
+        }
+    }
+    return ret;
+}
+
+
 void init_structure_graph(pybind11::module &m) {
     py::class_<StructureGraph>(m, "StructureGraph")
             .def_static("with_local_env_strategy", [](PymatgenStructure &s, NearNeighbor &nn) {
@@ -194,7 +278,13 @@ void init_structure_graph(pybind11::module &m) {
             .def("set_elemental_labels", &StructureGraph::set_elemental_labels)
             .def("set_wyckoffs", &StructureGraph::set_wyckoffs_label, py::arg("symmetry_tol") = 0.1) // 互換性
             .def("set_wyckoffs_label", &StructureGraph::set_wyckoffs_label)
-            .def("set_compositional_sequence_node_attr", &StructureGraph::set_compositional_sequence_node_attr)
+            .def("set_compositional_sequence_node_attr",
+                 &StructureGraph::set_compositional_sequence_node_attr,
+                 py::arg("hash_cs") = false,
+                 py::arg("wyckoff") = false,
+                 py::arg("additional_depth") = 0,
+                 py::arg("depth_factor") = 2,
+                 py::arg("use_previous_cs") = false)
             .def("to_py", &StructureGraph::to_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用
@@ -211,5 +301,16 @@ void init_structure_graph(pybind11::module &m) {
                           [](StructureGraph &sg, const std::vector<std::string> &labels) { sg.labels = labels; })
             .def_property_readonly("cc_nodes", [](const StructureGraph &sg) { return sg.cc_nodes; })
             .def_property_readonly("cc_diameter", [](const StructureGraph &sg) { return sg.cc_diameter; })
-            .def_property_readonly("cc_cs", [](const StructureGraph &sg) { return sg.cc_cs; });
+            .def_property_readonly("cc_cs_labels", [](const StructureGraph &sg) { return sg.cc_cs; })
+            .def_property_readonly("cc_cs", [](const StructureGraph &sg) {
+                // Python との互換性のため、cc_nodes, cc_cs_labels を使うと効率的
+                py::list res;
+                for (size_t i = 0; i < sg.cc_nodes.size(); i++) {
+                    py::dict d;
+                    d["site_i"] = py::set(py::list(py::cast(sg.cc_nodes[i])));
+                    d["cs_list"] = sg.cc_cs[i];
+                    res.append(d);
+                }
+                return res;
+            });
 }

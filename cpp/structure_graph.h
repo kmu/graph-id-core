@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include "near_neighbor.h"
 #include "core.h"
 
@@ -22,7 +23,7 @@ public:
 
     std::vector<std::string> labels;
 
-    std::vector<std::string> cc_cs;
+    std::vector<std::vector<std::string>> cc_cs;
     std::vector<std::vector<int>> cc_nodes;
     std::vector<int> cc_diameter;
 
@@ -42,7 +43,8 @@ public:
             bool hash_cs,
             bool wyckoff,
             int additional_depth,
-            int depth_factor
+            int depth_factor,
+            bool use_previous_cs
     );
 
     py::object to_py() const;
@@ -57,6 +59,33 @@ private:
     );
 
     void set_cc_diameter();
+};
+
+class CompositionalSequence {
+public:
+    CompositionalSequence() = default;
+
+    bool hash_cs{false};
+    std::string cs_for_hashing;
+    std::vector<std::string> compositional_seq;
+    int focused_site_i{0};
+    std::vector<std::tuple<int, std::array<int, 3>>> new_sites;
+    std::unordered_set<std::tuple<int, std::array<int, 3>>> seen_sites;
+    bool use_previous_sites{false};
+    std::vector<std::string> const *labels;
+    std::map<std::string, int> composition_counter;
+
+    std::string string() const;
+
+    std::vector<std::tuple<int, std::array<int, 3>>> get_current_starting_sites();
+
+    void count_composition_for_neighbors(const std::vector<NearNeighborInfo> &neighbors);
+
+    void count_composition_for_neighbors(const NearNeighborInfo &neighbors);
+
+    void finalize_this_depth();
+
+    std::vector<std::string> get_sorted_composition_list_form() const;
 };
 
 void init_structure_graph(pybind11::module &m);

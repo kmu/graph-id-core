@@ -229,5 +229,57 @@ struct Structure {
     PymatgenStructure py_structure;
 };
 
+std::string join_string(const std::string &delimiter, const std::vector<std::string> &strings);
+
+
+// std::unordered_map などに使うハッシュ関数を作る
+template<class T>
+size_t HashCombine(const size_t seed, const T &v) {
+    return seed ^ (std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+template<int N>
+struct HashTupleCore {
+    template<class Tuple>
+    size_t operator()(const Tuple &keyval) const noexcept {
+        size_t s = HashTupleCore<N - 1>()(keyval);
+        return HashCombine(s, std::get<N - 1>(keyval));
+    }
+};
+
+template<>
+struct HashTupleCore<0> {
+    template<class Tuple>
+    size_t operator()(const Tuple &keyval) const noexcept { return 0; }
+};
+
+template<class... Args>
+struct std::hash<std::tuple<Args...>> {
+    size_t operator()(const tuple<Args...> &keyval) const noexcept {
+        return HashTupleCore<tuple_size<tuple<Args...>>::value>()(keyval);
+    }
+};
+
+template<typename T, int N>
+struct HashArrayCore {
+    template<class Array>
+    size_t operator()(const Array &keyval) const noexcept {
+        size_t s = HashTupleCore<N - 1>()(keyval);
+        return HashCombine(s, std::get<N - 1>(keyval));
+    }
+};
+
+template<typename T>
+struct HashArrayCore<T, 0> {
+    template<class Tuple>
+    size_t operator()(const Tuple &keyval) const noexcept { return 0; }
+};
+
+template<typename T, int N>
+struct std::hash<std::array<T, N>> {
+    size_t operator()(const array<T, N> &keyval) const noexcept {
+        return HashArrayCore<T, N>()(keyval);
+    }
+};
 
 void init_core(py::module_ &m);
