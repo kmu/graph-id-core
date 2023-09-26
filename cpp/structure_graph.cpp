@@ -5,37 +5,6 @@ std::string blake2b(const std::string &s) {
     return hashlib("blake2b")(py::bytes(s)).attr("hexdigest")().cast<std::string>();
 }
 
-/// グラフの直径を計算する。グラフが連結ではない場合、各連結成分の最も大きい直径を返す。
-int graph_diameter(const std::vector<std::vector<NearNeighborInfo>> &graph) {
-    const int n = int(graph.size());
-    if (graph.size() <= 1) return 0;
-
-    int ret = 0;
-    std::vector<int> queue;
-    queue.reserve(n);
-    Eigen::VectorXi d(n);
-    for (int start = 0; start < n; start++) {
-        d.setConstant(-1);
-        queue.clear();
-        queue.push_back(start);
-        d[start] = 0;
-        int qi = 0;
-        while (qi < int(queue.size())) {
-            const int v = queue[qi++];
-            for (const auto &nni: graph[v]) {
-                const int u = nni.site_index;
-                if (d[u] == -1) {
-                    d[u] = d[v] + 1;
-                    queue.push_back(u);
-                }
-            }
-        }
-        ret = std::max(ret, d.maxCoeff());
-    }
-
-    return ret;
-}
-
 StructureGraph StructureGraph::with_local_env_strategy(
         const std::shared_ptr<const Structure> &structure,
         const NearNeighbor &strategy
@@ -50,7 +19,7 @@ StructureGraph StructureGraph::with_local_env_strategy(
             sg.add_edge(nni.site_index, nni.image, from, {0, 0, 0}, nni.weight);
         }
     }
-    sg.graph_diameter = ::graph_diameter(sg.graph);
+    sg.set_cc_diameter();
     return sg;
 }
 
@@ -61,7 +30,9 @@ StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Stru
             std::vector<std::vector<NearNeighborInfo>>(n),
             {},
             std::vector<std::string>(n),
-            0,
+            {},
+            {},
+            {},
     };
 }
 
@@ -89,6 +60,70 @@ void StructureGraph::add_edge(
 
     this->graph[from].emplace_back(NearNeighborInfo{to, weight, image});
     this->graph_map[std::make_tuple(from, to, image)] = int(this->graph[from].size() - 1);
+}
+
+// グラフの連結成分とその直径を計算する
+void StructureGraph::set_cc_diameter() {
+    const int n = int(graph.size());
+    assert(n > 0);
+
+    this->cc_nodes.clear();
+    this->cc_diameter.clear();
+    this->cc_cs.clear();
+
+    std::vector<bool> visited(n, false);
+    std::vector<int> queue;
+    queue.reserve(n);
+    size_t qi = 0;
+
+    // 幅優先探索で連結成分を調べる
+    for (int i = 0; i < n; ++i) {
+        if (visited[i]) continue;
+        visited[i] = true;
+        queue.push_back(i);
+        this->cc_nodes.emplace_back();
+        this->cc_nodes.back().push_back(i);
+        while (qi < queue.size()) {
+            int u = queue[qi++]; // pop_front
+            for (const auto &nni: graph[u]) {
+                if (!visited[nni.site_index]) {
+                    visited[nni.site_index] = true;
+                    this->cc_nodes.back().push_back(nni.site_index);
+                    queue.push_back(nni.site_index);
+                }
+            }
+        }
+    }
+
+    for (auto &vec: this->cc_nodes) std::sort(vec.begin(), vec.end());
+
+    Eigen::VectorXi d(n);
+    for (const auto &nodes: this->cc_nodes) {
+        // 連結成分ごとに幅優先探索を行う
+        int d_max = 0;
+        qi = 0;
+        queue.resize(0);
+        for (const int start: nodes) {
+            queue.push_back(start);
+            for (const int node: nodes) visited[node] = false;
+            d[start] = 0;
+            visited[start] = true;
+            while (qi < int(queue.size())) {
+                const int v = queue[qi++];
+                for (const auto &nni: graph[v]) {
+                    const int u = nni.site_index;
+                    if (!visited[u]) {
+                        visited[u] = true;
+                        d[u] = d[v] + 1;
+                        d_max = std::max(d_max, d[u]);
+                        queue.push_back(u);
+                    }
+                }
+            }
+        }
+        this->cc_diameter.push_back(d_max);
+        this->cc_cs.emplace_back("");
+    }
 }
 
 void StructureGraph::set_elemental_labels() {
@@ -131,9 +166,24 @@ void StructureGraph::set_compositional_sequence_node_attr(
 
 }
 
-void init_structure_graph(pybind11::module &m) {
-    m.def("graph_diameter", &graph_diameter);
+py::object StructureGraph::to_py() const {
+    py::object PmgStructureGraph = py::module::import("pymatgen.analysis.graphs").attr("StructureGraph");
+    py::object sg = PmgStructureGraph.attr("with_empty_graph")(this->structure->py_structure);
+    for (size_t i = 0; i < this->graph.size(); i++) {
+        for (const auto &nni: this->graph[i]) {
+            sg.attr("add_edge")(
+                    py::arg("from_index") = i,
+                    py::arg("from_jimage") = py::make_tuple(0, 0, 0),
+                    py::arg("to_index") = nni.site_index,
+                    py::arg("to_jimage") = nni.image,
+                    py::arg("weight") = nni.weight
+            );
+        }
+    }
+    return sg;
+}
 
+void init_structure_graph(pybind11::module &m) {
     py::class_<StructureGraph>(m, "StructureGraph")
             .def_static("with_local_env_strategy", [](PymatgenStructure &s, NearNeighbor &nn) {
                 return StructureGraph::with_local_env_strategy(std::make_shared<Structure>(s), nn);
@@ -145,9 +195,7 @@ void init_structure_graph(pybind11::module &m) {
             .def("set_wyckoffs", &StructureGraph::set_wyckoffs_label, py::arg("symmetry_tol") = 0.1) // 互換性
             .def("set_wyckoffs_label", &StructureGraph::set_wyckoffs_label)
             .def("set_compositional_sequence_node_attr", &StructureGraph::set_compositional_sequence_node_attr)
-            .def_property("labels", [](const StructureGraph &sg) { return sg.labels; },
-                          [](StructureGraph &sg, const std::vector<std::string> &labels) { sg.labels = labels; })
-            .def_property_readonly("graph_diameter", [](const StructureGraph &sg) { return sg.graph_diameter; })
+            .def("to_py", &StructureGraph::to_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用
                 py::list arr;
@@ -158,5 +206,10 @@ void init_structure_graph(pybind11::module &m) {
                 }
                 arr.attr("sort")();
                 return arr;
-            });
+            })
+            .def_property("labels", [](const StructureGraph &sg) { return sg.labels; },
+                          [](StructureGraph &sg, const std::vector<std::string> &labels) { sg.labels = labels; })
+            .def_property_readonly("cc_nodes", [](const StructureGraph &sg) { return sg.cc_nodes; })
+            .def_property_readonly("cc_diameter", [](const StructureGraph &sg) { return sg.cc_diameter; })
+            .def_property_readonly("cc_cs", [](const StructureGraph &sg) { return sg.cc_cs; });
 }

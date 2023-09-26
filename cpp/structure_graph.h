@@ -9,9 +9,6 @@
 
 std::string blake2b(const std::string &s);
 
-// グラフの直径を計算する
-int graph_diameter(const std::vector<std::vector<NearNeighborInfo>> &graph);
-
 class StructureGraph {
 public:
     std::shared_ptr<const Structure> structure;
@@ -25,7 +22,9 @@ public:
 
     std::vector<std::string> labels;
 
-    int graph_diameter;
+    std::vector<std::string> cc_cs;
+    std::vector<std::vector<int>> cc_nodes;
+    std::vector<int> cc_diameter;
 
     ~StructureGraph() = default;
 
@@ -46,6 +45,8 @@ public:
             int depth_factor
     );
 
+    py::object to_py() const;
+
 private:
     void add_edge(
             int from,
@@ -54,6 +55,8 @@ private:
             std::array<int, 3> to_image,
             double weight
     );
+
+    void set_cc_diameter();
 };
 
 void init_structure_graph(pybind11::module &m);

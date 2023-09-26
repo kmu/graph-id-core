@@ -42,16 +42,16 @@ class TestStructureGraph(unittest.TestCase):
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
                 ug = sg_py.graph.to_undirected()
-                diameter = max([nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)])
-                self.assertEqual(diameter, sg_cpp.graph_diameter)
+                diameter = [nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)]
+                self.assertListEqual(diameter, sg_cpp.cc_diameter)
 
     def test_graph_diameter_not_strongly_connected(self):
         s = Structure(Lattice([[10, 0, 0], [0, 10, 0], [0, 0, 10]]), ["H"]*4, [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]])
         sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
         sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
         ug = sg_py.graph.to_undirected()
-        diameter = max([nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)])
-        self.assertEqual(diameter, sg_cpp.graph_diameter)
+        diameter = [nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)]
+        self.assertEqual(diameter, sg_cpp.cc_diameter)
 
 
     def test_set_elemental_labels(self):
