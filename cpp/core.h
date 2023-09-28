@@ -290,4 +290,11 @@ struct std::hash<std::array<T, N>> {
     }
 };
 
+template<>
+struct std::hash<std::tuple<int, std::array<int, 3>>> {
+    size_t operator()(const std::tuple<int, std::array<int, 3>> &t) const noexcept {
+        return HashCombine(std::get<0>(t), HashCombine(std::get<1>(t)[0], HashCombine(std::get<1>(t)[1], std::get<1>(t)[2])));
+    }
+};
+
 void init_core(py::module_ &m);
