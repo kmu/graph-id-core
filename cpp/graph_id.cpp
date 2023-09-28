@@ -2,8 +2,18 @@
 #include "structure_graph.h"
 
 std::string GraphIDGenerator::get_id(const Structure &structure) const {
-    const auto sg = StructureGraph::with_local_env_strategy(std::make_shared<Structure>(structure), *this->nn);
-    return "";
+    auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
+    const auto sg = prepare_structure_graph(s_ptr);
+    std::vector<std::string> cc_labels(sg.cc_nodes.size());
+    for (size_t i = 0; i < sg.cc_nodes.size(); ++i) {
+        std::vector<std::string> labels = sg.cc_cs[i];
+        std::sort(labels.begin(), labels.end());
+        cc_labels[i] = blake2b(join_string("-", labels));
+    }
+    std::sort(cc_labels.begin(), cc_labels.end());
+    std::string gid = blake2b(join_string(":", cc_labels), 16);
+
+    return elaborate_comp_dim(sg, gid);
 }
 
 std::string GraphIDGenerator::get_id_catch_error(const Structure &structure) const noexcept {
@@ -24,6 +34,15 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
     return ids;
 }
 
+std::string GraphIDGenerator::elaborate_comp_dim(const StructureGraph &sg, const std::string &gid) const {
+    auto f = py::module_::import("pymatgen.analysis.dimensionality").attr("get_dimensionality_larsen");
+    int dim = f(sg.to_py()).cast<int>();
+    if (!topology_only) {
+        return sg.structure->py_structure.reduced_formula() + "-" + std::to_string(dim) + "D-" + gid;
+    }
+    return std::to_string(dim) + "D-" + gid;
+}
+
 std::vector<std::string> GraphIDGenerator::get_component_ids(const Structure &structure) const {
     // TODO
     return std::vector<std::string>(structure.count);
@@ -34,7 +53,41 @@ bool GraphIDGenerator::are_same(const Structure &structure1, const Structure &st
 }
 
 StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const Structure> &structure) const {
-    return StructureGraph::with_local_env_strategy(structure, *this->nn);
+    auto sg = StructureGraph::with_local_env_strategy(structure, *this->nn);
+    bool use_previous_cs = false;
+
+    auto labels = structure->species_strings;
+    auto prev_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+
+    if (wyckoff) {
+        sg.set_wyckoffs_label(symmetry_tol);
+    } else if (topology_only) {
+        sg.labels = std::vector<std::string>(structure->count, "X");
+    } else {
+        sg.set_elemental_labels();
+    }
+
+    while (true) {
+        sg.set_compositional_sequence_node_attr(
+                true,
+                wyckoff,
+                additional_depth,
+                depth_factor,
+                use_previous_cs
+        );
+
+        labels.resize(0);
+        for (const auto &v: sg.cc_cs)
+            for (const auto &s: v)
+                labels.emplace_back(s);
+        auto new_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+        if (new_num_uniq == prev_num_uniq) {
+            break;
+        }
+        prev_num_uniq = new_num_uniq;
+    }
+
+    return sg;
 }
 
 void init_graph_id(pybind11::module &m) {

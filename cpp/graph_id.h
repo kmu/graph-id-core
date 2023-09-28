@@ -37,6 +37,8 @@ public:
 
     std::vector<std::string> get_component_ids(const Structure &structure) const;
 
+    std::string elaborate_comp_dim(const StructureGraph &sg, const std::string &gid) const;
+
     bool are_same(const Structure &structure1, const Structure &structure2) const;
 
 private:

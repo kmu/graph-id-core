@@ -167,6 +167,14 @@ public:
         return List<PymatgenPeriodicSite>(obj.attr("sites"));
     }
 
+    std::string formula() const {
+        return obj.attr("composition").attr("formula").cast<std::string>();
+    }
+
+    std::string reduced_formula() const {
+        return obj.attr("composition").attr("reduced_formula").cast<std::string>();
+    }
+
     PymatgenStructure copy() const {
         return PymatgenStructure(obj.attr("copy")());
     }

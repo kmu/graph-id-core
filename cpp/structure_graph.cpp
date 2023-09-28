@@ -2,7 +2,15 @@
 
 std::string blake2b(const std::string &s) {
     py::object hashlib = py::module_::import("hashlib");
+
     return hashlib.attr("blake2b")(py::bytes(s)).attr("hexdigest")().cast<std::string>();
+}
+
+std::string blake2b(const std::string &s, int digest_size) {
+    py::object hashlib = py::module_::import("hashlib");
+
+    return hashlib.attr("blake2b")(py::bytes(s), py::arg("digest_size") = digest_size).attr(
+            "hexdigest")().cast<std::string>();
 }
 
 StructureGraph StructureGraph::with_local_env_strategy(
@@ -198,16 +206,19 @@ void StructureGraph::set_compositional_sequence_node_attr(
 
 py::object StructureGraph::to_py() const {
     py::object PmgStructureGraph = py::module::import("pymatgen.analysis.graphs").attr("StructureGraph");
-    py::object sg = PmgStructureGraph.attr("with_empty_graph")(this->structure->py_structure);
-    for (size_t i = 0; i < this->graph.size(); i++) {
+    py::object sg = PmgStructureGraph.attr("with_empty_graph")(this->structure->py_structure.obj);
+    for (int i = 0; size_t(i) < this->graph.size(); i++) {
         for (const auto &nni: this->graph[i]) {
-            sg.attr("add_edge")(
-                    py::arg("from_index") = i,
-                    py::arg("from_jimage") = py::make_tuple(0, 0, 0),
-                    py::arg("to_index") = nni.site_index,
-                    py::arg("to_jimage") = nni.image,
-                    py::arg("weight") = nni.weight
-            );
+            if (i <= nni.site_index) {
+                sg.attr("add_edge")(
+                        py::arg("from_index") = i,
+                        py::arg("from_jimage") = py::make_tuple(0, 0, 0),
+                        py::arg("to_index") = nni.site_index,
+                        py::arg("to_jimage") = nni.image,
+                        py::arg("weight") = nni.weight,
+                        py::arg("warn_duplicates") = false
+                );
+            }
         }
     }
     return sg;

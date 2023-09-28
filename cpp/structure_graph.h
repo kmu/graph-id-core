@@ -10,6 +10,8 @@
 
 std::string blake2b(const std::string &s);
 
+std::string blake2b(const std::string &s, int digest_size);
+
 class StructureGraph {
 public:
     std::shared_ptr<const Structure> structure;
