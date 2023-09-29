@@ -5,6 +5,7 @@
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <gtl/phmap.hpp>
 #include "near_neighbor.h"
 #include "core.h"
 
@@ -63,6 +64,8 @@ private:
     void set_cc_diameter();
 };
 
+unsigned long long int f(int site, std::array<int, 3> arr);
+
 class CompositionalSequence {
 public:
     CompositionalSequence() = default;
@@ -72,7 +75,7 @@ public:
     std::vector<std::string> compositional_seq;
     int focused_site_i{0};
     std::vector<std::tuple<int, std::array<int, 3>>> new_sites;
-    std::unordered_set<std::tuple<int, std::array<int, 3>>> seen_sites;
+    gtl::flat_hash_set<unsigned long long int> seen_sites;
     bool use_previous_sites{false};
     std::vector<std::string> const *labels;
     std::map<std::string, int> composition_counter;

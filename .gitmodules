@@ -4,3 +4,6 @@
 [submodule "library/eigen"]
 	path = library/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "library/gtl"]
+	path = library/gtl
+	url = https://github.com/greg7mdp/gtl.git

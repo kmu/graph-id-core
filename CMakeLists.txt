@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5...3.26)
 project(graph_id LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(library/pybind11)
@@ -19,7 +19,7 @@ pybind11_add_module(graph_id_cpp
 target_compile_definitions(graph_id_cpp
         PRIVATE VERSION_INFO=${VERSION_INFO})
 target_include_directories(graph_id_cpp
-        PRIVATE library/eigen
+        PRIVATE library/eigen library/gtl/include
 )
 target_compile_options(graph_id_cpp  PRIVATE
         # 警告をできるだけ出力する

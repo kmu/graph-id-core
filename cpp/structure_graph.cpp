@@ -164,6 +164,22 @@ void StructureGraph::set_wyckoffs_label(double symmetry_tol) {
     }
 }
 
+unsigned long long int f(int site, std::array<int, 3> arr) {
+    unsigned long long int ret = 0;
+    assert(0 <= site && site < (1 << 16));
+    assert(-32768 <= arr[0] && arr[0] < 32768);
+    assert(-32768 <= arr[1] && arr[1] < 32768);
+    assert(-32768 <= arr[2] && arr[2] < 32768);
+    ret |= uint16_t(site);
+    ret <<= 16;
+    ret |= uint16_t(arr[0]+32768);
+    ret <<= 16;
+    ret |= uint16_t(arr[1]+32768);
+    ret <<= 16;
+    ret |= uint16_t(arr[2]+32768);
+    return ret;
+}
+
 void StructureGraph::set_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
@@ -187,7 +203,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
             cs.labels = &labels;
             cs.use_previous_sites = use_previous_cs || wyckoff;
             cs.new_sites = {{focused_site_i, {0, 0, 0}}};
-            cs.seen_sites.emplace(cs.new_sites[0]);
+            cs.seen_sites.insert(f(focused_site_i, {0, 0, 0}));
 
             for (int di = 0; di < depth; ++di) {
                 for (const auto &c_site: cs.get_current_starting_sites()) {
@@ -248,8 +264,9 @@ void CompositionalSequence::count_composition_for_neighbors(const std::vector<Ne
 
 void CompositionalSequence::count_composition_for_neighbors(const NearNeighborInfo &nni) {
     const std::tuple<int, std::array<int, 3>> t = std::make_tuple(nni.site_index, nni.image);
-    if (seen_sites.find(t) == seen_sites.end()) {
-        seen_sites.insert(t);
+    auto n = f(nni.site_index, nni.image);
+    if (seen_sites.find(n) == seen_sites.end()) {
+        seen_sites.insert(n);
         new_sites.emplace_back(t);
         this->composition_counter[(*labels)[nni.site_index]] += 1;
     }

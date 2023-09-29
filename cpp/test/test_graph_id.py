@@ -36,10 +36,11 @@ class TestGraphIDGenerator(unittest.TestCase):
     def test_benchmark(self):
         a = graph_id.GraphIDGenerator()
         b = graph_id_cpp.GraphIDGenerator()
-        for name, s in small_test_structure():
+        for name, s in small_test_structure(1000):
             try:
-                at = timeit.timeit("a.get_id(s)", number=10, globals=locals()) * 100
-                bt = timeit.timeit("b.get_id(s)", number=10, globals=locals()) * 100
+                N = 1
+                at = timeit.timeit("a.get_id(s)", number=N, globals=locals()) * 1000 / N
+                bt = timeit.timeit("b.get_id(s)", number=N, globals=locals()) * 1000 / N
                 print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, name))
             except Exception as e:
                 print(e)
