@@ -1,4 +1,6 @@
 #include "structure_graph.h"
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 std::string blake2b(const std::string &s) {
     py::object hashlib = py::module_::import("hashlib");
@@ -33,6 +35,7 @@ StructureGraph StructureGraph::with_local_env_strategy(
 
 StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Structure> &structure) {
     const auto n = structure->count;
+    if (n == 0) throw py::value_error("Structure must have at least one site.");
     return StructureGraph{
             structure,
             std::vector<std::vector<NearNeighborInfo>>(n),
@@ -164,7 +167,7 @@ void StructureGraph::set_wyckoffs_label(double symmetry_tol) {
     }
 }
 
-unsigned long long int f(int site, std::array<int, 3> arr) {
+uint64_t connected_site_to_uint64(int site, std::array<int, 3> arr) {
     unsigned long long int ret = 0;
     assert(0 <= site && site < (1 << 16));
     assert(-32768 <= arr[0] && arr[0] < 32768);
@@ -172,11 +175,11 @@ unsigned long long int f(int site, std::array<int, 3> arr) {
     assert(-32768 <= arr[2] && arr[2] < 32768);
     ret |= uint16_t(site);
     ret <<= 16;
-    ret |= uint16_t(arr[0]+32768);
+    ret |= uint16_t(arr[0] + 32768);
     ret <<= 16;
-    ret |= uint16_t(arr[1]+32768);
+    ret |= uint16_t(arr[1] + 32768);
     ret <<= 16;
-    ret |= uint16_t(arr[2]+32768);
+    ret |= uint16_t(arr[2] + 32768);
     return ret;
 }
 
@@ -203,7 +206,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
             cs.labels = &labels;
             cs.use_previous_sites = use_previous_cs || wyckoff;
             cs.new_sites = {{focused_site_i, {0, 0, 0}}};
-            cs.seen_sites.insert(f(focused_site_i, {0, 0, 0}));
+            cs.seen_sites.insert(connected_site_to_uint64(focused_site_i, {0, 0, 0}));
 
             for (int di = 0; di < depth; ++di) {
                 for (const auto &c_site: cs.get_current_starting_sites()) {
@@ -218,6 +221,64 @@ void StructureGraph::set_compositional_sequence_node_attr(
         }
         cc_cs.emplace_back(std::move(cs_list));
     }
+}
+
+bool
+StructureGraph::rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate) {
+    size_t n = seen.size();
+    if (n == 0) return true;
+
+    Eigen::Matrix3Xd images(3, n + 1);
+    int i = 0;
+    for (const std::array<int, 3> &image: seen) {
+        images.col(i++) << image[0], image[1], image[2];
+    }
+    images.col(i++) << candidate[0], candidate[1], candidate[2];
+    return (n - 1) < size_t(images.fullPivLu().rank());
+}
+
+/// Larsen らの方法で次元を計算する
+/// 連結成分ごとに適当に一つ頂点を選び pymatgen.analysis.calculate_dimensionality_of_site と
+/// 同じ方法で次元を計算する。
+/// 連結成分の他の頂点もその頂点と同じ次元になるので、連結成分ごとに１頂点しか計算しない。
+/// 連結成分の頂点のうち、一番次元が高いものを選ぶ。
+int StructureGraph::get_dimensionality_larsen() const {
+    int max_dim = 0;
+    std::vector<gtl::flat_hash_set<std::array<int, 3>>> seen_comp_vertices(structure->count);
+    for (const auto &nodes: this->cc_nodes) {
+        assert(!nodes.empty());
+        const int node = nodes[0];
+        gtl::flat_hash_set<uint64_t> seen_vertices;
+        std::deque<std::tuple<int, std::array<int, 3>>> queue;
+        queue.emplace_back(node, std::array<int, 3>{0, 0, 0});
+        while (!queue.empty()) {
+            const auto t = queue.front();
+            const auto [comp_i, image_i] = t;
+            const auto ni = connected_site_to_uint64(comp_i, image_i);
+            queue.pop_front();
+
+            if (seen_vertices.find(ni) != seen_vertices.end()) continue;
+            seen_vertices.insert(ni);
+
+            if (!rank_increase(seen_comp_vertices[comp_i], image_i)) continue;
+
+            seen_comp_vertices[comp_i].insert(image_i);
+
+            for (const auto &nni: graph[comp_i]) {
+                int comp_j = nni.site_index;
+                std::array<int, 3> image_j{};
+                for (int i = 0; i < 3; ++i) image_j[i] = nni.image[i] + image_i[i];
+                if (seen_vertices.find(connected_site_to_uint64(comp_j, image_j)) != seen_vertices.end()) {
+                    continue;
+                }
+                if (!rank_increase(seen_comp_vertices[comp_j], image_j)) continue;
+                queue.emplace_back(comp_j, image_j);
+            }
+        }
+        max_dim = std::max(max_dim, int(seen_comp_vertices[node].size() - 1));
+        if (max_dim == 3) return 3;
+    }
+    return max_dim;
 }
 
 py::object StructureGraph::to_py() const {
@@ -264,7 +325,7 @@ void CompositionalSequence::count_composition_for_neighbors(const std::vector<Ne
 
 void CompositionalSequence::count_composition_for_neighbors(const NearNeighborInfo &nni) {
     const std::tuple<int, std::array<int, 3>> t = std::make_tuple(nni.site_index, nni.image);
-    auto n = f(nni.site_index, nni.image);
+    auto n = connected_site_to_uint64(nni.site_index, nni.image);
     if (seen_sites.find(n) == seen_sites.end()) {
         seen_sites.insert(n);
         new_sites.emplace_back(t);
@@ -313,6 +374,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("additional_depth") = 0,
                  py::arg("depth_factor") = 2,
                  py::arg("use_previous_cs") = false)
+            .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用

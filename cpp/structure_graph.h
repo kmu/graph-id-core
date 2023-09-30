@@ -50,6 +50,8 @@ public:
             bool use_previous_cs
     );
 
+    int get_dimensionality_larsen() const;
+
     py::object to_py() const;
 
 private:
@@ -62,9 +64,11 @@ private:
     );
 
     void set_cc_diameter();
+
+    static bool rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate);
 };
 
-unsigned long long int f(int site, std::array<int, 3> arr);
+uint64_t connected_site_to_uint64(int site, std::array<int, 3> arr);
 
 class CompositionalSequence {
 public:
@@ -75,7 +79,7 @@ public:
     std::vector<std::string> compositional_seq;
     int focused_site_i{0};
     std::vector<std::tuple<int, std::array<int, 3>>> new_sites;
-    gtl::flat_hash_set<unsigned long long int> seen_sites;
+    gtl::flat_hash_set<uint64_t> seen_sites;
     bool use_previous_sites{false};
     std::vector<std::string> const *labels;
     std::map<std::string, int> composition_counter;

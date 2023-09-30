@@ -35,8 +35,7 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
 }
 
 std::string GraphIDGenerator::elaborate_comp_dim(const StructureGraph &sg, const std::string &gid) const {
-    auto f = py::module_::import("pymatgen.analysis.dimensionality").attr("get_dimensionality_larsen");
-    int dim = f(sg.to_py()).cast<int>();
+    int dim = sg.get_dimensionality_larsen();
     if (!topology_only) {
         return sg.structure->py_structure.reduced_formula() + "-" + std::to_string(dim) + "D-" + gid;
     }

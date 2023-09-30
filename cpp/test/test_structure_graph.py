@@ -113,6 +113,14 @@ class TestStructureGraph(unittest.TestCase):
                 sg_cpp.set_compositional_sequence_node_attr(use_previous_cs=True)
                 self.assertListEqual(sg_py.cc_cs, sg_cpp.cc_cs)
 
+    def test_get_dimensionality_larsen(self):
+        for name, s in small_test_structure():
+            with self.subTest(name):
+                nn = graph_id_cpp.MinimumDistanceNN()
+                sg_py = StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                self.assertEqual(sg_py.get_dimensionality_larsen(), sg_cpp.get_dimensionality_larsen())
+
     def test_benchmark(self):
         py = StructureGraph
         cpp = graph_id_cpp.StructureGraph
