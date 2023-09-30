@@ -239,56 +239,29 @@ struct Structure {
 
 std::string join_string(const std::string &delimiter, const std::vector<std::string> &strings);
 
-
-// std::unordered_map などに使うハッシュ関数を作る
 template<class T>
 size_t HashCombine(const size_t seed, const T &v) {
     return seed ^ (std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2));
 }
 
-template<int N>
-struct HashTupleCore {
-    template<class Tuple>
-    size_t operator()(const Tuple &keyval) const noexcept {
-        size_t s = HashTupleCore<N - 1>()(keyval);
-        return HashCombine(s, std::get<N - 1>(keyval));
-    }
-};
+// Some primes between 2^63 and 2^64 for various uses.
+// CityHash (http://code.google.com/p/cityhash/) の一部を参考にした。
+static const uint64_t hash_seed0 = 0xc3a5c85c97cb3127ULL;
+static const uint64_t hash_seed1 = 0xb492b66fbe98f273ULL;
+static const uint64_t hash_seed2 = 0x9ae16a3b2f90404fULL;
 
-template<>
-struct HashTupleCore<0> {
-    template<class Tuple>
-    size_t operator()(const Tuple &keyval) const noexcept { return 0; }
-};
-
-template<class... Args>
-struct std::hash<std::tuple<Args...>> {
-    size_t operator()(const tuple<Args...> &keyval) const noexcept {
-        return HashTupleCore<tuple_size<tuple<Args...>>::value>()(keyval);
-    }
-};
-
-template<typename T, int N>
-struct HashArrayCore {
-    template<class Array>
-    size_t operator()(const Array &keyval) const noexcept {
-        size_t s = HashTupleCore<N - 1>()(keyval);
-        return HashCombine(s, std::get<N - 1>(keyval));
-    }
-};
-
-template<typename T>
-struct HashArrayCore<T, 0> {
-    template<class Tuple>
-    size_t operator()(const Tuple &keyval) const noexcept { return 0; }
-};
-
-template<typename T, int N>
-struct std::hash<std::array<T, N>> {
-    size_t operator()(const array<T, N> &keyval) const noexcept {
-        return HashArrayCore<T, N>()(keyval);
-    }
-};
+// x, y を 64bit 整数として、それらを組み合わせて 64bit 整数を作るハッシュ関数
+// CityHash (http://code.google.com/p/cityhash/) の一部を参考にした。
+// hash_combine(hash_seed0, x) などと利用する
+inline uint64_t hash_combine(uint64_t x, uint64_t y) {
+    const uint64_t kMul = 0x9ddfea08eb382d69ULL;
+    uint64_t a = (x ^ y) * kMul;
+    a ^= (a >> 47);
+    uint64_t b = (x ^ a) * kMul;
+    b ^= (b >> 47);
+    b *= kMul;
+    return b;
+}
 
 template<>
 struct std::hash<std::tuple<int, std::array<int, 3>>> {
@@ -301,6 +274,13 @@ template<>
 struct std::hash<std::array<int, 3>> {
     size_t operator()(const std::array<int, 3> &t) const noexcept {
         return HashCombine(t[0], HashCombine(t[1], t[2]));
+    }
+};
+
+template<typename T, uint64_t seed = hash_seed0>
+struct Hash {
+    size_t operator()(const T &t) const noexcept {
+         return hash_combine(seed, t);
     }
 };
 
