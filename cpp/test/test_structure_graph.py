@@ -3,6 +3,7 @@ import os
 import timeit
 import unittest
 
+from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.core import Structure, Lattice
 
 from graph_id.analysis.graphs import StructureGraph
@@ -119,24 +120,7 @@ class TestStructureGraph(unittest.TestCase):
                 nn = graph_id_cpp.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
-                self.assertEqual(sg_py.get_dimensionality_larsen(), sg_cpp.get_dimensionality_larsen())
-
-    def test_benchmark(self):
-        py = StructureGraph
-        cpp = graph_id_cpp.StructureGraph
-        for name, s in small_test_structure():
-            nn = graph_id_cpp.MinimumDistanceNN()
-            def f(cls):
-                sg = cls.with_local_env_strategy(s, nn)
-                sg.set_elemental_labels()
-                sg.set_compositional_sequence_node_attr(hash_cs=True)
-                sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)
-            try:
-                at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
-                bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
-                print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, name))
-            except Exception as e:
-                print(e)
+                self.assertEqual(get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen())
 
 
 if __name__ == '__main__':

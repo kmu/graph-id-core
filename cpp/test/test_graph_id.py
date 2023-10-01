@@ -33,18 +33,6 @@ class TestGraphIDGenerator(unittest.TestCase):
                     self.skipTest('pymatgen error')
                 self.assertEqual(aid, b.get_id(s))
 
-    def test_benchmark(self):
-        a = graph_id.GraphIDGenerator()
-        b = graph_id_cpp.GraphIDGenerator()
-        for name, s in small_test_structure(1000):
-            try:
-                N = 1
-                at = timeit.timeit("a.get_id(s)", number=N, globals=locals()) * 1000 / N
-                bt = timeit.timeit("b.get_id(s)", number=N, globals=locals()) * 1000 / N
-                print("{: 3d} site. Python: {:.3f}ms, C++: {:.3f}ms, {:.1f} times faster [{}]".format(s.num_sites, at, bt, at / bt, name))
-            except Exception as e:
-                print(e)
-
 
 if __name__ == "__main__":
     unittest.main()
