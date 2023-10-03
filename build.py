@@ -74,12 +74,13 @@ class CMakeBuild(build_ext):
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
-
+        env = {**os.environ}
+        del env["PYTHONPATH"]  # CMake が pip でインストールされていた場合、import cmake できなくなり build が失敗する
         subprocess.run(
-            ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True
+            ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True, env=env,
         )
         subprocess.run(
-            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
+            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True, env=env,
         )
 
 
