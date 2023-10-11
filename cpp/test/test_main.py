@@ -1,6 +1,6 @@
 import unittest
 
-from cpp.test.imports import graph_id_cpp
+from imports import graph_id_cpp
 
 
 class TestMail(unittest.TestCase):

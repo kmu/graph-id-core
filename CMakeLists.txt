@@ -23,7 +23,7 @@ target_include_directories(graph_id_cpp
 )
 target_compile_options(graph_id_cpp  PRIVATE
         # 警告をできるだけ出力する
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /Wall>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
@@ -31,6 +31,7 @@ target_compile_options(graph_id_cpp  PRIVATE
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     target_compile_options(graph_id_cpp PRIVATE
             $<$<CXX_COMPILER_ID:MSVC>:/O2 /Ob2 /Oi /Ot /Oy /GL /Gw /GF /GS- /Gy /fp:fast /arch:AVX2>
-            $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3 -march=native -mfma -ffast-math>
+            $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3 -ffast-math>
     )
 endif ()
+set(CMAKE_VERBOSE_MAKEFILE on) # TODO: 後で消す

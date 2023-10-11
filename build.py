@@ -44,6 +44,7 @@ class CMakeBuild(build_ext):
         # from Python.
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
@@ -56,6 +57,8 @@ class CMakeBuild(build_ext):
         # Pass in the version to C++.
         cmake_args += [f"-DVERSION_INFO={self.distribution.get_version()}"]
 
+        if sys.platform.startswith("win32"):
+            build_args += ["--config", cfg]
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set
             archs = re.findall(r"-arch (\S+)", os.environ.get("ARCHFLAGS", ""))
@@ -75,7 +78,9 @@ class CMakeBuild(build_ext):
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         env = {**os.environ}
-        del env["PYTHONPATH"]  # CMake が pip でインストールされていた場合、import cmake できなくなり build が失敗する
+        if "PYTHONPATH" in env:
+            # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
+            del env["PYTHONPATH"]
         subprocess.run(
             ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True, env=env,
         )
