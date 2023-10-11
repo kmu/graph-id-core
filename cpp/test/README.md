@@ -37,6 +37,7 @@ python -m unittest discover -s cpp/test -p "benchmark*.py"
 **必要なライブラリの取得 (Linux のみ対応)**
 ```bash
 apt-get install -y google-perftools libgoogle-perftools-dev kcachegrind
+pip install yep
 ```
 
 **C++ コードのビルド**
