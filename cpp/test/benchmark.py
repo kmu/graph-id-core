@@ -48,7 +48,7 @@ class TestBenchmark(unittest.TestCase):
             nn = graph_id_cpp.MinimumDistanceNN()
 
             def f(cls):
-                sg = cls.with_local_env_strategy(s, nn)
+                sg = cls.with_local_env_strategy(s, nn)  # noqa: B023
                 sg.set_elemental_labels()
                 sg.set_compositional_sequence_node_attr(hash_cs=True)
                 sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)
