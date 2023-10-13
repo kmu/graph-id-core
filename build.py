@@ -82,10 +82,16 @@ class CMakeBuild(build_ext):
             # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
             del env["PYTHONPATH"]
         subprocess.run(
-            ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True, env=env,
+            ["cmake", ext.sourcedir, *cmake_args],
+            cwd=build_temp,
+            check=True,
+            env=env,
         )
         subprocess.run(
-            ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True, env=env,
+            ["cmake", "--build", ".", *build_args],
+            cwd=build_temp,
+            check=True,
+            env=env,
         )
 
 
@@ -93,8 +99,10 @@ def build(setup_kwargs):
     ext_modules = [
         CMakeExtension("graph_id_cpp"),
     ]
-    setup_kwargs.update({
-        "ext_modules": ext_modules,
-        "cmdclass": {"build_ext": CMakeBuild},
-        "zip_safe": False,
-    })
+    setup_kwargs.update(
+        {
+            "ext_modules": ext_modules,
+            "cmdclass": {"build_ext": CMakeBuild},
+            "zip_safe": False,
+        }
+    )

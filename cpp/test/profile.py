@@ -1,6 +1,7 @@
-from pymatgen.core import Structure
-from .imports import graph_id_cpp
 import yep
+from pymatgen.core import Structure
+
+from .imports import graph_id_cpp
 
 g = graph_id_cpp.GraphIDGenerator()
 s_large = Structure.from_file("graph_id/tests/test_files/YFI.cif")  # 360 sites

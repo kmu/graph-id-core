@@ -1,12 +1,11 @@
 import glob
 import os
 import unittest
-import timeit
+
 import graph_id
+from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
-
-from pymatgen.core import Structure
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -29,8 +28,8 @@ class TestGraphIDGenerator(unittest.TestCase):
             with self.subTest(name):
                 try:
                     aid = a.get_id(s)
-                except Exception as e:
-                    self.skipTest('pymatgen error')
+                except Exception:
+                    self.skipTest("pymatgen error")
                 self.assertEqual(aid, b.get_id(s))
 
 

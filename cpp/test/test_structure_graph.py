@@ -2,12 +2,12 @@ import glob
 import os
 import unittest
 
-from pymatgen.analysis.dimensionality import get_dimensionality_larsen
-from pymatgen.core import Structure, Lattice
-
-from graph_id.analysis.graphs import StructureGraph
-from .imports import graph_id_cpp
 import networkx as nx
+from graph_id.analysis.graphs import StructureGraph
+from pymatgen.analysis.dimensionality import get_dimensionality_larsen
+from pymatgen.core import Lattice, Structure
+
+from .imports import graph_id_cpp
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -49,13 +49,16 @@ class TestStructureGraph(unittest.TestCase):
     def test_graph_diameter_not_strongly_connected(self):
         for name, s in small_test_structure(1000):
             with self.subTest(name):
-                s = Structure(Lattice([[10, 0, 0], [0, 10, 0], [0, 0, 10]]), ["H"]*4, [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]])
+                s = Structure(
+                    Lattice([[10, 0, 0], [0, 10, 0], [0, 0, 10]]),
+                    ["H"] * 4,
+                    [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]],
+                )
                 sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
                 ug = sg_py.graph.to_undirected()
                 diameter = [nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)]
                 self.assertEqual(diameter, sg_cpp.cc_diameter)
-
 
     def test_set_elemental_labels(self):
         for name, s in small_test_structure():
@@ -122,5 +125,5 @@ class TestStructureGraph(unittest.TestCase):
                 self.assertEqual(get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

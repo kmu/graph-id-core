@@ -1,15 +1,13 @@
-import timeit
-import unittest
-
 import glob
 import os.path
+import unittest
 
 import numpy as np
-from pymatgen.core import Structure, Lattice, Molecule
+from pymatgen.analysis.local_env import MinimumDistanceNN
+from pymatgen.core import Molecule, Structure
+from pymatgen.optimization.neighbors import find_points_in_spheres
 
 from .imports import graph_id_cpp
-from pymatgen.analysis.local_env import MinimumDistanceNN
-from pymatgen.optimization.neighbors import find_points_in_spheres
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -26,8 +24,8 @@ def small_test_structure(max_sites=30):
 
 class TestNN(unittest.TestCase):
     def assert_nn_info(self, a, b):
-        self.assertEqual(len(a), len(b), 'mismatch array length')
-        self.assertListEqual([len(x) for x in a], [len(x) for x in b], 'mismatch bonds count')
+        self.assertEqual(len(a), len(b), "mismatch array length")
+        self.assertListEqual([len(x) for x in a], [len(x) for x in b], "mismatch bonds count")
 
         for i in range(len(a)):
             ai = self.sort(a[i])
@@ -84,13 +82,13 @@ class TestNNHelper(unittest.TestCase):
     def assert_result(self, a, b):
         sa = {(x[0], x[1], tuple(x[2])) for x in a}
         sb = {(x[0], x[1], tuple(x[2])) for x in b}
-        self.assertSetEqual(sa, sb, 'mismatch bonds set')
-        self.assertEqual(len(a), len(b), 'mismatch array length')
+        self.assertSetEqual(sa, sb, "mismatch bonds set")
+        self.assertEqual(len(a), len(b), "mismatch array length")
         for i in range(len(a)):
-            self.assertEqual(a[i][0], b[i][0], 'mismatch all_index')
-            self.assertEqual(a[i][1], b[i][1], 'mismatch center_index')
-            self.assertTrue(all(np.equal(a[i][2], b[i][2])), 'mismatch jindex')
-            self.assertAlmostEqual(a[i][3], b[i][3], msg='mismatch distance')
+            self.assertEqual(a[i][0], b[i][0], "mismatch all_index")
+            self.assertEqual(a[i][1], b[i][1], "mismatch center_index")
+            self.assertTrue(all(np.equal(a[i][2], b[i][2])), "mismatch jindex")
+            self.assertAlmostEqual(a[i][3], b[i][3], msg="mismatch distance")
 
 
 class TestMinimumDistanceNN(TestNN):
@@ -112,7 +110,7 @@ class TestMinimumDistanceNN(TestNN):
                 self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_molecules(self):
-        m = Molecule(['H', 'H'], [[0, 0, 0], [0, 0, 1]])
+        m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
         cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(m)
         try:
             pymatgen_result = MinimumDistanceNN().get_all_nn_info(m)
