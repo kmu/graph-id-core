@@ -8,7 +8,7 @@ from pymatgen.core import Structure
 
 from graph_id import GraphIDGenerator
 from graph_id.analysis.graphs import StructureGraph
-from imports import graph_id_cpp
+from .imports import graph_id_cpp
 from pymatgen.analysis.local_env import MinimumDistanceNN
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))

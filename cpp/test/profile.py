@@ -1,5 +1,5 @@
 from pymatgen.core import Structure
-from imports import graph_id_cpp
+from .imports import graph_id_cpp
 import yep
 
 g = graph_id_cpp.GraphIDGenerator()

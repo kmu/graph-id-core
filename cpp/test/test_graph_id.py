@@ -4,7 +4,7 @@ import unittest
 import timeit
 import graph_id
 
-from imports import graph_id_cpp
+from .imports import graph_id_cpp
 
 from pymatgen.core import Structure
 

@@ -37,3 +37,6 @@ line_length = 119
 py_version = "py38"
 [[tool.pysen.lint.mypy_targets]]
   paths = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["graph_id", "cpp"]

@@ -1,13 +1,12 @@
 import glob
 import os
-import timeit
 import unittest
 
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.core import Structure, Lattice
 
 from graph_id.analysis.graphs import StructureGraph
-from imports import graph_id_cpp
+from .imports import graph_id_cpp
 import networkx as nx
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))

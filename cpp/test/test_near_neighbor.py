@@ -7,7 +7,7 @@ import os.path
 import numpy as np
 from pymatgen.core import Structure, Lattice, Molecule
 
-from imports import graph_id_cpp
+from .imports import graph_id_cpp
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
