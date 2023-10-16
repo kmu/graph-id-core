@@ -62,6 +62,8 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
         sg.set_wyckoffs_label(symmetry_tol);
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
+    } else if (loop) {
+        sg.set_loops(depth_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -91,13 +93,14 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
 
 void init_graph_id(pybind11::module &m) {
     py::class_<GraphIDGenerator>(m, "GraphIDGenerator")
-            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool>(),
+            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool>(),
                  py::arg("nn") = nullptr,
                  py::arg("wyckoff") = false,
                  py::arg("depth_factor") = 2,
                  py::arg("additional_depth") = 1,
                  py::arg("symmetry_tol") = 0.1,
-                 py::arg("topology_only") = false)
+                 py::arg("topology_only") = false,
+                 py::arg("loop") = false)
             .def("get_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));

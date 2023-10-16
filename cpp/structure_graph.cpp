@@ -140,6 +140,32 @@ void StructureGraph::set_elemental_labels() {
     this->labels = this->structure->species_strings;
 }
 
+
+void StructureGraph::set_loops(int depth_factor, int additional_depth) {
+    auto core = py::module_::import("pymatgen.core");
+    auto Element = core.attr("Element");
+
+    py::object siteless = this->structure->py_structure.copy().obj;
+    for (int i = 0; i < this->structure->count; i++) {
+        siteless.attr("replace")(i, Element("H"));
+    }
+
+    auto sga = SpacegroupAnalyzer(siteless);
+    auto sym_dataset = sga.attr("get_symmetry_dataset")();
+    if (sym_dataset.is_none()) {
+        this->set_elemental_labels();
+        return;
+    }
+
+    auto wyckoffs = sym_dataset["wyckoffs"];
+    auto number = sym_dataset["number"];
+
+    for (size_t site_i = 0; site_i < py::len(wyckoffs); site_i++) {
+        auto wyckoff = wyckoffs[py::int_(site_i)];
+        this->labels[site_i] = py::str("{}_{}_{}").format(this->structure->species_strings[site_i], wyckoff, number);
+    }
+}
+
 void StructureGraph::set_wyckoffs_label(double symmetry_tol) {
     auto core = py::module_::import("pymatgen.core");
     auto symmetry = py::module_::import("pymatgen.symmetry.analyzer");
