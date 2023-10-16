@@ -140,31 +140,31 @@ void StructureGraph::set_elemental_labels() {
     this->labels = this->structure->species_strings;
 }
 
-
 void StructureGraph::set_loops(int depth_factor, int additional_depth) {
-    auto core = py::module_::import("pymatgen.core");
-    auto Element = core.attr("Element");
+    // Import the required Python module
+    py::module GraphAnalysisModule = py::module::import("graph_id.analysis.graphs");
 
-    py::object siteless = this->structure->py_structure.copy().obj;
-    for (int i = 0; i < this->structure->count; i++) {
-        siteless.attr("replace")(i, Element("H"));
-    }
+    // Convert the C++ StructureGraph to its Python equivalent
+    py::object py_structure_graph = this->to_py();
 
-    auto sga = SpacegroupAnalyzer(siteless);
-    auto sym_dataset = sga.attr("get_symmetry_dataset")();
-    if (sym_dataset.is_none()) {
-        this->set_elemental_labels();
-        return;
-    }
+    // Convert py_structure_graph from PmgStructureGraph to StructureGraph
+    py::object DesiredStructureGraphClass = GraphAnalysisModule.attr("StructureGraph");
+    py::object desired_structure_graph = DesiredStructureGraphClass.attr("from_pymatgen_structure_graph")(py_structure_graph);
 
-    auto wyckoffs = sym_dataset["wyckoffs"];
-    auto number = sym_dataset["number"];
+    // Call the set_loops method on this Python object
+    desired_structure_graph.attr("set_loops")(depth_factor, additional_depth);
 
-    for (size_t site_i = 0; site_i < py::len(wyckoffs); site_i++) {
-        auto wyckoff = wyckoffs[py::int_(site_i)];
-        this->labels[site_i] = py::str("{}_{}_{}").format(this->structure->species_strings[site_i], wyckoff, number);
+    // Retrieve the labels
+    py::list labels = desired_structure_graph.attr("starting_labels").cast<py::list>();
+
+    // Assign the labels to the C++ object
+    for (size_t site_i = 0; site_i < labels.size(); site_i++) {
+        this->labels[site_i] = labels[site_i].cast<std::string>();
     }
 }
+
+
+
 
 void StructureGraph::set_wyckoffs_label(double symmetry_tol) {
     auto core = py::module_::import("pymatgen.core");

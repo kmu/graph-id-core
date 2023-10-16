@@ -10,6 +10,15 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from itertools import combinations
 from hashlib import blake2b
 
+
+def standardize_loop(lst):
+    lst2 = list(reversed(lst))
+    starting_point = lst2.pop(-1)
+    lst2.insert(0, starting_point)
+
+    return sorted([lst, lst2], key=lambda x: "".join(x))[-1]
+
+
 class SiteOnlySpeciesString:
     def __init__(self, species_string):
         self.species_string = species_string
@@ -33,6 +42,12 @@ class ConnectedSiteLight:
 
 class StructureGraph(PmgStructureGraph):  # type: ignore
 
+
+    @staticmethod
+    def from_pymatgen_structure_graph(sg: PmgStructureGraph):
+        graph_data = sg.as_dict()["graphs"]
+
+        return StructureGraph(sg.structure, graph_data)
     # Copied from original pymatgen with modifications
     @staticmethod
     def with_local_env_strategy(structure, strategy, weights=False):
