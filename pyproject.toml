@@ -6,7 +6,12 @@ authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
 packages = [{include = "graph_id"}]
 
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = true
+
 [tool.poetry.dependencies]
+pybind11 = "2.11.1"
 python = ">=3.8.1,<4.0"
 pymatgen = "^2023.6.28"
 
@@ -16,7 +21,7 @@ pysen = {version = "^0.10.4", extras = ["lint"]}
 pytest-cov = "^4.1.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0", "pybind11~=2.11.1", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pysen]
@@ -32,3 +37,6 @@ line_length = 119
 py_version = "py38"
 [[tool.pysen.lint.mypy_targets]]
   paths = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["graph_id", "cpp"]
