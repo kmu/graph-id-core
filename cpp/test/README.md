@@ -12,7 +12,7 @@ cd ..
 
 **テストの実行**
 ```bash
-python -m unittest discover -s cpp/test -p "test*.py"
+poetry run pytest
 ```
 
 
@@ -28,7 +28,7 @@ cd ..
 
 **ベンチマークのの実行**
 ```bash
-python -m unittest discover -s cpp/test -p "benchmark*.py"
+python -m unittest discover -s cpp -p "test/benchmark*.py"
 ```
 
 
