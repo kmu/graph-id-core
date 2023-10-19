@@ -27,10 +27,18 @@ class GraphIDGenerator:
         additional_depth=1,
         symmetry_tol=0.1,
         topology_only=False,
+        loop=False,
     ):
         """
         comp_dim: include composition and dimensionality as the prefix
         """
+
+        if wyckoff and loop:
+            raise ValueError("wyckoff and loop cannot be True at the same time")
+
+        if loop and topology_only:
+            raise ValueError("loop and topology_only cannot be True at the same time")
+
         if nn is None:
             self.nn = MinimumDistanceNN()
         else:
@@ -41,6 +49,7 @@ class GraphIDGenerator:
         self.depth_factor = depth_factor
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
+        self.loop = loop
 
     # def get_graph_I#
 
@@ -168,6 +177,12 @@ class GraphIDGenerator:
 
             # TODO: remove nx
             prev_num_uniq = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
+
+        elif self.loop:
+            sg.set_loops(
+                depth_factor=self.depth_factor,
+                additional_depth=self.additional_depth,
+            )
 
         else:
             sg.set_elemental_labels()

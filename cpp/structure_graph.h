@@ -41,6 +41,7 @@ public:
     void set_elemental_labels();
 
     void set_wyckoffs_label(double symmetry_tol = 0.1);
+    void set_loops(int depth_factor, int additional_depth);
 
     void set_compositional_sequence_node_attr(
             bool hash_cs,

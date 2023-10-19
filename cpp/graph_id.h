@@ -12,6 +12,7 @@ public:
     int additional_depth = 1;
     double symmetry_tol = 0.1;
     bool topology_only = false;
+    bool loop = false;
 
     GraphIDGenerator(
             const std::shared_ptr<const NearNeighbor> &nn,
@@ -19,9 +20,10 @@ public:
             int depth_factor,
             int additional_depth,
             double symmetry_tol,
-            bool topology_only
+            bool topology_only,
+            bool loop
     ) : wyckoff(wyckoff), depth_factor(depth_factor), additional_depth(additional_depth),
-        symmetry_tol(symmetry_tol), topology_only(topology_only) {
+        symmetry_tol(symmetry_tol), topology_only(topology_only), loop(loop) {
         if (nn) {
             this->nn = nn;
         } else {
