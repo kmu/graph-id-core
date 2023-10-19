@@ -29,7 +29,8 @@ jobs:
           CIBW_BEFORE_BUILD_MACOS: "rm -rf {project}/build"
           CIBW_BEFORE_BUILD_WINDOWS: "if exist build rmdir /s /q build"
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.15
-          CIBW_TEST_COMMAND: python -m unittest discover -s {package}/cpp/test -p "test*.py"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest
           # テストは最新の Python でのみ実行
           CIBW_TEST_SKIP: "cp{36,37,38,39,310,311}-*"
         with:
