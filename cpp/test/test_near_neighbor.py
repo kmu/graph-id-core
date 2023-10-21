@@ -3,7 +3,7 @@ import os.path
 import unittest
 
 import numpy as np
-from pymatgen.analysis.local_env import MinimumDistanceNN
+from pymatgen.analysis.local_env import CutOffDictNN, MinimumDistanceNN
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
@@ -44,6 +44,17 @@ class TestNN(unittest.TestCase):
 
     def sort(self, a):
         return sorted(a, key=lambda x: ((x["site_index"], *x["image"]) if x["image"] else x["site_index"]))
+
+    def run_for_small_structures(self, pymatgen_nn, out_nn):
+        for name, s in small_test_structure():
+            with self.subTest(name):
+                cpp_result = out_nn.get_all_nn_info(s)
+                try:
+                    pymatgen_result = pymatgen_nn.get_all_nn_info(s)
+                except Exception as e:
+                    print(e)
+                    self.skipTest("pymatgen error")
+                self.assert_nn_info(cpp_result, pymatgen_result)
 
 
 class TestNNHelper(unittest.TestCase):
@@ -99,15 +110,7 @@ class TestMinimumDistanceNN(TestNN):
         self.assertTrue(graph_id_cpp.MinimumDistanceNN().molecules_allowed)
 
     def test_structures(self):
-        for name, s in small_test_structure():
-            with self.subTest(name):
-                cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(s)
-                try:
-                    pymatgen_result = MinimumDistanceNN().get_all_nn_info(s)
-                except Exception as e:
-                    print(e)
-                    self.skipTest("pymatgen error")
-                self.assert_nn_info(cpp_result, pymatgen_result)
+        self.run_for_small_structures(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
 
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
@@ -120,11 +123,33 @@ class TestMinimumDistanceNN(TestNN):
         self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_structures_get_all_sites(self):
-        for name, s in small_test_structure():
-            with self.subTest(name):
-                cpp_result = graph_id_cpp.MinimumDistanceNN(get_all_sites=True).get_all_nn_info(s)
-                pymatgen_result = MinimumDistanceNN(get_all_sites=True).get_all_nn_info(s)
-                self.assert_nn_info(cpp_result, pymatgen_result)
+        self.run_for_small_structures(
+            MinimumDistanceNN(get_all_sites=True), graph_id_cpp.MinimumDistanceNN(get_all_sites=True)
+        )
+
+
+class TestCutoffDictNN(TestNN):
+    def test_structures(self):
+        self.run_for_small_structures(
+            CutOffDictNN.from_preset("vesta_2019"), graph_id_cpp.CutOffDictNN.from_preset("vesta_2019")
+        )
+
+    def test_molecules(self):
+        m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
+        cpp_result = graph_id_cpp.CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
+        try:
+            pymatgen_result = CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
+        except Exception as e:
+            print(e)
+            self.skipTest("pymatgen error")
+        self.assert_nn_info(cpp_result, pymatgen_result)
+
+    def test_structures_with_dict(self):
+        d = CutOffDictNN.from_preset("vesta_2019").cut_off_dict
+        self.run_for_small_structures(CutOffDictNN(cut_off_dict=d), graph_id_cpp.CutOffDictNN(cut_off_dict=d))
+
+    def test_structures_with_empty_dict(self):
+        self.run_for_small_structures(CutOffDictNN(), graph_id_cpp.CutOffDictNN())
 
 
 if __name__ == "__main__":

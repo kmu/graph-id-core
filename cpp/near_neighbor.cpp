@@ -46,15 +46,7 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
 
 
 std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
-    const Eigen::Matrix3Xd frac = structure.lattice.inv_matrix * structure.site_xyz;
-    const auto nn = find_near_neighbors(
-            structure.site_xyz,
-            frac,
-            structure.site_xyz,
-            frac,
-            this->cutoff,
-            structure.lattice
-    );
+    const auto nn = find_near_neighbors(structure, this->cutoff);
     assert(int(nn.size()) == structure.count);
     if (this->get_all_sites) {
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
@@ -104,6 +96,28 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
     }
 }
 
+std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(const Structure &structure) const {
+    const auto nn = find_near_neighbors(structure, this->max_cut_off);
+    assert(int(nn.size()) == structure.count);
+
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    for (int i = 0; i < structure.count; ++i) {
+        if (nn[i].empty()) continue;
+        for (int j = 0; j < int(nn[i].size()); ++j) {
+            if (nn[i][j].distances2 < 1e-8) continue;
+            const auto key = std::make_pair(structure.species_strings[i],
+                                            structure.species_strings[nn[i][j].all_coords_idx]);
+            const auto it = this->cut_off_dict.find(key);
+            if (it == this->cut_off_dict.end()) continue;
+            double distance = std::sqrt(nn[i][j].distances2);
+            if (distance < it->second) {
+                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image});
+            }
+        }
+    }
+
+    return result;
+}
 
 /// pymatgen.optimization.neighbors.find_points_in_spheres と同じ処理を行う。
 /// Python から利用する際はオーバーヘッドを考慮すると pymatgen で実装されたものを使ったほうが速いことが多い。
@@ -270,6 +284,16 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     return result;
 }
 
+std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
+        const Structure &structure,
+        double r,
+        double min_r,
+        double tol
+) {
+    const Eigen::Matrix3Xd frac = structure.lattice.inv_matrix * structure.site_xyz;
+    return find_near_neighbors(structure.site_xyz, frac, structure.site_xyz, frac, r, structure.lattice, min_r, tol);
+}
+
 // Given the fractional coordinates and the number of repeation needed in each
 // direction, maxr, compute the translational bounds in each dimension
 std::pair<Eigen::Vector3i, Eigen::Vector3i> get_bounds(
@@ -380,6 +404,11 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0,
                  py::arg("get_all_sites") = false);
+
+    py::class_<CutOffDictNN, std::shared_ptr<CutOffDictNN>, NearNeighbor>(m, "CutOffDictNN")
+            .def(py::init<std::optional<py::dict>>(),
+                 py::arg("cut_off_dict") = py::none())
+            .def_static("from_preset", CutOffDictNN::from_preset);
 
     m.def("find_near_neighbors", [](
             const Eigen::MatrixX3d &all_coords,

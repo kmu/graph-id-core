@@ -2,6 +2,8 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <gtl/phmap.hpp>
+#include <utility>
 #include "core.h"
 
 namespace py = pybind11;
@@ -50,6 +52,51 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
+class CutOffDictNN : public NearNeighbor {
+private:
+    double max_cut_off;
+    gtl::flat_hash_map<std::pair<std::string, std::string>, double> cut_off_dict;
+public:
+    explicit CutOffDictNN(const std::optional<py::dict> &cut_off_dict) {
+        max_cut_off = 0;
+        if (!cut_off_dict || cut_off_dict->is_none()) return;
+        for (auto item: *cut_off_dict) {
+            auto key = item.first.cast<std::pair<std::string, std::string>>();
+            auto value = item.second.cast<double>();
+            this->cut_off_dict[key] = value;
+            std::swap(key.first, key.second);
+            this->cut_off_dict[key] = value;
+            if (value > max_cut_off) {
+                max_cut_off = value;
+            }
+        }
+    };
+
+    explicit CutOffDictNN(gtl::flat_hash_map<std::pair<std::string, std::string>, double> cut_off_dict) : cut_off_dict(
+            std::move(cut_off_dict)) {
+        max_cut_off = 0;
+        for (const auto &item: this->cut_off_dict) {
+            if (item.second > max_cut_off) {
+                max_cut_off = item.second;
+            }
+        }
+    };
+
+    explicit CutOffDictNN() : max_cut_off(0) {};
+
+    static CutOffDictNN from_preset(const std::string &preset) {
+        py::module local_env = py::module::import("pymatgen.analysis.local_env");
+        py::object nn = local_env.attr("CutOffDictNN").attr("from_preset")(preset);
+        return CutOffDictNN(nn.attr("cut_off_dict"));
+    }
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+};
+
 struct FindNearNeighborsResult {
     int all_coords_idx;
     std::array<int, 3> image;
@@ -63,6 +110,13 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
         const Eigen::Matrix3Xd &center_frac_coords,
         double r,
         const Lattice &lattice,
+        double min_r = 1,
+        double tol = 1e-8
+);
+
+std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
+        const Structure &structure,
+        double r,
         double min_r = 1,
         double tol = 1e-8
 );
