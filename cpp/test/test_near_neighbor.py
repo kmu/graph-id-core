@@ -3,7 +3,7 @@ import os.path
 import unittest
 
 import numpy as np
-from pymatgen.analysis.local_env import CutOffDictNN, MinimumDistanceNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, VoronoiNN
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
@@ -102,6 +102,53 @@ class TestNNHelper(unittest.TestCase):
             self.assertAlmostEqual(a[i][3], b[i][3], msg="mismatch distance")
 
 
+class TestVoronoiNN(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.VoronoiNN().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertFalse(graph_id_cpp.VoronoiNN().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(VoronoiNN(), graph_id_cpp.VoronoiNN())
+
+    def test_get_voronoi_polyhedra(self):
+        pmg = VoronoiNN()
+        cpp = graph_id_cpp.VoronoiNN()
+        import pprint
+        for name, s in small_test_structure():
+            with self.subTest(name):
+                for i in range(s.num_sites):
+                    pmg_res = pmg.get_voronoi_polyhedra(s, i)
+                    cpp_res = cpp.get_voronoi_polyhedra(s, i)
+                    self.assert_voronoi_polyhedra(pmg_res, cpp_res)
+
+    def assert_voronoi_polyhedra(self, pmg_res, cpp_res):
+        self.assertEqual(len(pmg_res), len(cpp_res))
+        # 返り値の順番が違うので、site の座標を基準に順番を揃える
+        pmg_sites = np.array([s['site'].frac_coords for _, s in sorted(pmg_res.items())])
+        cpp_sites = np.array([s['site'].frac_coords for _, s in sorted(cpp_res.items())])
+        pmg_keys = list(sorted(pmg_res.keys()))
+        cpp_keys = list(sorted(cpp_res.keys()))
+        a = np.argmin(np.linalg.norm(pmg_sites.reshape(1, -1, 3) - cpp_sites.reshape(-1, 1, 3), axis=-1), axis=-1)
+        cpp2pmg = {cpp_keys[i]: pmg_keys[a[i]] for i in range(len(pmg_res))}
+
+        for cpp_key in cpp_keys:
+            pmg_key = cpp2pmg[cpp_key]
+            self.assertAlmostEquals(
+                np.linalg.norm(pmg_res[pmg_key]['site'].frac_coords - cpp_res[cpp_key]['site'].frac_coords),
+                0, msg='site mismatch')
+            self.assertAlmostEquals(
+                np.linalg.norm(pmg_res[pmg_key]['normal'] - cpp_res[cpp_key]['normal']),
+                0, msg='site mismatch')
+            self.assertAlmostEqual(pmg_res[pmg_key]['solid_angle'], cpp_res[cpp_key]['solid_angle'], msg='solid_angle mismatch')
+            self.assertAlmostEqual(pmg_res[pmg_key]['area'], cpp_res[cpp_key]['area'], msg='area mismatch')
+            self.assertAlmostEqual(pmg_res[pmg_key]['face_dist'], cpp_res[cpp_key]['face_dist'], msg='face_dist mismatch')
+            self.assertAlmostEqual(pmg_res[pmg_key]['volume'], cpp_res[cpp_key]['volume'], msg='volume mismatch')
+            self.assertEqual(pmg_res[pmg_key]['n_verts'], cpp_res[cpp_key]['n_verts'], msg='n_verts mismatch')
+            self.assertEqual(set(pmg_res[pmg_key]['adj_neighbors']), {cpp2pmg[v] for v in cpp_res[cpp_key]['adj_neighbors']}, msg='adj_neighbors mismatch')
+
+
 class TestMinimumDistanceNN(TestNN):
     def test_structure_allowed(self):
         self.assertTrue(graph_id_cpp.MinimumDistanceNN().structures_allowed)
@@ -126,6 +173,17 @@ class TestMinimumDistanceNN(TestNN):
         self.run_for_small_structures(
             MinimumDistanceNN(get_all_sites=True), graph_id_cpp.MinimumDistanceNN(get_all_sites=True)
         )
+
+
+class TestCrystalNN(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.CrystalNN().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertFalse(graph_id_cpp.CrystalNN().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(CrystalNN(), graph_id_cpp.CrystalNN())
 
 
 class TestCutoffDictNN(TestNN):

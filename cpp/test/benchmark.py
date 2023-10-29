@@ -5,7 +5,7 @@ import unittest
 
 from graph_id import GraphIDGenerator
 from graph_id.analysis.graphs import StructureGraph
-from pymatgen.analysis.local_env import CutOffDictNN, MinimumDistanceNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, VoronoiNN
 from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
@@ -38,9 +38,17 @@ def run_benchmark(pymatgen, our_nn):
 
 
 class TestBenchmark(unittest.TestCase):
+    def test_voronoi(self):
+        print("VoronoiNN:")
+        run_benchmark(VoronoiNN(), graph_id_cpp.VoronoiNN())
+
     def test_minimum_distance(self):
         print("MinimumDistanceNN:")
         run_benchmark(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
+
+    def test_crystal(self):
+        print("CrystalNN:")
+        run_benchmark(CrystalNN(), graph_id_cpp.CrystalNN())
 
     def test_cut_off_dict(self):
         print("CutOffDictNN:")
