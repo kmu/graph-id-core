@@ -115,13 +115,26 @@ class TestVoronoiNN(TestNN):
     def test_get_voronoi_polyhedra(self):
         pmg = VoronoiNN()
         cpp = graph_id_cpp.VoronoiNN()
-        import pprint
         for name, s in small_test_structure():
             with self.subTest(name):
                 for i in range(s.num_sites):
                     pmg_res = pmg.get_voronoi_polyhedra(s, i)
                     cpp_res = cpp.get_voronoi_polyhedra(s, i)
                     self.assert_voronoi_polyhedra(pmg_res, cpp_res)
+
+    def test_get_all_voronoi_polyhedra(self):
+        pmg = VoronoiNN()
+        cpp = graph_id_cpp.VoronoiNN()
+        for name, s in small_test_structure():
+            with self.subTest(name):
+                try:
+                    pmg_res = pmg.get_all_voronoi_polyhedra(s)
+                except Exception as e:
+                    self.skipTest("pymatgen error")
+                cpp_res = cpp.get_all_voronoi_polyhedra(s)
+                self.assertEqual(len(pmg_res), len(cpp_res))
+                for i in range(s.num_sites):
+                    self.assert_voronoi_polyhedra(pmg_res[i], cpp_res[i])
 
     def assert_voronoi_polyhedra(self, pmg_res, cpp_res):
         self.assertEqual(len(pmg_res), len(cpp_res))
@@ -135,10 +148,10 @@ class TestVoronoiNN(TestNN):
 
         for cpp_key in cpp_keys:
             pmg_key = cpp2pmg[cpp_key]
-            self.assertAlmostEquals(
+            self.assertAlmostEqual(
                 np.linalg.norm(pmg_res[pmg_key]['site'].frac_coords - cpp_res[cpp_key]['site'].frac_coords),
                 0, msg='site mismatch')
-            self.assertAlmostEquals(
+            self.assertAlmostEqual(
                 np.linalg.norm(pmg_res[pmg_key]['normal'] - cpp_res[cpp_key]['normal']),
                 0, msg='site mismatch')
             self.assertAlmostEqual(pmg_res[pmg_key]['solid_angle'], cpp_res[cpp_key]['solid_angle'], msg='solid_angle mismatch')

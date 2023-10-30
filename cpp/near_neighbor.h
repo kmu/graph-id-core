@@ -239,7 +239,7 @@ public:
 
     std::unordered_map<int, VoronoiPolyhedra> get_voronoi_polyhedra(const Structure &structure, int site_index) const;
 
-    std::vector<VoronoiPolyhedra> get_all_voronoi_polyhedra(const Structure &structure) const;
+    std::vector<std::unordered_map<int, VoronoiPolyhedra>> get_all_voronoi_polyhedra(const Structure &structure) const;
 
 private:
     std::unordered_map<int, VoronoiPolyhedra> extract_cell_info(

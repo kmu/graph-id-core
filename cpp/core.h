@@ -277,6 +277,13 @@ struct std::hash<std::array<int, 3>> {
     }
 };
 
+template<>
+struct std::hash<std::array<int, 4>> {
+    size_t operator()(const std::array<int, 4> &t) const noexcept {
+        return HashCombine(HashCombine(t[0], t[3]), HashCombine(t[1], t[2]));
+    }
+};
+
 template<typename T, uint64_t seed = hash_seed0>
 struct Hash {
     size_t operator()(const T &t) const noexcept {

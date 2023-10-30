@@ -91,7 +91,6 @@ VoronoiNN::get_voronoi_polyhedra(const Structure &structure, int site_index) con
                 qvoronoi_input.col(i) = neighbors[i].xyz(structure);
             }
 
-            py::print(qvoronoi_input);
             // Run the Voronoi tessellation
             auto voro = Voronoi(qvoronoi_input);  // can give seg fault if cutoff is too small
 
@@ -114,9 +113,47 @@ VoronoiNN::get_voronoi_polyhedra(const Structure &structure, int site_index) con
     throw std::logic_error("unreachable");
 }
 
-std::vector<VoronoiPolyhedra> VoronoiNN::get_all_voronoi_polyhedra(const Structure &structure) const {
-    // TODO
-    return {};
+std::vector<std::unordered_map<int, VoronoiPolyhedra>>
+VoronoiNN::get_all_voronoi_polyhedra(const Structure &structure) const {
+    if (structure.count == 1) {
+        return {this->get_voronoi_polyhedra(structure, 0)};
+    }
+    assert(structure.count >= 2);
+
+    const auto &targets = this->targets ? this->targets.value() : structure.species_strings;
+    const auto neighbors = find_near_neighbors(structure, this->cutoff);
+    assert(int(neighbors.size()) == structure.count);
+
+    gtl::flat_hash_set<std::array<int, 4>, std::hash<std::array<int, 4>>> indices_set;
+    std::vector<FindNearNeighborsResult> flat; // (site_index, image[0], image[1], image[2])
+    std::vector<int> root_image_index(structure.count, -1);
+    for (int i = 0; i < int(neighbors.size()); ++i) {
+        for (const auto &nn: neighbors[i]) {
+            std::array<int, 4> arr = {nn.all_coords_idx, nn.image[0], nn.image[1], nn.image[2]};
+            if (indices_set.contains(arr)) continue;
+            if (nn.image[0] == 0 && nn.image[1] == 0 && nn.image[2] == 0) {
+                root_image_index[nn.all_coords_idx] = int(flat.size());
+            }
+            flat.push_back(nn);
+            indices_set.insert(arr);
+        }
+    }
+
+    Eigen::Matrix3Xd qvoronoi_input(3, flat.size());
+    for (int i = 0; const auto &nn: flat) {
+        qvoronoi_input.col(i++) = nn.xyz(structure);
+    }
+
+    for (const int i: root_image_index) assert(0 <= i && i < int(flat.size()));
+
+    auto voro = Voronoi(qvoronoi_input);
+
+    std::vector<std::unordered_map<int, VoronoiPolyhedra>> result(structure.count);
+    for (int i = 0; i < structure.count; ++i) {
+        result[i] = this->extract_cell_info(root_image_index[i], structure, flat, targets, voro,
+                                            this->compute_adj_neighbors);
+    }
+    return result;
 }
 
 std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
@@ -156,7 +193,6 @@ std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
                 if (this->allow_pathological) {
                     continue;
                 } else {
-                    py::print(vind);
                     throw std::runtime_error(
                             "This structure is pathological, infinite vertex in the Voronoi construction");
                 }
@@ -664,8 +700,16 @@ void init_near_neighbor(pybind11::module &m) {
                 return ret;
             })
             .def("get_all_voronoi_polyhedra", [](VoronoiNN &self, const PymatgenStructure &s) {
-                // TODO
-                return self.get_all_voronoi_polyhedra(Structure(s));
+                Structure ss(s);
+                py::list ret;
+                for (const auto &res: self.get_all_voronoi_polyhedra(Structure(s))) {
+                    py::dict d;
+                    for (const auto &[key, val]: res) {
+                        d[py::int_(key)] = val.to_dict(ss);
+                    }
+                    ret.append(d);
+                };
+                return ret;
             });
 
     py::class_<MinimumDistanceNN, std::shared_ptr<MinimumDistanceNN>, NearNeighbor>(m, "MinimumDistanceNN")
