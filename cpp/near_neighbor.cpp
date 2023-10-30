@@ -37,6 +37,7 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
             } else {
                 d["image"] = py::none();
             }
+            if (info.extra) for (const auto &[k, v]: info.extra.value()) d[k] = v;
             inner.append(d);
         }
         arr.append(inner);
@@ -46,7 +47,37 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
 
 
 std::vector<std::vector<NearNeighborInfo>> VoronoiNN::get_all_nn_info_cpp(const Structure &structure) const {
-    return {};
+    const auto voro = this->get_all_voronoi_polyhedra(structure);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    for (int i = 0; i < structure.count; ++i) {
+        result[i] = this->extract_nn_info(structure, voro[i]);
+    }
+    return result;
+}
+
+std::vector<NearNeighborInfo>
+VoronoiNN::extract_nn_info(const Structure &s, const std::unordered_map<int, VoronoiPolyhedra> &voro) const {
+    const auto &targets = this->targets ? this->targets.value() : s.species_strings;
+    gtl::flat_hash_set<std::string> target_set(targets.begin(), targets.end());
+    std::vector<NearNeighborInfo> result;
+
+    double max_weight = 0;
+    for (const auto &[k, v]: voro) max_weight = std::max(max_weight, v[this->weight]);
+    for (const auto &[k, v]: voro) {
+        if (v[this->weight] > this->tol * max_weight && target_set.contains(s.species_strings[v.site.all_coords_idx])) {
+            NearNeighborInfo info;
+            info.site_index = v.site.all_coords_idx;
+            info.image = v.site.image;
+            info.weight = v[this->weight] / max_weight;
+            if (this->extra_nn_info) {
+                info.extra = v.to_dict(s);
+                info.extra->attr("pop")("site");
+            }
+            result.push_back(std::move(info));
+        }
+    }
+
+    return result;
 }
 
 std::unordered_map<int, VoronoiPolyhedra>
@@ -708,7 +739,7 @@ void init_near_neighbor(pybind11::module &m) {
                         d[py::int_(key)] = val.to_dict(ss);
                     }
                     ret.append(d);
-                };
+                }
                 return ret;
             });
 

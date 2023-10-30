@@ -82,6 +82,7 @@ struct NearNeighborInfo {
     int site_index;
     double weight;
     std::array<int, 3> image;
+    std::optional<py::dict> extra;
 };
 
 // Base class to determine near neighbors that typically include nearest
@@ -114,6 +115,16 @@ struct VoronoiPolyhedra {
     std::vector<int> verts;
     std::vector<int> adj_neighbors;
     Eigen::Vector3d normal;
+
+    double operator[](const std::string &s) const {
+        if (s == "solid_angle") return solid_angle;
+        if (s == "angle_normalized") return angle_normalized;
+        if (s == "area") return area;
+        if (s == "face_dist") return face_dist;
+        if (s == "volume") return volume;
+        if (s == "n_verts") return n_verts;
+        throw std::invalid_argument("invalid key");
+    }
 
     py::dict to_dict(const Structure &s) const {
         py::dict ret;
@@ -249,6 +260,9 @@ private:
             const std::vector<std::string> &targets,
             const Voronoi &voro,
             bool compute_adj_neighbors = false) const;
+
+    std::vector<NearNeighborInfo>
+    extract_nn_info(const Structure &s, const std::unordered_map<int, VoronoiPolyhedra> &v) const;
 };
 
 class MinimumDistanceNN : public NearNeighbor {

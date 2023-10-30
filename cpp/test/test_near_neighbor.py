@@ -48,12 +48,12 @@ class TestNN(unittest.TestCase):
     def run_for_small_structures(self, pymatgen_nn, out_nn):
         for name, s in small_test_structure():
             with self.subTest(name):
-                cpp_result = out_nn.get_all_nn_info(s)
                 try:
                     pymatgen_result = pymatgen_nn.get_all_nn_info(s)
                 except Exception as e:
                     print(e)
                     self.skipTest("pymatgen error")
+                cpp_result = out_nn.get_all_nn_info(s)
                 self.assert_nn_info(cpp_result, pymatgen_result)
 
 
