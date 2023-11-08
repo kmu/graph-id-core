@@ -78,11 +78,19 @@ double solid_angle(Eigen::Vector3d center, Eigen::Matrix3Xd coords);
 /// Calculate the volume of a tetrahedron
 double vol_tetra(Eigen::Vector3d v0, Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d v3);
 
+double get_default_radius(py::object site);
+
+double get_radius(py::object site);
+
 struct NearNeighborInfo {
     int site_index;
     double weight;
     std::array<int, 3> image;
     std::optional<py::dict> extra;
+
+    Eigen::Vector3d xyz(const Structure &s) const {
+        return s.site_xyz.col(site_index) + s.lattice.matrix * Eigen::Vector3d(image[0], image[1], image[2]);
+    }
 };
 
 // Base class to determine near neighbors that typically include nearest
@@ -252,7 +260,6 @@ public:
 
     std::vector<std::unordered_map<int, VoronoiPolyhedra>> get_all_voronoi_polyhedra(const Structure &structure) const;
 
-private:
     std::unordered_map<int, VoronoiPolyhedra> extract_cell_info(
             int neighbor_index,
             const Structure &structure,
@@ -263,6 +270,13 @@ private:
 
     std::vector<NearNeighborInfo>
     extract_nn_info(const Structure &s, const std::unordered_map<int, VoronoiPolyhedra> &v) const;
+
+    std::vector<NearNeighborInfo>
+    extract_nn_info(const Structure &s, const std::unordered_map<int, VoronoiPolyhedra> &v,
+                    const std::vector<std::string> &targets) const;
+
+private:
+    static double get_max_cutoff(const Structure &s);
 };
 
 class MinimumDistanceNN : public NearNeighbor {
@@ -292,6 +306,7 @@ private:
     double x_diff_weight;
     bool porous_adjustment;
     double search_cutoff;
+    int fingerprint_length;
 public:
     explicit CrystalNN(
             bool weighted_cn = false,
@@ -308,9 +323,7 @@ public:
         this->x_diff_weight = x_diff_weight;
         this->porous_adjustment = porous_adjustment;
         this->search_cutoff = search_cutoff;
-        if (!fingerprint_length) {
-            throw std::invalid_argument("fingerprint_length is not supported");
-        }
+        this->fingerprint_length = fingerprint_length;
     };
 
     bool structures_allowed() override { return true; };
@@ -318,6 +331,19 @@ public:
     bool molecules_allowed() override { return false; };
 
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+
+    struct NNData {
+        std::vector<NearNeighborInfo> all_nninfo;
+        std::unordered_map<int, double> cn_weights;
+        std::unordered_map<int, std::vector<NearNeighborInfo>> cn_nninfo;
+    };
+
+    std::vector<NNData> get_all_nn_data(const Structure &structure, int length = 0) const;
+
+private:
+    static double semicircle_integral(const std::vector<double> &dist_bins, int idx);
+
+    static void transform_to_length(NNData &nn_data, int length);
 };
 
 class CutOffDictNN : public NearNeighbor {
