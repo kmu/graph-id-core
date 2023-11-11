@@ -237,6 +237,15 @@ struct Structure {
     PymatgenStructure py_structure;
 };
 
+inline void warn(const std::string &s) {
+    // Python で warnings.warn(s) するのと同じ。
+    PyErr_WarnEx(PyExc_Warning, s.c_str(), 2);
+}
+
+inline void warn(py::object &s) {
+    PyErr_WarnEx(PyExc_Warning, py::str(s).cast<std::string>().c_str(), 2);
+}
+
 std::string join_string(const std::string &delimiter, const std::vector<std::string> &strings);
 
 template<class T>
@@ -266,7 +275,8 @@ inline uint64_t hash_combine(uint64_t x, uint64_t y) {
 template<>
 struct std::hash<std::tuple<int, std::array<int, 3>>> {
     size_t operator()(const std::tuple<int, std::array<int, 3>> &t) const noexcept {
-        return HashCombine(std::get<0>(t), HashCombine(std::get<1>(t)[0], HashCombine(std::get<1>(t)[1], std::get<1>(t)[2])));
+        return HashCombine(std::get<0>(t),
+                           HashCombine(std::get<1>(t)[0], HashCombine(std::get<1>(t)[1], std::get<1>(t)[2])));
     }
 };
 
@@ -277,10 +287,17 @@ struct std::hash<std::array<int, 3>> {
     }
 };
 
+template<>
+struct std::hash<std::array<int, 4>> {
+    size_t operator()(const std::array<int, 4> &t) const noexcept {
+        return HashCombine(HashCombine(t[0], t[3]), HashCombine(t[1], t[2]));
+    }
+};
+
 template<typename T, uint64_t seed = hash_seed0>
 struct Hash {
     size_t operator()(const T &t) const noexcept {
-         return hash_combine(seed, t);
+        return hash_combine(seed, t);
     }
 };
 

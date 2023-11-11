@@ -1,7 +1,7 @@
 #include "near_neighbor.h"
 #include <vector>
-#include <pybind11/stl.h>
-#include <pybind11/eigen.h>
+#include <pybind11/eval.h>
+#include <gtl/phmap.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
@@ -37,6 +37,7 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
             } else {
                 d["image"] = py::none();
             }
+            if (info.extra) for (const auto &[k, v]: info.extra.value()) d[k] = v;
             inner.append(d);
         }
         arr.append(inner);
@@ -45,16 +46,326 @@ py::list NearNeighbor::get_all_nn_info(py::object &structure) {
 }
 
 
+std::vector<std::vector<NearNeighborInfo>> VoronoiNN::get_all_nn_info_cpp(const Structure &structure) const {
+    const auto voro = this->get_all_voronoi_polyhedra(structure);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    for (int i = 0; i < structure.count; ++i) {
+        result[i] = this->extract_nn_info(structure, voro[i]);
+    }
+    return result;
+}
+
+std::vector<NearNeighborInfo>
+VoronoiNN::extract_nn_info(const Structure &s, const std::unordered_map<int, VoronoiPolyhedra> &voro) const {
+    const auto &targets = this->targets ? this->targets.value() : s.species_strings;
+    return extract_nn_info(s, voro, targets);
+}
+
+std::vector<NearNeighborInfo>
+VoronoiNN::extract_nn_info(const Structure &s,
+                           const std::unordered_map<int, VoronoiPolyhedra> &voro,
+                           const std::vector<std::string> &targets
+) const {
+    gtl::flat_hash_set<std::string> target_set(targets.begin(), targets.end());
+    std::vector<NearNeighborInfo> result;
+
+    double max_weight = 0;
+    for (const auto &[k, v]: voro) max_weight = std::max(max_weight, v[this->weight]);
+    for (const auto &[k, v]: voro) {
+        if (v[this->weight] > this->tol * max_weight && target_set.contains(s.species_strings[v.site.all_coords_idx])) {
+            NearNeighborInfo info;
+            info.site_index = v.site.all_coords_idx;
+            info.image = v.site.image;
+            info.weight = v[this->weight] / max_weight;
+            if (this->extra_nn_info) {
+                auto pi = v.to_dict(s);
+                info.extra = py::dict(py::arg("poly_info") = pi);
+                pi.attr("pop")("site");
+            }
+            result.push_back(std::move(info));
+        }
+    }
+
+    return result;
+}
+
+std::unordered_map<int, VoronoiPolyhedra>
+VoronoiNN::get_voronoi_polyhedra(const Structure &structure, int site_index) const {
+    if (site_index < 0 || site_index >= structure.count) {
+        throw py::index_error("site_index out of range."); // IndexError
+    }
+
+    const auto &targets = this->targets ? this->targets.value() : structure.species_strings;
+    const Eigen::Matrix3Xd center = structure.site_xyz.col(site_index);
+    double max_cutoff = get_max_cutoff(structure);
+    double cutoff = this->cutoff;
+
+    while (true) {
+        try {
+            auto neighbors = find_near_neighbors(
+                    structure.site_xyz,
+                    structure.lattice.inv_matrix * structure.site_xyz,
+                    center,
+                    structure.lattice.inv_matrix * center,
+                    cutoff,
+                    structure.lattice
+            )[0];
+            std::sort(neighbors.begin(), neighbors.end(), [](const auto &lhs, const auto &rhs) {
+                return lhs.distances2 < rhs.distances2;
+            });
+
+            Eigen::Matrix3Xd qvoronoi_input(3, neighbors.size());
+            for (int i = 0; i < int(neighbors.size()); ++i) {
+                qvoronoi_input.col(i) = neighbors[i].xyz(structure);
+            }
+
+            // Run the Voronoi tessellation
+            auto voro = Voronoi(qvoronoi_input);  // can give seg fault if cutoff is too small
+
+            return this->extract_cell_info(0, structure, neighbors, targets, voro, this->compute_adj_neighbors);
+        } catch (py::error_already_set &eas) {
+            if (!eas.matches(PyExc_RuntimeError)) {
+                throw;
+            }
+        } catch (std::exception &e) {
+            if (std::string(e.what()) !=
+                "This structure is pathological, infinite vertex in the Voronoi construction") {
+                throw;
+            }
+        }
+        if (cutoff >= max_cutoff) {
+            throw std::runtime_error("Error in Voronoi neighbor finding; max cutoff exceeded");
+        }
+        cutoff = std::min(cutoff * 2, max_cutoff + 0.001);
+    }
+
+    throw std::logic_error("unreachable");
+}
+
+std::vector<std::unordered_map<int, VoronoiPolyhedra>>
+VoronoiNN::get_all_voronoi_polyhedra(const Structure &structure) const {
+    if (structure.count == 1) {
+        return {this->get_voronoi_polyhedra(structure, 0)};
+    }
+    assert(structure.count >= 2);
+
+    const auto &targets = this->targets ? this->targets.value() : structure.species_strings;
+    double max_cutoff = get_max_cutoff(structure);
+    double cutoff = this->cutoff;
+
+    while (true) {
+        try {
+            const auto neighbors = find_near_neighbors(structure, cutoff);
+            assert(int(neighbors.size()) == structure.count);
+
+            gtl::flat_hash_set<std::array<int, 4>, std::hash<std::array<int, 4>>> indices_set;
+            std::vector<FindNearNeighborsResult> flat; // (site_index, image[0], image[1], image[2])
+            std::vector<int> root_image_index(structure.count, -1);
+            for (int i = 0; i < int(neighbors.size()); ++i) {
+                for (const auto &nn: neighbors[i]) {
+                    std::array<int, 4> arr = {nn.all_coords_idx, nn.image[0], nn.image[1], nn.image[2]};
+                    if (indices_set.contains(arr)) continue;
+                    if (nn.image[0] == 0 && nn.image[1] == 0 && nn.image[2] == 0) {
+                        root_image_index[nn.all_coords_idx] = int(flat.size());
+                    }
+                    flat.push_back(nn);
+                    indices_set.insert(arr);
+                }
+            }
+
+            Eigen::Matrix3Xd qvoronoi_input(3, flat.size());
+            for (int i = 0; const auto &nn: flat) {
+                qvoronoi_input.col(i++) = nn.xyz(structure);
+            }
+
+            for (const int i: root_image_index) assert(0 <= i && i < int(flat.size()));
+
+            auto voro = Voronoi(qvoronoi_input);
+
+            std::vector<std::unordered_map<int, VoronoiPolyhedra>> result(structure.count);
+            for (int i = 0; i < structure.count; ++i) {
+                result[i] = this->extract_cell_info(root_image_index[i], structure, flat, targets, voro,
+                                                    this->compute_adj_neighbors);
+            }
+            return result;
+        } catch (py::error_already_set &eas) {
+            if (!eas.matches(PyExc_RuntimeError)) {
+                throw;
+            }
+        } catch (std::exception &e) {
+            if (std::string(e.what()) !=
+                "This structure is pathological, infinite vertex in the Voronoi construction") {
+                throw;
+            }
+        }
+        if (cutoff >= max_cutoff) {
+            throw std::runtime_error("Error in Voronoi neighbor finding; max cutoff exceeded");
+        }
+        cutoff = std::min(cutoff * 2, max_cutoff + 0.001);
+    }
+
+    throw std::logic_error("unreachable");
+}
+
+std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
+        int neighbor_index,
+        const Structure &structure,
+        const std::vector<FindNearNeighborsResult> &neighbors,
+        const std::vector<std::string> &targets,
+        const Voronoi &voro,
+        bool compute_adj_neighbors
+) const {
+    assert(0 <= neighbor_index && neighbor_index < int(neighbors.size()));
+    int site_index = neighbors[neighbor_index].all_coords_idx;
+
+    // Get the coordinates of every vertex
+    const auto _all_vertices = voro.vertices();
+    Eigen::Matrix3Xd all_vertices(3, _all_vertices.shape(0));
+    for (int i = 0; i < _all_vertices.shape(0); ++i) {
+        for (int j = 0; j < 3; ++j) {
+            all_vertices(j, i) = _all_vertices.at(i, j);
+        }
+    }
+
+    // Get the coordinates of the central site
+    const Eigen::Vector3d center_coords = neighbors[neighbor_index].xyz(structure);
+
+    // Iterate through all the faces in the tessellation
+    std::unordered_map<int, VoronoiPolyhedra> results;
+    for (const auto &[_nn, _vind]: voro.ridge_dict()) {
+        auto nn = _nn.cast<py::tuple>();
+        auto vind = _vind.cast<std::vector<int>>();
+        if (nn.contains(neighbor_index)) {
+            int other_neighbor_index = nn[0].cast<int>() == neighbor_index ? nn[1].cast<int>() : nn[0].cast<int>();
+            assert(0 <= other_neighbor_index && other_neighbor_index < int(neighbors.size()));
+            int other_site_index = neighbors[other_neighbor_index].all_coords_idx;
+            Eigen::Vector3d other_xyz = neighbors[other_neighbor_index].xyz(structure);
+            if (std::find(vind.begin(), vind.end(), -1) != vind.end()) {
+                if (this->allow_pathological) {
+                    continue;
+                } else {
+                    throw std::runtime_error(
+                            "This structure is pathological, infinite vertex in the Voronoi construction");
+                }
+            }
+
+            // Get the solid angle of the face
+            Eigen::Matrix3Xd facets(3, vind.size());
+            for (int i = 0; i < int(vind.size()); ++i) {
+                facets.col(i) << all_vertices.col(vind[i]);
+            }
+            double angle = solid_angle(center_coords, facets);
+
+            // Compute the volume of associated with this face
+            double volume = 0;
+            // qvoronoi returns vertices in CCW order, so I can break
+            // the face up in to segments (0,1,2), (0,2,3), ... to compute
+            // its area where each number is a vertex size
+            for (int i = 1; i < int(vind.size()) - 1; ++i) {
+                int j = vind[i];
+                int k = vind[i + 1];
+                volume += vol_tetra(
+                        center_coords,
+                        all_vertices.col(vind[0]),
+                        all_vertices.col(j),
+                        all_vertices.col(k)
+                );
+            }
+
+            // Compute the distance of the site to the face
+            double face_dist = (center_coords - other_xyz).norm() / 2;
+
+            // Compute the area of the face (knowing V=Ad/3)
+            double face_area = 3 * volume / face_dist;
+
+            // Compute the normal of the facet
+            Eigen::Vector3d normal = other_xyz - center_coords;
+            normal /= normal.norm();
+            VoronoiPolyhedra v;
+            v.site = neighbors[other_neighbor_index];
+            v.normal = normal;
+            v.solid_angle = angle;
+            v.volume = volume;
+            v.face_dist = face_dist;
+            v.area = face_area;
+            v.n_verts = int(vind.size());
+
+            if (compute_adj_neighbors) v.verts = vind;
+
+            results[other_neighbor_index] = v;
+        }
+    }
+
+    // all sites should have at least two connected ridges in periodic system
+    if (results.empty()) {
+        throw py::value_error("No Voronoi neighbors found for site - try increasing cutoff");
+    }
+
+    // Get only target elements
+    gtl::flat_hash_set<std::string> target_set(targets.begin(), targets.end());
+    std::unordered_map<int, VoronoiPolyhedra> result_weighted;
+    for (const auto &[nn_index, nn_stats]: results) {
+        // Check if this is a target site
+        py::object nn = structure.py_structure.sites()[nn_stats.site.all_coords_idx].obj;
+        if (nn.attr("is_ordered").cast<bool>()) {
+            if (target_set.contains(structure.species_strings[nn_stats.site.all_coords_idx])) {
+                result_weighted[nn_index] = nn_stats;
+            }
+        } else { // if nn site is disordered
+            for (auto disordered_sp: nn.attr("species")) {
+                if (target_set.contains(disordered_sp.attr("formula").cast<std::string>())) {
+                    result_weighted[nn_index] = nn_stats;
+                }
+            }
+        }
+    }
+
+    // If desired, determine which neighbors are adjacent
+    if (compute_adj_neighbors) {
+        gtl::flat_hash_map<int, std::vector<int>> adj_neighbors;
+        for (const auto &[a_ind, a_nn_info]: result_weighted) {
+            gtl::flat_hash_set<int> a_verts(a_nn_info.verts.begin(), a_nn_info.verts.end());
+            // Loop over all neighbors that have an index lower that this one
+            // The goal here is to exploit the fact that neighbor adjacency is
+            // symmetric (if A is adj to B, B is adj to A)
+            for (auto &[b_ind, b_nn_info]: result_weighted) {
+                if (b_ind > a_ind) continue;
+                gtl::flat_hash_set<int> v;
+                for (const int n: b_nn_info.verts) {
+                    if (a_verts.contains(n)) v.insert(n);
+                }
+                if (v.size() == 2) {
+                    adj_neighbors[a_ind].push_back(b_ind);
+                    adj_neighbors[b_ind].push_back(a_ind);
+                }
+            }
+        }
+
+        for (const auto &[k, v]: adj_neighbors) {
+            result_weighted[k].adj_neighbors = v;
+        }
+    }
+
+    return result_weighted;
+}
+
+double VoronoiNN::get_max_cutoff(const Structure &structure) {
+    // max cutoff is the longest diagonal of the cell + room for noise
+    Eigen::Matrix3Xd corners(3, 4);
+    corners << 1, 1, 1,
+            -1, 1, 1,
+            1, -1, 1,
+            1, 1, -1;
+    Eigen::VectorXd d_corners(4);
+
+    for (auto i = 0; i < 4; ++i) {
+        d_corners(i) = (structure.lattice.matrix * corners.col(i)).norm();
+    }
+    return d_corners.maxCoeff() + 0.01;
+}
+
 std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
-    const Eigen::Matrix3Xd frac = structure.lattice.inv_matrix * structure.site_xyz;
-    const auto nn = find_near_neighbors(
-            structure.site_xyz,
-            frac,
-            structure.site_xyz,
-            frac,
-            this->cutoff,
-            structure.lattice
-    );
+    const auto nn = find_near_neighbors(structure, this->cutoff);
     assert(int(nn.size()) == structure.count);
     if (this->get_all_sites) {
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
@@ -104,6 +415,271 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
     }
 }
 
+std::vector<std::vector<NearNeighborInfo>> CrystalNN::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn_data = get_all_nn_data(structure);
+    std::vector<std::vector<NearNeighborInfo>> result;
+    result.reserve(structure.count);
+
+    for (int i = 0; i < structure.count; i++) {
+        auto &nn_data = all_nn_data[i];
+        if (!this->weighted_cn) {
+            int max_key = nn_data.cn_weights.begin()->first;
+            for (const auto &[key, value]: nn_data.cn_weights) {
+                if (nn_data.cn_weights[max_key] < value) {
+                    max_key = key;
+                }
+            }
+            auto &nn = nn_data.cn_nninfo[max_key];
+            for (auto &entry: nn) entry.weight = 1;
+            result.push_back(nn);
+        } else {
+            for (auto &entry: nn_data.all_nninfo) {
+                double weight = 0;
+                for (auto &[cn, cn_nninfo]: nn_data.cn_nninfo) {
+                    for (auto &cn_entry: cn_nninfo) {
+                        if (cn_entry.site_index == entry.site_index && cn_entry.image == entry.image) {
+                            weight += nn_data.cn_weights[cn];
+                        }
+                    }
+                }
+                entry.weight = weight;
+            }
+            result.push_back(nn_data.all_nninfo);
+        }
+    }
+
+    return result;
+}
+
+std::vector<CrystalNN::NNData> CrystalNN::get_all_nn_data(const Structure &structure, int length) const {
+    std::vector<CrystalNN::NNData> result;
+    result.reserve(structure.count);
+    py::object py_structure = structure.py_structure.obj;
+
+    if (length == 0) length = this->fingerprint_length;
+
+    // get base VoronoiNN targets
+    auto vnn = VoronoiNN(0, std::nullopt, this->search_cutoff, false, "solid_angle");
+    auto all_voronoi = vnn.get_all_voronoi_polyhedra(structure);
+
+    std::vector<double> site_radius(structure.count);
+    std::vector<double> site_default_radius(structure.count);
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        site_radius[site_i] = get_radius(py_structure[py::int_(site_i)]);
+        site_default_radius[site_i] = get_default_radius(py_structure[py::int_(site_i)]);
+    }
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto voronoi = all_voronoi[site_i];
+        std::vector<NearNeighborInfo> nn;
+
+        if (this->cation_anion) {
+            std::vector<std::string> targets;
+            auto m_oxi = py_structure[py::int_(site_i)].attr("specie").attr("oxi_state");
+            for (auto site: py_structure) {
+                py::object oxi_state = py::getattr(site.attr("specie"), "oxi_state", py::none());
+                if (!oxi_state.is_none() && oxi_state.cast<double>() * m_oxi.cast<double>() <= 0) {
+                    targets.push_back(site.attr("species_string").cast<std::string>());
+                }
+            }
+            if (targets.empty()) {
+                throw py::value_error("No valid targets for site within cation_anion constraint!");
+            }
+            nn = vnn.extract_nn_info(structure, voronoi, targets);
+        } else {
+            nn = vnn.extract_nn_info(structure, voronoi);
+        }
+
+
+        // solid angle weights can be misleading in open / porous structures
+        // adjust weights to correct for this behavior
+        if (this->porous_adjustment) {
+            for (auto &x: nn) {
+                x.weight *= x.extra.value()["poly_info"]["solid_angle"].cast<double>() /
+                            x.extra.value()["poly_info"]["area"].cast<double>();
+            }
+        }
+
+        if (this->x_diff_weight > 0) {
+            for (auto &entry: nn) {
+                auto x1 = py_structure[py::int_(site_i)].attr("specie").attr("X").cast<double>();
+                auto x2 = py_structure[py::int_(entry.site_index)].attr("specie").attr("X").cast<double>();
+                double chemical_weight = 0;
+                if (std::isnan(x1) || std::isnan(x2)) {
+                    chemical_weight = 1;
+                } else {
+                    // note: 3.3 is max deltaX between 2 elements
+                    chemical_weight = 1 + this->x_diff_weight * std::sqrt(std::abs(x1 - x2) / 3.3);
+                }
+                entry.weight *= chemical_weight;
+            }
+        }
+
+        // sort nearest neighbors from highest to lowest weight
+        std::sort(nn.begin(), nn.end(), [](const auto &lhs, const auto &rhs) {
+            return lhs.weight > rhs.weight;
+        });
+        if (nn[0].weight == 0) {
+            NNData data;
+            data.cn_weights[0] = 1;
+            data.cn_nninfo[0] = {};
+            transform_to_length(data, length);
+            result.push_back(std::move(data));
+            continue;
+        }
+
+        // renormalize weights so the highest weight is 1.0
+        double highest_weight = nn[0].weight;
+        for (auto &entry: nn) {
+            entry.weight /= highest_weight;
+        }
+
+        // adjust solid angle weights based on distance
+        if (this->distance_cutoffs.first != 0 && this->distance_cutoffs.second != 0) {
+            double r1 = site_radius[site_i];
+            for (auto &entry: nn) {
+                double r2 = site_radius[entry.site_index];
+                double d = 0;
+                if (r1 > 0 && r2 > 0) {
+                    d = r1 + r2;
+                } else {
+                    warn("CrystalNN: cannot locate an appropriate radius, "
+                         "covalent or atomic radii will be used, this can lead "
+                         "to non-optimal results.");
+                    d = site_default_radius[site_i] + site_default_radius[entry.site_index];
+                }
+
+                double dist = (structure.site_xyz.col(site_i) - entry.xyz(structure)).norm();
+                double dist_weight = 0;
+
+                double cutoff_low = d + this->distance_cutoffs.first;
+                double cutoff_high = d + this->distance_cutoffs.second;
+                if (dist <= cutoff_low) {
+                    dist_weight = 1;
+                } else if (dist < cutoff_high) {
+                    dist_weight = (std::cos((dist - cutoff_low) / (cutoff_high - cutoff_low) * pi) + 1) * 0.5;
+                }
+                entry.weight *= dist_weight;
+            }
+        }
+
+        // sort nearest neighbors from highest to lowest weight
+        std::sort(nn.begin(), nn.end(), [](const auto &lhs, const auto &rhs) {
+            return lhs.weight > rhs.weight;
+        });
+        if (nn[0].weight == 0) {
+            NNData data;
+            data.cn_weights[0] = 1;
+            data.cn_nninfo[0] = {};
+            transform_to_length(data, length);
+            result.push_back(std::move(data));
+            continue;
+        }
+
+        for (auto &entry: nn) {
+            entry.weight = std::round(entry.weight * 1000) / 1000;
+            if (entry.extra) entry.extra->attr("pop")("poly_info", py::none());
+        }
+
+        // remove entries with no weight
+        nn.erase(std::remove_if(nn.begin(), nn.end(), [](const auto &entry) {
+            return entry.weight == 0;
+        }), nn.end());
+
+        // get the transition distances, i.e. all distinct weights
+        std::vector<double> dist_bins;
+        for (const auto &entry: nn) {
+            if (dist_bins.empty() || dist_bins[dist_bins.size() - 1] != entry.weight) {
+                dist_bins.push_back(entry.weight);
+            }
+        }
+        dist_bins.push_back(0);
+
+        // main algorithm to determine fingerprint from bond weights
+        NNData data;
+        for (int idx = 0; idx < int(dist_bins.size()); idx++) {
+            double val = dist_bins[idx];
+            if (val != 0) {
+                std::vector<NearNeighborInfo> nn_info;
+                for (const auto &entry: nn) {
+                    if (entry.weight >= val) {
+                        nn_info.push_back(entry);
+                    }
+                }
+                int cn = int(nn_info.size());
+                data.cn_nninfo[cn] = nn_info;
+                data.cn_weights[cn] = semicircle_integral(dist_bins, idx);
+            }
+        }
+
+        // add zero coord
+        double cn0_weight = 1;
+        for (const auto &[_, v]: data.cn_weights) {
+            cn0_weight -= v;
+        }
+
+        if (cn0_weight > 0) {
+            data.cn_weights[0] = cn0_weight;
+            data.cn_nninfo[0] = {};
+        }
+
+        data.all_nninfo = nn;
+        transform_to_length(data, length);
+        result.push_back(std::move(data));
+    }
+
+    return result;
+}
+
+double CrystalNN::semicircle_integral(const std::vector<double> &dist_bins, int idx) {
+    double r = 1;
+    double x1 = dist_bins[idx];
+    double x2 = dist_bins[idx + 1];
+    double area1, area2;
+
+    if (dist_bins[idx] == 1) {
+        area1 = 0.25 * pi * r * r;
+    } else {
+        area1 = 0.5 * ((x1 * std::sqrt(r * r - x1 * x1)) + (r * r * std::atan(x1 / std::sqrt(r * r - x1 * x1))));
+    }
+
+    area2 = 0.5 * ((x2 * std::sqrt(r * r - x2 * x2)) + (r * r * std::atan(x2 / std::sqrt(r * r - x2 * x2))));
+
+    return (area1 - area2) / (0.25 * pi * r * r);
+}
+
+void CrystalNN::transform_to_length(CrystalNN::NNData &nn_data, int length) {
+    if (length == 0) return;
+    for (int cn = 0; cn < length; ++cn) {
+        if (!nn_data.cn_weights.contains(cn)) {
+            nn_data.cn_weights[cn] = 0;
+            nn_data.cn_nninfo[cn] = {};
+        }
+    }
+}
+
+std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(const Structure &structure) const {
+    const auto nn = find_near_neighbors(structure, this->max_cut_off);
+    assert(int(nn.size()) == structure.count);
+
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    for (int i = 0; i < structure.count; ++i) {
+        if (nn[i].empty()) continue;
+        for (int j = 0; j < int(nn[i].size()); ++j) {
+            if (nn[i][j].distances2 < 1e-8) continue;
+            const auto key = std::make_pair(structure.species_strings[i],
+                                            structure.species_strings[nn[i][j].all_coords_idx]);
+            const auto it = this->cut_off_dict.find(key);
+            if (it == this->cut_off_dict.end()) continue;
+            double distance = std::sqrt(nn[i][j].distances2);
+            if (distance < it->second) {
+                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image});
+            }
+        }
+    }
+
+    return result;
+}
 
 /// pymatgen.optimization.neighbors.find_points_in_spheres と同じ処理を行う。
 /// Python から利用する際はオーバーヘッドを考慮すると pymatgen で実装されたものを使ったほうが速いことが多い。
@@ -270,6 +846,16 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     return result;
 }
 
+std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
+        const Structure &structure,
+        double r,
+        double min_r,
+        double tol
+) {
+    const Eigen::Matrix3Xd frac = structure.lattice.inv_matrix * structure.site_xyz;
+    return find_near_neighbors(structure.site_xyz, frac, structure.site_xyz, frac, r, structure.lattice, min_r, tol);
+}
+
 // Given the fractional coordinates and the number of repeation needed in each
 // direction, maxr, compute the translational bounds in each dimension
 std::pair<Eigen::Vector3i, Eigen::Vector3i> get_bounds(
@@ -360,6 +946,91 @@ std::vector<std::vector<int>> get_cube_neighbors(const Eigen::Vector3i &n_cube) 
     return result;
 }
 
+double solid_angle(Eigen::Vector3d center, Eigen::Matrix3Xd coords) {
+    Eigen::Matrix3Xd r = coords.colwise() - center;
+    Eigen::VectorXd r_norm = r.colwise().norm();
+
+    // Compute the solid angle for each tetrahedron that makes up the facet
+    // Following: https://en.wikipedia.org/wiki/Solid_angle#Tetrahedron
+    double angle = 0;
+    for (int i = 1; i < r.cols() - 1; ++i) {
+        int j = i + 1;
+        double tp = std::abs(r.col(0).dot(r.col(i).cross(r.col(j))));
+        double de = r_norm[0] * r_norm[i] * r_norm[j] +
+                    r_norm[j] * r.col(0).dot(r.col(i)) +
+                    r_norm[i] * r.col(0).dot(r.col(j)) +
+                    r_norm[0] * r.col(i).dot(r.col(j));
+        double _angle = de == 0 ? (tp > 0 ? 0.5 * pi : -0.5 * pi) : std::atan(tp / de);
+        angle += 2 * (_angle > 0 ? _angle : _angle + pi);
+    }
+    return angle;
+}
+
+double vol_tetra(Eigen::Vector3d v0, Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d v3) {
+    return std::abs((v3 - v0).dot((v1 - v0).cross(v2 - v0))) / 6;
+}
+
+double get_default_radius(py::object site) {
+    py::object CovalentRadius =
+    py::module_::import("pymatgen.analysis.molecule_structure_comparator").attr("CovalentRadius");
+    try {
+        return CovalentRadius.attr("radius")[site.attr("specie").attr("symbol")].cast<double>();
+    } catch (py::error_already_set &e) {
+        return site.attr("specie").attr("atomic_radius").cast<double>();
+    }
+}
+
+double get_radius(py::object site) {
+    py::dict scope(py::arg("site") = site);
+    py::exec(R"(
+def _get_radius(site):
+    """
+    An internal method to get the expected radius for a site with
+    oxidation state.
+
+    Args:
+        site: (Site)
+
+    Returns:
+        Oxidation-state dependent radius: ionic, covalent, or atomic.
+        Returns 0 if no oxidation state or appropriate radius is found.
+    """
+    if hasattr(site.specie, "oxi_state"):
+        el = site.specie.element
+        oxi = site.specie.oxi_state
+
+        if oxi == 0:
+            return _get_default_radius(site)
+
+        if oxi in el.ionic_radii:
+            return el.ionic_radii[oxi]
+
+        # e.g., oxi = 2.667, average together 2+ and 3+ radii
+        if int(math.floor(oxi)) in el.ionic_radii and int(math.ceil(oxi)) in el.ionic_radii:
+            oxi_low = el.ionic_radii[int(math.floor(oxi))]
+            oxi_high = el.ionic_radii[int(math.ceil(oxi))]
+            x = oxi - int(math.floor(oxi))
+            return (1 - x) * oxi_low + x * oxi_high
+
+        if oxi > 0 and el.average_cationic_radius > 0:
+            return el.average_cationic_radius
+
+        if el.average_anionic_radius > 0 > oxi:
+            return el.average_anionic_radius
+
+    else:
+        import warnings
+        warnings.warn(
+            "No oxidation states specified on sites! For better results, set "
+            "the site oxidation states in the structure."
+        )
+    return 0
+
+ret = _get_radius(site)
+    )", py::globals(), scope);
+    return scope["ret"].cast<double>();
+}
+
 void init_near_neighbor(pybind11::module &m) {
     py::class_<NearNeighborInfo>(m, "NearNeighborInfo")
             .def(py::init<int, double, std::array<int, 3>>(),
@@ -375,11 +1046,58 @@ void init_near_neighbor(pybind11::module &m) {
             .def_property_readonly("molecules_allowed", &NearNeighbor::molecules_allowed)
             .def("get_all_nn_info", &NearNeighbor::get_all_nn_info);
 
+    py::class_<VoronoiPolyhedra>(m, "VoronoiPolyhedra");
+
+    py::class_<VoronoiNN, std::shared_ptr<VoronoiNN>, NearNeighbor>(m, "VoronoiNN")
+            .def(py::init<double, std::optional<std::vector<std::string>>, double, bool, std::string, bool, bool>(),
+                 py::arg("tol") = 0,
+                 py::arg("targets") = py::none(),
+                 py::arg("cutoff") = 13.0,
+                 py::arg("allow_pathological") = false,
+                 py::arg("weight") = "solid_angle",
+                 py::arg("extra_nn_info") = true,
+                 py::arg("compute_adj_neighbors") = true)
+            .def("get_voronoi_polyhedra", [](VoronoiNN &self, const PymatgenStructure &s, int n) {
+                Structure ss(s);
+                py::dict ret;
+                for (const auto &[key, val]: self.get_voronoi_polyhedra(ss, n)) {
+                    ret[py::int_(key)] = val.to_dict(ss);
+                }
+                return ret;
+            })
+            .def("get_all_voronoi_polyhedra", [](VoronoiNN &self, const PymatgenStructure &s) {
+                Structure ss(s);
+                py::list ret;
+                for (const auto &res: self.get_all_voronoi_polyhedra(Structure(s))) {
+                    py::dict d;
+                    for (const auto &[key, val]: res) {
+                        d[py::int_(key)] = val.to_dict(ss);
+                    }
+                    ret.append(d);
+                }
+                return ret;
+            });
+
     py::class_<MinimumDistanceNN, std::shared_ptr<MinimumDistanceNN>, NearNeighbor>(m, "MinimumDistanceNN")
             .def(py::init<double, double, double>(),
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0,
                  py::arg("get_all_sites") = false);
+
+    py::class_<CrystalNN, std::shared_ptr<CrystalNN>, NearNeighbor>(m, "CrystalNN")
+            .def(py::init<bool, bool, std::pair<double, double>, double, bool, double, int>(),
+                 py::arg("weighted_cn") = false,
+                 py::arg("cation_anion") = false,
+                 py::arg("distance_cutoffs") = std::pair<double, double>{0.5, 1},
+                 py::arg("x_diff_weight") = 3.0,
+                 py::arg("porous_adjustment") = true,
+                 py::arg("search_cutoff") = 7,
+                 py::arg("fingerprint_length") = 0);
+
+    py::class_<CutOffDictNN, std::shared_ptr<CutOffDictNN>, NearNeighbor>(m, "CutOffDictNN")
+            .def(py::init<std::optional<py::dict>>(),
+                 py::arg("cut_off_dict") = py::none())
+            .def_static("from_preset", CutOffDictNN::from_preset);
 
     m.def("find_near_neighbors", [](
             const Eigen::MatrixX3d &all_coords,
