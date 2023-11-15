@@ -14,7 +14,7 @@ namespace py = pybind11;
 struct FindNearNeighborsResult {
     int all_coords_idx;
     std::array<int, 3> image;
-    double distances2;
+    double distance;
 
     Eigen::Vector3d xyz(const Structure &s) const {
         return s.site_xyz.col(all_coords_idx) + s.lattice.matrix * Eigen::Vector3d(image[0], image[1], image[2]);
@@ -28,7 +28,7 @@ struct FindNearNeighborsResult {
                                     Eigen::Vector3d(image[0], image[1], image[2]),
                 py::arg("lattice") = s.py_structure.lattice().obj,
                 py::arg("properties") = s.py_structure.sites()[all_coords_idx].obj.attr("properties"),
-                py::arg("nn_distance") = std::sqrt(distances2),
+                py::arg("nn_distance") = distance,
                 py::arg("index") = all_coords_idx,
                 py::arg("image") = py::make_tuple(image[0], image[1], image[2]),
                 py::arg("label") = s.species_strings[all_coords_idx]

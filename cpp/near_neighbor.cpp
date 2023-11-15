@@ -111,7 +111,7 @@ VoronoiNN::get_voronoi_polyhedra(const Structure &structure, int site_index) con
                     structure.lattice
             )[0];
             std::sort(neighbors.begin(), neighbors.end(), [](const auto &lhs, const auto &rhs) {
-                return lhs.distances2 < rhs.distances2;
+                return lhs.distance < rhs.distance;
             });
 
             Eigen::Matrix3Xd qvoronoi_input(3, neighbors.size());
@@ -216,7 +216,6 @@ std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
         bool compute_adj_neighbors
 ) const {
     assert(0 <= neighbor_index && neighbor_index < int(neighbors.size()));
-    int site_index = neighbors[neighbor_index].all_coords_idx;
 
     // Get the coordinates of every vertex
     const auto _all_vertices = voro.vertices();
@@ -238,7 +237,6 @@ std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
         if (nn.contains(neighbor_index)) {
             int other_neighbor_index = nn[0].cast<int>() == neighbor_index ? nn[1].cast<int>() : nn[0].cast<int>();
             assert(0 <= other_neighbor_index && other_neighbor_index < int(neighbors.size()));
-            int other_site_index = neighbors[other_neighbor_index].all_coords_idx;
             Eigen::Vector3d other_xyz = neighbors[other_neighbor_index].xyz(structure);
             if (std::find(vind.begin(), vind.end(), -1) != vind.end()) {
                 if (this->allow_pathological) {
@@ -371,17 +369,13 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
         for (int i = 0; i < structure.count; ++i) {
             if (nn[i].empty()) continue;
-            Eigen::VectorXd d2(nn[i].size());
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                d2(j) = nn[i][j].distances2;
-            }
-            const Eigen::VectorXd d = d2.array().sqrt();
-            for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 < 1e-8) continue;
+                if (nn[i][j].distance < 1e-8) continue;
                 result[i].emplace_back(NearNeighborInfo{
                         nn[i][j].all_coords_idx,
-                        std::sqrt(nn[i][j].distances2),
-                        nn[i][j].image
+                        nn[i][j].distance,
+                        nn[i][j].image,
+                        py::dict()
                 });
             }
         }
@@ -390,23 +384,23 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
         for (int i = 0; i < structure.count; ++i) {
             if (nn[i].empty()) continue;
-            Eigen::VectorXd d2(nn[i].size());
+            Eigen::VectorXd d(nn[i].size());
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 < 1e-8) {
-                    d2(j) = 9999;
+                if (nn[i][j].distance < 1e-8) {
+                    d(j) = 9999;
                 } else {
-                    d2(j) = nn[i][j].distances2;
+                    d(j) = nn[i][j].distance;
                 }
             }
-            const Eigen::VectorXd d = d2.array().sqrt();
             const double min_distance = d.minCoeff();
             const double r = (1 + this->tol) * min_distance;
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 > 1e-8 && d(j) < r) {
+                if (d(j) < r) {
                     result[i].emplace_back(NearNeighborInfo{
                             nn[i][j].all_coords_idx,
                             min_distance / d(j),
-                            nn[i][j].image
+                            nn[i][j].image,
+                            py::dict()
                     });
                 }
             }
@@ -451,8 +445,8 @@ std::vector<std::vector<NearNeighborInfo>> MinimumOKeeffeNN::get_all_nn_info_cpp
         std::vector<double> reldists_neighs;
         reldists_neighs.reserve(neighs_dists[site_i].size());
         for (const auto &nn: neighs_dists[site_i]) {
-            double dist = std::sqrt(nn.distances2);
-            if (nn.distances2 < 1e-16) dist = 1e9; // 距離が 0 のときは同じサイトの組なので無視するために十分大きな値にする
+            double dist = nn.distance;
+            if (nn.distance < 1e-8) dist = 1e9; // 距離が 0 のときは同じサイトの組なので無視するために十分大きな値にする
             reldists_neighs.push_back(
                     dist / okeeffe_distance_prediction[std::make_pair(elem[site_i], elem[nn.all_coords_idx])]);
         }
@@ -725,14 +719,14 @@ std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(con
     for (int i = 0; i < structure.count; ++i) {
         if (nn[i].empty()) continue;
         for (int j = 0; j < int(nn[i].size()); ++j) {
-            if (nn[i][j].distances2 < 1e-8) continue;
+            if (nn[i][j].distance < 1e-8) continue;
             const auto key = std::make_pair(structure.species_strings[i],
                                             structure.species_strings[nn[i][j].all_coords_idx]);
             const auto it = this->cut_off_dict.find(key);
             if (it == this->cut_off_dict.end()) continue;
-            double distance = std::sqrt(nn[i][j].distances2);
+            double distance = nn[i][j].distance;
             if (distance < it->second) {
-                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image});
+                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image, py::dict()});
             }
         }
     }
@@ -771,11 +765,10 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     if (r < min_r) {
         const auto res = find_near_neighbors(all_coords, all_frac_coords, center_coords, center_frac_coords,
                                              min_r + tol, lattice, min_r, tol);
-        const double r2 = r * r;
         std::vector<std::vector<FindNearNeighborsResult>> result(res.size());
         for (size_t i = 0; i < res.size(); ++i) {
             for (const auto &x: res[i]) {
-                if (x.distances2 <= r2) {
+                if (x.distance <= r) {
                     result[i].emplace_back(x);
                 }
             }
@@ -784,7 +777,6 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     }
 
 
-    const double r2 = r * r;
     const long n_center = center_coords.cols();
     const long n_total = all_coords.cols();
     const double ledge = std::max(0.1, r);
@@ -865,8 +857,8 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
         for (int i = 0; i < n_center; ++i) {
             for (const int cube_index: cube_neighbors[center_indices(i)]) {
                 for (const int j: atom_indices[cube_index]) {
-                    const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-                    if (d2 < r2) {
+                    const double d = (expanded_coords.col(j) - center_coords.col(i)).norm();
+                    if (d < r) {
                         const int all_coords_idx = std::get<0>(indices[j]);
                         auto offset = std::get<1>(indices[j]);
                         offset[0] -= int(offset_correction(0, all_coords_idx));
@@ -875,7 +867,7 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
                         result[i].emplace_back(FindNearNeighborsResult{
                                 all_coords_idx,
                                 offset,
-                                d2
+                                d
                         });
                     }
                 }
@@ -884,8 +876,8 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     } else {
         for (int i = 0; i < n_center; ++i) {
             for (int j = 0; j < expanded_coords.cols(); ++j) {
-                const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-                if (d2 < r2) {
+                const double d = (expanded_coords.col(j) - center_coords.col(i)).norm();
+                if (d < r) {
                     const int all_coords_idx = std::get<0>(indices[j]);
                     auto offset = std::get<1>(indices[j]);
                     offset[0] -= int(offset_correction(0, all_coords_idx));
@@ -894,7 +886,7 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
                     result[i].emplace_back(FindNearNeighborsResult{
                             all_coords_idx,
                             offset,
-                            d2
+                            d
                     });
                 }
             }
@@ -1192,7 +1184,7 @@ void init_near_neighbor(pybind11::module &m) {
                 res1(i) = res_i;
                 res2(i) = x.all_coords_idx;
                 res_offset.row(i) = Eigen::Vector3d(x.image[0], x.image[1], x.image[2]);
-                distances(i) = std::sqrt(x.distances2);
+                distances(i) = x.distance;
                 i++;
             }
         }
