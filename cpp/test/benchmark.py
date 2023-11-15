@@ -5,7 +5,7 @@ import unittest
 
 from graph_id import GraphIDGenerator
 from graph_id.analysis.graphs import StructureGraph
-from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, VoronoiNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
 from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
@@ -45,6 +45,10 @@ class TestBenchmark(unittest.TestCase):
     def test_minimum_distance(self):
         print("MinimumDistanceNN:")
         run_benchmark(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
+
+    def test_minimum_okeefee(self):
+        print("MinimumOKeeffeNN:")
+        run_benchmark(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
 
     def test_crystal(self):
         print("CrystalNN:")

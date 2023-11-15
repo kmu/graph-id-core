@@ -415,6 +415,65 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
     }
 }
 
+std::vector<std::vector<NearNeighborInfo>> MinimumOKeeffeNN::get_all_nn_info_cpp(const Structure &structure) const {
+    const auto neighs_dists = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+
+    // get_okeeffe_distance_prediction をあらかじめ計算しておく
+    py::object get_okeeffe_distance_prediction = py::module_::import("pymatgen.analysis.local_env").attr(
+            "get_okeeffe_distance_prediction");
+    gtl::flat_hash_map<std::pair<std::string, std::string>, double> okeeffe_distance_prediction;
+    std::vector<std::string> elem(structure.count);
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        try {
+            elem[site_i] = structure.py_structure.obj[py::int_(site_i)].attr("specie").attr(
+                    "element").cast<std::string>();
+        } catch (py::error_already_set &_) {
+            elem[site_i] = structure.py_structure.obj[py::int_(site_i)].attr("species_string").cast<std::string>();
+        }
+    }
+
+    std::vector<std::string> elem_uniq(elem.begin(), elem.end());
+    std::sort(elem_uniq.begin(), elem_uniq.end());
+    elem_uniq.erase(std::unique(elem_uniq.begin(), elem_uniq.end()), elem_uniq.end());
+    for (int i = 0; i < int(elem_uniq.size()); i++) {
+        for (int j = i; j < int(elem_uniq.size()); j++) {
+            auto d = get_okeeffe_distance_prediction(elem_uniq[i], elem_uniq[j]).cast<double>();
+            okeeffe_distance_prediction[std::make_pair(elem_uniq[i], elem_uniq[j])] = d;
+            okeeffe_distance_prediction[std::make_pair(elem_uniq[j], elem_uniq[i])] = d;
+        }
+    }
+
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        if (neighs_dists[site_i].empty()) continue;
+
+        std::vector<double> reldists_neighs;
+        reldists_neighs.reserve(neighs_dists[site_i].size());
+        for (const auto &nn: neighs_dists[site_i]) {
+            double dist = std::sqrt(nn.distances2);
+            if (nn.distances2 < 1e-16) dist = 1e9; // 距離が 0 のときは同じサイトの組なので無視するために十分大きな値にする
+            reldists_neighs.push_back(
+                    dist / okeeffe_distance_prediction[std::make_pair(elem[site_i], elem[nn.all_coords_idx])]);
+        }
+
+        double min_reldist = reldists_neighs[0];
+        for (double d: reldists_neighs) if (min_reldist > d) min_reldist = d;
+        for (int i = 0; i < int(neighs_dists[site_i].size()); i++) {
+            if (reldists_neighs[i] < min_reldist * (1 + this->tol)) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        neighs_dists[site_i][i].all_coords_idx,
+                        min_reldist / reldists_neighs[i],
+                        neighs_dists[site_i][i].image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
 std::vector<std::vector<NearNeighborInfo>> CrystalNN::get_all_nn_info_cpp(const Structure &structure) const {
     auto all_nn_data = get_all_nn_data(structure);
     std::vector<std::vector<NearNeighborInfo>> result;
@@ -1083,6 +1142,11 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0,
                  py::arg("get_all_sites") = false);
+
+    py::class_<MinimumOKeeffeNN, std::shared_ptr<MinimumOKeeffeNN>, NearNeighbor>(m, "MinimumOKeeffeNN")
+            .def(py::init<double, double>(),
+                 py::arg("tol") = 0.1,
+                 py::arg("cutoff") = 10.0);
 
     py::class_<CrystalNN, std::shared_ptr<CrystalNN>, NearNeighbor>(m, "CrystalNN")
             .def(py::init<bool, bool, std::pair<double, double>, double, bool, double, int>(),

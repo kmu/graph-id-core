@@ -298,6 +298,23 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
+class MinimumOKeeffeNN : public NearNeighbor {
+private:
+    double tol;
+    double cutoff;
+public:
+    explicit MinimumOKeeffeNN(double tol = 0.1, double cutoff = 10.0) {
+        this->tol = tol;
+        this->cutoff = cutoff;
+    };
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+};
+
 class CrystalNN : public NearNeighbor {
 private:
     bool weighted_cn;

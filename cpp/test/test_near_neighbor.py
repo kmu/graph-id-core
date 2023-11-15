@@ -3,7 +3,7 @@ import os.path
 import unittest
 
 import numpy as np
-from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, VoronoiNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
@@ -196,6 +196,17 @@ class TestMinimumDistanceNN(TestNN):
         self.run_for_small_structures(
             MinimumDistanceNN(get_all_sites=True), graph_id_cpp.MinimumDistanceNN(get_all_sites=True)
         )
+
+
+class TestMinimumOKeeffeNN(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.MinimumOKeeffeNN().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertTrue(graph_id_cpp.MinimumOKeeffeNN().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
 
 
 class TestCrystalNN(TestNN):
