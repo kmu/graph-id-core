@@ -734,6 +734,97 @@ std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(con
     return result;
 }
 
+std::vector<std::vector<NearNeighborInfo>> EconNN::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    std::vector<double> oxi_state(structure.count);
+    std::vector<bool> oxi_state_valid(structure.count);
+
+    // oxi_state を取得
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto site = structure.py_structure.obj[py::int_(site_i)];
+        auto oxi = py::getattr(site.attr("specie"), "oxi_state", py::none());
+        if (!oxi.is_none()) {
+            oxi_state[site_i] = oxi.cast<double>();
+            oxi_state_valid[site_i] = true;
+        }
+    }
+
+    // site_radius をあらかじめ計算
+    std::vector<double> site_radius(structure.count);
+    if (this->use_fictive_radius) {
+        auto py_structure = structure.py_structure.obj;
+        for (int site_i = 0; site_i < structure.count; site_i++) {
+            double r = get_radius(py_structure[py::int_(site_i)]);
+            if (r > 0) {
+                site_radius[site_i] = r;
+            } else {
+                site_radius[site_i] = get_default_radius(py_structure[py::int_(site_i)]);
+            };
+        }
+    }
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        if (all_nn[site_i].empty()) continue;
+
+        auto &nn = all_nn[site_i];
+
+        if (this->cation_anion && oxi_state_valid[site_i]) {
+            if (oxi_state[site_i] >= 0) {
+                nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+                    return oxi_state[x.all_coords_idx] > 0;
+                }), nn.end());
+            } else {
+                nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+                    return oxi_state[x.all_coords_idx] <= 0;
+                }), nn.end());
+            }
+        }
+
+        nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+            return x.distance < 1e-8; // 距離が 0 のときは同じサイトの組なので無視する
+        }), nn.end());
+
+
+        Eigen::VectorXd fir(nn.size());
+        if (this->use_fictive_radius) {
+            for (int i = 0; i < int(nn.size()); i++) {
+                // calculate fictive ionic radii
+                fir[i] = nn[i].distance *
+                         (site_radius[site_i] / (site_radius[site_i] + site_radius[nn[i].all_coords_idx]));
+            }
+        } else {
+            for (int i = 0; i < int(nn.size()); i++) {
+                fir[i] = nn[i].distance;
+            }
+        }
+
+        // calculate mean fictive ionic radius
+        double mefir = get_mean_fictive_ionic_radius(fir, fir.minCoeff());
+
+        // iteratively solve MEFIR; follows equation 4 in Hoppe's EconN paper
+        double prev_mefir = 1e100;
+        while (std::abs(prev_mefir - mefir) > 1e-4) {
+            prev_mefir = mefir;
+            mefir = get_mean_fictive_ionic_radius(fir, mefir);
+        }
+
+        Eigen::VectorXd w = Eigen::exp(1 - (fir.array() / mefir).pow(6));
+        for (int i = 0; i < int(nn.size()); i++) {
+            if (nn[i].distance < this->cutoff && w[i] > this->tol) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        nn[i].all_coords_idx,
+                        w[i],
+                        nn[i].image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
 /// pymatgen.optimization.neighbors.find_points_in_spheres と同じ処理を行う。
 /// Python から利用する際はオーバーヘッドを考慮すると pymatgen で実装されたものを使ったほうが速いことが多い。
 /// 原子の座標と中心点の座標を行列で与えると、中心点からの距離が r 以下の原子の情報を返す。
@@ -1082,6 +1173,11 @@ ret = _get_radius(site)
     return scope["ret"].cast<double>();
 }
 
+double get_mean_fictive_ionic_radius(const Eigen::VectorXd &f, double min_fir) {
+    Eigen::VectorXd v = Eigen::exp(1 - (f.array() / min_fir).pow(6));
+    return (f.array() * v.array()).sum() / v.sum();
+}
+
 void init_near_neighbor(pybind11::module &m) {
     py::class_<NearNeighborInfo>(m, "NearNeighborInfo")
             .def(py::init<int, double, std::array<int, 3>>(),
@@ -1154,6 +1250,13 @@ void init_near_neighbor(pybind11::module &m) {
             .def(py::init<std::optional<py::dict>>(),
                  py::arg("cut_off_dict") = py::none())
             .def_static("from_preset", CutOffDictNN::from_preset);
+
+    py::class_<EconNN, std::shared_ptr<EconNN>, NearNeighbor>(m, "EconNN")
+            .def(py::init<double, double, bool, bool>(),
+                 py::arg("tol") = 0.2,
+                 py::arg("cutoff") = 10.0,
+                 py::arg("cation_anion") = false,
+                 py::arg("use_fictive_radius") = false);
 
     m.def("find_near_neighbors", [](
             const Eigen::MatrixX3d &all_coords,

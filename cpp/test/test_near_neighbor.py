@@ -3,7 +3,7 @@ import os.path
 import unittest
 
 import numpy as np
-from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, EconNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
@@ -242,6 +242,20 @@ class TestCutoffDictNN(TestNN):
 
     def test_structures_with_empty_dict(self):
         self.run_for_small_structures(CutOffDictNN(), graph_id_cpp.CutOffDictNN())
+
+
+class TestEconNN(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.EconNN().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertTrue(graph_id_cpp.EconNN().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(EconNN(), graph_id_cpp.EconNN())
+
+    def test_structures_using_fir(self):
+        self.run_for_small_structures(EconNN(use_fictive_radius=True), graph_id_cpp.EconNN(use_fictive_radius=True))
 
 
 if __name__ == "__main__":

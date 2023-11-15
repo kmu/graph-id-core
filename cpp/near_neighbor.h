@@ -82,6 +82,8 @@ double get_default_radius(py::object site);
 
 double get_radius(py::object site);
 
+double get_mean_fictive_ionic_radius(const Eigen::VectorXd &fictive_ionic_radii, double minimum_fir);
+
 struct NearNeighborInfo {
     int site_index;
     double weight;
@@ -404,6 +406,29 @@ public:
     bool structures_allowed() override { return true; };
 
     bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+};
+
+class EconNN : public NearNeighbor {
+private:
+    double tol;
+    double cutoff;
+    bool cation_anion;
+    bool use_fictive_radius;
+public:
+    explicit EconNN(double tol = 0.2, double cutoff = 10.0, bool cation_anion = false,
+                    bool use_fictive_radius = false) {
+        this->tol = tol;
+        this->cutoff = cutoff;
+        this->cation_anion = cation_anion;
+        this->use_fictive_radius = use_fictive_radius;
+    };
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
 
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
