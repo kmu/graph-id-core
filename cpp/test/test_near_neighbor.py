@@ -3,7 +3,17 @@ import os.path
 import unittest
 
 import numpy as np
-from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, EconNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
+from pymatgen.analysis.local_env import (
+    BrunnerNN_real,
+    BrunnerNN_reciprocal,
+    BrunnerNN_relative,
+    CrystalNN,
+    CutOffDictNN,
+    EconNN,
+    MinimumDistanceNN,
+    MinimumOKeeffeNN,
+    VoronoiNN,
+)
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
@@ -242,6 +252,39 @@ class TestCutoffDictNN(TestNN):
 
     def test_structures_with_empty_dict(self):
         self.run_for_small_structures(CutOffDictNN(), graph_id_cpp.CutOffDictNN())
+
+
+class TestBrunnerNNReciprocal(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.BrunnerNN_reciprocal().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertFalse(graph_id_cpp.BrunnerNN_reciprocal().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(BrunnerNN_reciprocal(), graph_id_cpp.BrunnerNN_reciprocal())
+
+
+class TestBrunnerNNRelative(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.BrunnerNN_relative().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertFalse(graph_id_cpp.BrunnerNN_relative().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(BrunnerNN_relative(), graph_id_cpp.BrunnerNN_relative())
+
+
+class TestBrunnerNNReal(TestNN):
+    def test_structure_allowed(self):
+        self.assertTrue(graph_id_cpp.BrunnerNN_real().structures_allowed)
+
+    def test_molecule_allowed(self):
+        self.assertFalse(graph_id_cpp.BrunnerNN_real().molecules_allowed)
+
+    def test_structures(self):
+        self.run_for_small_structures(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real())
 
 
 class TestEconNN(TestNN):
