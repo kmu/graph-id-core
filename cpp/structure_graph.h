@@ -41,6 +41,7 @@ public:
     void set_elemental_labels();
 
     void set_wyckoffs_label(double symmetry_tol = 0.1);
+
     void set_loops(int depth_factor, int additional_depth);
 
     void set_compositional_sequence_node_attr(
@@ -89,9 +90,7 @@ public:
 
     std::vector<std::tuple<int, std::array<int, 3>>> get_current_starting_sites();
 
-    void count_composition_for_neighbors(const std::vector<NearNeighborInfo> &neighbors);
-
-    void count_composition_for_neighbors(const NearNeighborInfo &neighbors);
+    void count_composition_for_neighbors(int site_i, std::array<int, 3> image);
 
     void finalize_this_depth();
 
