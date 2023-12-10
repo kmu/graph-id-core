@@ -5,7 +5,7 @@ import unittest
 
 from graph_id import GraphIDGenerator
 from graph_id.analysis.graphs import StructureGraph
-from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN, VoronoiNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, EconNN, MinimumDistanceNN, MinimumOKeeffeNN, VoronoiNN
 from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
@@ -46,6 +46,10 @@ class TestBenchmark(unittest.TestCase):
         print("MinimumDistanceNN:")
         run_benchmark(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
 
+    def test_minimum_okeefee(self):
+        print("MinimumOKeeffeNN:")
+        run_benchmark(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
+
     def test_crystal(self):
         print("CrystalNN:")
         run_benchmark(CrystalNN(), graph_id_cpp.CrystalNN())
@@ -53,6 +57,10 @@ class TestBenchmark(unittest.TestCase):
     def test_cut_off_dict(self):
         print("CutOffDictNN:")
         run_benchmark(CutOffDictNN.from_preset("vesta_2019"), graph_id_cpp.CutOffDictNN.from_preset("vesta_2019"))
+
+    def test_econ(self):
+        print("EconNN:")
+        run_benchmark(EconNN(), graph_id_cpp.EconNN())
 
     def test_structure_graph(self):
         print("StructureGraph.set_compositional_sequence_node_attr:")

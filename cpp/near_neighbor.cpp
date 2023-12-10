@@ -111,7 +111,7 @@ VoronoiNN::get_voronoi_polyhedra(const Structure &structure, int site_index) con
                     structure.lattice
             )[0];
             std::sort(neighbors.begin(), neighbors.end(), [](const auto &lhs, const auto &rhs) {
-                return lhs.distances2 < rhs.distances2;
+                return lhs.distance < rhs.distance;
             });
 
             Eigen::Matrix3Xd qvoronoi_input(3, neighbors.size());
@@ -216,7 +216,6 @@ std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
         bool compute_adj_neighbors
 ) const {
     assert(0 <= neighbor_index && neighbor_index < int(neighbors.size()));
-    int site_index = neighbors[neighbor_index].all_coords_idx;
 
     // Get the coordinates of every vertex
     const auto _all_vertices = voro.vertices();
@@ -238,7 +237,6 @@ std::unordered_map<int, VoronoiPolyhedra> VoronoiNN::extract_cell_info(
         if (nn.contains(neighbor_index)) {
             int other_neighbor_index = nn[0].cast<int>() == neighbor_index ? nn[1].cast<int>() : nn[0].cast<int>();
             assert(0 <= other_neighbor_index && other_neighbor_index < int(neighbors.size()));
-            int other_site_index = neighbors[other_neighbor_index].all_coords_idx;
             Eigen::Vector3d other_xyz = neighbors[other_neighbor_index].xyz(structure);
             if (std::find(vind.begin(), vind.end(), -1) != vind.end()) {
                 if (this->allow_pathological) {
@@ -371,17 +369,13 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
         for (int i = 0; i < structure.count; ++i) {
             if (nn[i].empty()) continue;
-            Eigen::VectorXd d2(nn[i].size());
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                d2(j) = nn[i][j].distances2;
-            }
-            const Eigen::VectorXd d = d2.array().sqrt();
-            for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 < 1e-8) continue;
+                if (nn[i][j].distance < 1e-8) continue;
                 result[i].emplace_back(NearNeighborInfo{
                         nn[i][j].all_coords_idx,
-                        std::sqrt(nn[i][j].distances2),
-                        nn[i][j].image
+                        nn[i][j].distance,
+                        nn[i][j].image,
+                        py::dict()
                 });
             }
         }
@@ -390,29 +384,88 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
         std::vector<std::vector<NearNeighborInfo>> result(structure.count);
         for (int i = 0; i < structure.count; ++i) {
             if (nn[i].empty()) continue;
-            Eigen::VectorXd d2(nn[i].size());
+            Eigen::VectorXd d(nn[i].size());
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 < 1e-8) {
-                    d2(j) = 9999;
+                if (nn[i][j].distance < 1e-8) {
+                    d(j) = 9999;
                 } else {
-                    d2(j) = nn[i][j].distances2;
+                    d(j) = nn[i][j].distance;
                 }
             }
-            const Eigen::VectorXd d = d2.array().sqrt();
             const double min_distance = d.minCoeff();
             const double r = (1 + this->tol) * min_distance;
             for (int j = 0; j < int(nn[i].size()); ++j) {
-                if (nn[i][j].distances2 > 1e-8 && d(j) < r) {
+                if (d(j) < r) {
                     result[i].emplace_back(NearNeighborInfo{
                             nn[i][j].all_coords_idx,
                             min_distance / d(j),
-                            nn[i][j].image
+                            nn[i][j].image,
+                            py::dict()
                     });
                 }
             }
         }
         return result;
     }
+}
+
+std::vector<std::vector<NearNeighborInfo>> MinimumOKeeffeNN::get_all_nn_info_cpp(const Structure &structure) const {
+    const auto neighs_dists = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+
+    // get_okeeffe_distance_prediction をあらかじめ計算しておく
+    py::object get_okeeffe_distance_prediction = py::module_::import("pymatgen.analysis.local_env").attr(
+            "get_okeeffe_distance_prediction");
+    gtl::flat_hash_map<std::pair<std::string, std::string>, double> okeeffe_distance_prediction;
+    std::vector<std::string> elem(structure.count);
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        try {
+            elem[site_i] = structure.py_structure.obj[py::int_(site_i)].attr("specie").attr(
+                    "element").cast<std::string>();
+        } catch (py::error_already_set &_) {
+            elem[site_i] = structure.py_structure.obj[py::int_(site_i)].attr("species_string").cast<std::string>();
+        }
+    }
+
+    std::vector<std::string> elem_uniq(elem.begin(), elem.end());
+    std::sort(elem_uniq.begin(), elem_uniq.end());
+    elem_uniq.erase(std::unique(elem_uniq.begin(), elem_uniq.end()), elem_uniq.end());
+    for (int i = 0; i < int(elem_uniq.size()); i++) {
+        for (int j = i; j < int(elem_uniq.size()); j++) {
+            auto d = get_okeeffe_distance_prediction(elem_uniq[i], elem_uniq[j]).cast<double>();
+            okeeffe_distance_prediction[std::make_pair(elem_uniq[i], elem_uniq[j])] = d;
+            okeeffe_distance_prediction[std::make_pair(elem_uniq[j], elem_uniq[i])] = d;
+        }
+    }
+
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        if (neighs_dists[site_i].empty()) continue;
+
+        std::vector<double> reldists_neighs;
+        reldists_neighs.reserve(neighs_dists[site_i].size());
+        for (const auto &nn: neighs_dists[site_i]) {
+            double dist = nn.distance;
+            if (nn.distance < 1e-8) dist = 1e9; // 距離が 0 のときは同じサイトの組なので無視するために十分大きな値にする
+            reldists_neighs.push_back(
+                    dist / okeeffe_distance_prediction[std::make_pair(elem[site_i], elem[nn.all_coords_idx])]);
+        }
+
+        double min_reldist = reldists_neighs[0];
+        for (double d: reldists_neighs) if (min_reldist > d) min_reldist = d;
+        for (int i = 0; i < int(neighs_dists[site_i].size()); i++) {
+            if (reldists_neighs[i] < min_reldist * (1 + this->tol)) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        neighs_dists[site_i][i].all_coords_idx,
+                        min_reldist / reldists_neighs[i],
+                        neighs_dists[site_i][i].image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
 }
 
 std::vector<std::vector<NearNeighborInfo>> CrystalNN::get_all_nn_info_cpp(const Structure &structure) const {
@@ -666,14 +719,105 @@ std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(con
     for (int i = 0; i < structure.count; ++i) {
         if (nn[i].empty()) continue;
         for (int j = 0; j < int(nn[i].size()); ++j) {
-            if (nn[i][j].distances2 < 1e-8) continue;
+            if (nn[i][j].distance < 1e-8) continue;
             const auto key = std::make_pair(structure.species_strings[i],
                                             structure.species_strings[nn[i][j].all_coords_idx]);
             const auto it = this->cut_off_dict.find(key);
             if (it == this->cut_off_dict.end()) continue;
-            double distance = std::sqrt(nn[i][j].distances2);
+            double distance = nn[i][j].distance;
             if (distance < it->second) {
-                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image});
+                result[i].emplace_back(NearNeighborInfo{nn[i][j].all_coords_idx, distance, nn[i][j].image, py::dict()});
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<NearNeighborInfo>> EconNN::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    std::vector<double> oxi_state(structure.count);
+    std::vector<bool> oxi_state_valid(structure.count);
+
+    // oxi_state を取得
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto site = structure.py_structure.obj[py::int_(site_i)];
+        auto oxi = py::getattr(site.attr("specie"), "oxi_state", py::none());
+        if (!oxi.is_none()) {
+            oxi_state[site_i] = oxi.cast<double>();
+            oxi_state_valid[site_i] = true;
+        }
+    }
+
+    // site_radius をあらかじめ計算
+    std::vector<double> site_radius(structure.count);
+    if (this->use_fictive_radius) {
+        auto py_structure = structure.py_structure.obj;
+        for (int site_i = 0; site_i < structure.count; site_i++) {
+            double r = get_radius(py_structure[py::int_(site_i)]);
+            if (r > 0) {
+                site_radius[site_i] = r;
+            } else {
+                site_radius[site_i] = get_default_radius(py_structure[py::int_(site_i)]);
+            };
+        }
+    }
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        if (all_nn[site_i].empty()) continue;
+
+        auto &nn = all_nn[site_i];
+
+        if (this->cation_anion && oxi_state_valid[site_i]) {
+            if (oxi_state[site_i] >= 0) {
+                nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+                    return oxi_state[x.all_coords_idx] > 0;
+                }), nn.end());
+            } else {
+                nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+                    return oxi_state[x.all_coords_idx] <= 0;
+                }), nn.end());
+            }
+        }
+
+        nn.erase(std::remove_if(nn.begin(), nn.end(), [&](const auto &x) {
+            return x.distance < 1e-8; // 距離が 0 のときは同じサイトの組なので無視する
+        }), nn.end());
+
+
+        Eigen::VectorXd fir(nn.size());
+        if (this->use_fictive_radius) {
+            for (int i = 0; i < int(nn.size()); i++) {
+                // calculate fictive ionic radii
+                fir[i] = nn[i].distance *
+                         (site_radius[site_i] / (site_radius[site_i] + site_radius[nn[i].all_coords_idx]));
+            }
+        } else {
+            for (int i = 0; i < int(nn.size()); i++) {
+                fir[i] = nn[i].distance;
+            }
+        }
+
+        // calculate mean fictive ionic radius
+        double mefir = get_mean_fictive_ionic_radius(fir, fir.minCoeff());
+
+        // iteratively solve MEFIR; follows equation 4 in Hoppe's EconN paper
+        double prev_mefir = 1e100;
+        while (std::abs(prev_mefir - mefir) > 1e-4) {
+            prev_mefir = mefir;
+            mefir = get_mean_fictive_ionic_radius(fir, mefir);
+        }
+
+        Eigen::VectorXd w = Eigen::exp(1 - (fir.array() / mefir).pow(6));
+        for (int i = 0; i < int(nn.size()); i++) {
+            if (nn[i].distance < this->cutoff && w[i] > this->tol) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        nn[i].all_coords_idx,
+                        w[i],
+                        nn[i].image,
+                        py::dict()
+                });
             }
         }
     }
@@ -712,11 +856,10 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     if (r < min_r) {
         const auto res = find_near_neighbors(all_coords, all_frac_coords, center_coords, center_frac_coords,
                                              min_r + tol, lattice, min_r, tol);
-        const double r2 = r * r;
         std::vector<std::vector<FindNearNeighborsResult>> result(res.size());
         for (size_t i = 0; i < res.size(); ++i) {
             for (const auto &x: res[i]) {
-                if (x.distances2 <= r2) {
+                if (x.distance <= r) {
                     result[i].emplace_back(x);
                 }
             }
@@ -725,7 +868,6 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     }
 
 
-    const double r2 = r * r;
     const long n_center = center_coords.cols();
     const long n_total = all_coords.cols();
     const double ledge = std::max(0.1, r);
@@ -806,8 +948,8 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
         for (int i = 0; i < n_center; ++i) {
             for (const int cube_index: cube_neighbors[center_indices(i)]) {
                 for (const int j: atom_indices[cube_index]) {
-                    const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-                    if (d2 < r2) {
+                    const double d = (expanded_coords.col(j) - center_coords.col(i)).norm();
+                    if (d < r) {
                         const int all_coords_idx = std::get<0>(indices[j]);
                         auto offset = std::get<1>(indices[j]);
                         offset[0] -= int(offset_correction(0, all_coords_idx));
@@ -816,7 +958,7 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
                         result[i].emplace_back(FindNearNeighborsResult{
                                 all_coords_idx,
                                 offset,
-                                d2
+                                d
                         });
                     }
                 }
@@ -825,8 +967,8 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
     } else {
         for (int i = 0; i < n_center; ++i) {
             for (int j = 0; j < expanded_coords.cols(); ++j) {
-                const double d2 = (expanded_coords.col(j) - center_coords.col(i)).squaredNorm();
-                if (d2 < r2) {
+                const double d = (expanded_coords.col(j) - center_coords.col(i)).norm();
+                if (d < r) {
                     const int all_coords_idx = std::get<0>(indices[j]);
                     auto offset = std::get<1>(indices[j]);
                     offset[0] -= int(offset_correction(0, all_coords_idx));
@@ -835,7 +977,7 @@ std::vector<std::vector<FindNearNeighborsResult>> find_near_neighbors(
                     result[i].emplace_back(FindNearNeighborsResult{
                             all_coords_idx,
                             offset,
-                            d2
+                            d
                     });
                 }
             }
@@ -1031,6 +1173,11 @@ ret = _get_radius(site)
     return scope["ret"].cast<double>();
 }
 
+double get_mean_fictive_ionic_radius(const Eigen::VectorXd &f, double min_fir) {
+    Eigen::VectorXd v = Eigen::exp(1 - (f.array() / min_fir).pow(6));
+    return (f.array() * v.array()).sum() / v.sum();
+}
+
 void init_near_neighbor(pybind11::module &m) {
     py::class_<NearNeighborInfo>(m, "NearNeighborInfo")
             .def(py::init<int, double, std::array<int, 3>>(),
@@ -1084,6 +1231,11 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("cutoff") = 10.0,
                  py::arg("get_all_sites") = false);
 
+    py::class_<MinimumOKeeffeNN, std::shared_ptr<MinimumOKeeffeNN>, NearNeighbor>(m, "MinimumOKeeffeNN")
+            .def(py::init<double, double>(),
+                 py::arg("tol") = 0.1,
+                 py::arg("cutoff") = 10.0);
+
     py::class_<CrystalNN, std::shared_ptr<CrystalNN>, NearNeighbor>(m, "CrystalNN")
             .def(py::init<bool, bool, std::pair<double, double>, double, bool, double, int>(),
                  py::arg("weighted_cn") = false,
@@ -1098,6 +1250,13 @@ void init_near_neighbor(pybind11::module &m) {
             .def(py::init<std::optional<py::dict>>(),
                  py::arg("cut_off_dict") = py::none())
             .def_static("from_preset", CutOffDictNN::from_preset);
+
+    py::class_<EconNN, std::shared_ptr<EconNN>, NearNeighbor>(m, "EconNN")
+            .def(py::init<double, double, bool, bool>(),
+                 py::arg("tol") = 0.2,
+                 py::arg("cutoff") = 10.0,
+                 py::arg("cation_anion") = false,
+                 py::arg("use_fictive_radius") = false);
 
     m.def("find_near_neighbors", [](
             const Eigen::MatrixX3d &all_coords,
@@ -1128,7 +1287,7 @@ void init_near_neighbor(pybind11::module &m) {
                 res1(i) = res_i;
                 res2(i) = x.all_coords_idx;
                 res_offset.row(i) = Eigen::Vector3d(x.image[0], x.image[1], x.image[2]);
-                distances(i) = std::sqrt(x.distances2);
+                distances(i) = x.distance;
                 i++;
             }
         }

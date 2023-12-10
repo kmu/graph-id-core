@@ -14,7 +14,7 @@ namespace py = pybind11;
 struct FindNearNeighborsResult {
     int all_coords_idx;
     std::array<int, 3> image;
-    double distances2;
+    double distance;
 
     Eigen::Vector3d xyz(const Structure &s) const {
         return s.site_xyz.col(all_coords_idx) + s.lattice.matrix * Eigen::Vector3d(image[0], image[1], image[2]);
@@ -28,7 +28,7 @@ struct FindNearNeighborsResult {
                                     Eigen::Vector3d(image[0], image[1], image[2]),
                 py::arg("lattice") = s.py_structure.lattice().obj,
                 py::arg("properties") = s.py_structure.sites()[all_coords_idx].obj.attr("properties"),
-                py::arg("nn_distance") = std::sqrt(distances2),
+                py::arg("nn_distance") = distance,
                 py::arg("index") = all_coords_idx,
                 py::arg("image") = py::make_tuple(image[0], image[1], image[2]),
                 py::arg("label") = s.species_strings[all_coords_idx]
@@ -81,6 +81,8 @@ double vol_tetra(Eigen::Vector3d v0, Eigen::Vector3d v1, Eigen::Vector3d v2, Eig
 double get_default_radius(py::object site);
 
 double get_radius(py::object site);
+
+double get_mean_fictive_ionic_radius(const Eigen::VectorXd &fictive_ionic_radii, double minimum_fir);
 
 struct NearNeighborInfo {
     int site_index;
@@ -298,6 +300,23 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
+class MinimumOKeeffeNN : public NearNeighbor {
+private:
+    double tol;
+    double cutoff;
+public:
+    explicit MinimumOKeeffeNN(double tol = 0.1, double cutoff = 10.0) {
+        this->tol = tol;
+        this->cutoff = cutoff;
+    };
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+};
+
 class CrystalNN : public NearNeighbor {
 private:
     bool weighted_cn;
@@ -387,6 +406,29 @@ public:
     bool structures_allowed() override { return true; };
 
     bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+};
+
+class EconNN : public NearNeighbor {
+private:
+    double tol;
+    double cutoff;
+    bool cation_anion;
+    bool use_fictive_radius;
+public:
+    explicit EconNN(double tol = 0.2, double cutoff = 10.0, bool cation_anion = false,
+                    bool use_fictive_radius = false) {
+        this->tol = tol;
+        this->cutoff = cutoff;
+        this->cation_anion = cation_anion;
+        this->use_fictive_radius = use_fictive_radius;
+    };
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
 
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
