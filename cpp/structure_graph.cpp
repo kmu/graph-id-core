@@ -69,7 +69,7 @@ void StructureGraph::add_edge(
         return;
     }
 
-    this->graph[from].emplace_back(NearNeighborInfo{to, weight, image});
+    this->graph[from].emplace_back(NearNeighborInfo{to, weight, image, std::nullopt});
     this->graph_map[std::make_tuple(from, to, image)] = int(this->graph[from].size() - 1);
 }
 
@@ -119,7 +119,7 @@ void StructureGraph::set_cc_diameter() {
             for (const int node: nodes) visited[node] = false;
             d[start] = 0;
             visited[start] = true;
-            while (qi < int(queue.size())) {
+            while (qi < queue.size()) {
                 const int v = queue[qi++];
                 for (const auto &nni: graph[v]) {
                     const int u = nni.site_index;
@@ -149,7 +149,8 @@ void StructureGraph::set_loops(int depth_factor, int additional_depth) {
 
     // Convert py_structure_graph from PmgStructureGraph to StructureGraph
     py::object DesiredStructureGraphClass = GraphAnalysisModule.attr("StructureGraph");
-    py::object desired_structure_graph = DesiredStructureGraphClass.attr("from_pymatgen_structure_graph")(py_structure_graph);
+    py::object desired_structure_graph = DesiredStructureGraphClass.attr("from_pymatgen_structure_graph")(
+            py_structure_graph);
 
     // Call the set_loops method on this Python object
     desired_structure_graph.attr("set_loops")(depth_factor, additional_depth);
@@ -162,8 +163,6 @@ void StructureGraph::set_loops(int depth_factor, int additional_depth) {
         this->labels[site_i] = labels[site_i].cast<std::string>();
     }
 }
-
-
 
 
 void StructureGraph::set_wyckoffs_label(double symmetry_tol) {
@@ -236,9 +235,13 @@ void StructureGraph::set_compositional_sequence_node_attr(
 
             for (int di = 0; di < depth; ++di) {
                 for (const auto &c_site: cs.get_current_starting_sites()) {
-                    for (auto nni: graph[std::get<0>(c_site)]) {
-                        for (int i = 0; i < 3; ++i) nni.image[i] += std::get<1>(c_site)[i];
-                        cs.count_composition_for_neighbors(nni);
+                    for (const auto &nni: graph[std::get<0>(c_site)]) {
+                        auto &arr = std::get<1>(c_site);
+                        cs.count_composition_for_neighbors(nni.site_index, {
+                                nni.image[0] + arr[0],
+                                nni.image[1] + arr[1],
+                                nni.image[2] + arr[2]
+                        });
                     }
                 }
                 cs.finalize_this_depth();
@@ -343,19 +346,13 @@ std::vector<std::tuple<int, std::array<int, 3>>> CompositionalSequence::get_curr
 }
 
 
-void CompositionalSequence::count_composition_for_neighbors(const std::vector<NearNeighborInfo> &neighbors) {
-    for (const auto &nni: neighbors) {
-        count_composition_for_neighbors(nni);
-    }
-}
-
-void CompositionalSequence::count_composition_for_neighbors(const NearNeighborInfo &nni) {
-    const std::tuple<int, std::array<int, 3>> t = std::make_tuple(nni.site_index, nni.image);
-    auto n = connected_site_to_uint64(nni.site_index, nni.image);
+void CompositionalSequence::count_composition_for_neighbors(int site_i, std::array<int, 3> image) {
+    const std::tuple<int, std::array<int, 3>> t = std::make_tuple(site_i, image);
+    auto n = connected_site_to_uint64(site_i, image);
     if (seen_sites.find(n) == seen_sites.end()) {
         seen_sites.insert(n);
         new_sites.emplace_back(t);
-        this->composition_counter[(*labels)[nni.site_index]] += 1;
+        this->composition_counter[(*labels)[site_i]] += 1;
     }
 }
 

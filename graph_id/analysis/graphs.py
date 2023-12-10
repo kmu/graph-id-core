@@ -41,13 +41,12 @@ class ConnectedSiteLight:
 
 
 class StructureGraph(PmgStructureGraph):  # type: ignore
-
-
     @staticmethod
     def from_pymatgen_structure_graph(sg: PmgStructureGraph):
         graph_data = sg.as_dict()["graphs"]
 
         return StructureGraph(sg.structure, graph_data)
+
     # Copied from original pymatgen with modifications
     @staticmethod
     def with_local_env_strategy(structure, strategy, weights=False):
@@ -194,7 +193,6 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         nx.set_node_attributes(self.graph, values=node_attributes, name="compositional_sequence")
 
-
     def get_loops(self, depth: int, index: int, shortest: bool = True):  # noqa: C901
         """
         各原子を起点としてループを計算し、そのインデックス情報を返す。
@@ -283,7 +281,6 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 return ring_list
 
         return list(ring_list)
-
 
     def set_loops(self, depth_factor: int, additional_depth: int) -> None:
         self.starting_labels = []

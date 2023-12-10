@@ -734,6 +734,117 @@ std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(con
     return result;
 }
 
+std::vector<std::vector<NearNeighborInfo>> BrunnerNN_reciprocal::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto &nn = all_nn[site_i];
+        std::vector<double> ds;
+        ds.reserve(nn.size());
+        for (auto & i : nn) {
+            if (i.distance < 1e-8) continue;
+            ds.push_back(i.distance);
+        }
+        std::sort(ds.begin(), ds.end());
+        if (ds.size() < 2) continue;
+
+        std::vector<double> ns(ds.size() - 1);
+        for (int i = 0; i < int(ns.size()); i++) ns[i] = 1 / ds[i] - 1 / ds[i + 1];
+
+        size_t d_max_idx = std::max_element(ns.begin(), ns.end()) - ns.begin();
+        double d_max = ds[d_max_idx];
+
+        for (auto &nni: nn) {
+            if (nni.distance < 1e-8) continue;
+            if (nni.distance < d_max + this->tol) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        nni.all_coords_idx,
+                        ds[0] / nni.distance,
+                        nni.image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<NearNeighborInfo>> BrunnerNN_relative::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto &nn = all_nn[site_i];
+        std::vector<double> ds;
+        ds.reserve(nn.size());
+        for (auto & i : nn) {
+            if (i.distance < 1e-8) continue;
+            ds.push_back(i.distance);
+        }
+        std::sort(ds.begin(), ds.end());
+        if (ds.size() < 2) continue;
+
+        std::vector<double> ns(ds.size() - 1);
+        for (int i = 0; i < int(ns.size()); i++) ns[i] = ds[i + 1] / ds[i];
+
+        size_t d_max_idx = std::max_element(ns.begin(), ns.end()) - ns.begin();
+        double d_max = ds[d_max_idx];
+
+        for (auto &nni: nn) {
+            if (nni.distance < 1e-8) continue;
+            if (nni.distance < d_max + this->tol) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        nni.all_coords_idx,
+                        ds[0] / nni.distance,
+                        nni.image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<NearNeighborInfo>> BrunnerNN_real::get_all_nn_info_cpp(const Structure &structure) const {
+    auto all_nn = find_near_neighbors(structure, this->cutoff);
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+
+    for (int site_i = 0; site_i < structure.count; site_i++) {
+        auto &nn = all_nn[site_i];
+        std::vector<double> ds;
+        ds.reserve(nn.size());
+        for (auto & i : nn) {
+            if (i.distance < 1e-8) continue;
+            ds.push_back(i.distance);
+        }
+        std::sort(ds.begin(), ds.end());
+        if (ds.size() < 2) continue;
+
+        std::vector<double> ns(ds.size() - 1);
+        for (int i = 0; i < int(ns.size()); i++) ns[i] = ds[i + 1] - ds[i];
+
+        size_t d_max_idx = std::max_element(ns.begin(), ns.end()) - ns.begin();
+        double d_max = ds[d_max_idx];
+
+        for (auto &nni: nn) {
+            if (nni.distance < 1e-8) continue;
+            if (nni.distance < d_max + this->tol) {
+                result[site_i].emplace_back(NearNeighborInfo{
+                        nni.all_coords_idx,
+                        ds[0] / nni.distance,
+                        nni.image,
+                        py::dict()
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
 std::vector<std::vector<NearNeighborInfo>> EconNN::get_all_nn_info_cpp(const Structure &structure) const {
     auto all_nn = find_near_neighbors(structure, this->cutoff);
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
@@ -1250,6 +1361,21 @@ void init_near_neighbor(pybind11::module &m) {
             .def(py::init<std::optional<py::dict>>(),
                  py::arg("cut_off_dict") = py::none())
             .def_static("from_preset", CutOffDictNN::from_preset);
+
+    py::class_<BrunnerNN_reciprocal, std::shared_ptr<BrunnerNN_reciprocal>, NearNeighbor>(m, "BrunnerNN_reciprocal")
+            .def(py::init<double, double>(),
+                 py::arg("tol") = 1e-4,
+                 py::arg("cutoff") = 8.0);
+
+    py::class_<BrunnerNN_relative, std::shared_ptr<BrunnerNN_relative>, NearNeighbor>(m, "BrunnerNN_relative")
+            .def(py::init<double, double>(),
+                 py::arg("tol") = 1e-4,
+                 py::arg("cutoff") = 8.0);
+
+    py::class_<BrunnerNN_real, std::shared_ptr<BrunnerNN_real>, NearNeighbor>(m, "BrunnerNN_real")
+            .def(py::init<double, double>(),
+                 py::arg("tol") = 1e-4,
+                 py::arg("cutoff") = 8.0);
 
     py::class_<EconNN, std::shared_ptr<EconNN>, NearNeighbor>(m, "EconNN")
             .def(py::init<double, double, bool, bool>(),
