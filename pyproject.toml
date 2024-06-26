@@ -14,7 +14,7 @@ generate-setup-file = true
 pybind11 = "2.11.1"
 python = ">=3.8.1,<4.0"
 pymatgen = "^2023.6.28"
-scikit-learn = "1.4.2"
+scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
