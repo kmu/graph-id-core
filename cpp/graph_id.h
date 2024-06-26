@@ -13,6 +13,8 @@ public:
     double symmetry_tol = 0.1;
     bool topology_only = false;
     bool loop = false;
+    int rank_k = 3;
+    double cutoff = 6.0;
 
     GraphIDGenerator(
             const std::shared_ptr<const NearNeighbor> &nn,
@@ -21,9 +23,12 @@ public:
             int additional_depth,
             double symmetry_tol,
             bool topology_only,
-            bool loop
+            bool loop,
+            int rank_k,
+            double cutoff
     ) : wyckoff(wyckoff), depth_factor(depth_factor), additional_depth(additional_depth),
-        symmetry_tol(symmetry_tol), topology_only(topology_only), loop(loop) {
+        symmetry_tol(symmetry_tol), topology_only(topology_only), loop(loop),
+        rank_k(rank_k), cutoff(cutoff) {
         if (nn) {
             this->nn = nn;
         } else {
@@ -32,6 +37,7 @@ public:
     }
 
     std::string get_id(const Structure &structure) const;
+    std::string get_long_distance_id(const Structure &structure) const;
 
     std::string get_id_catch_error(const Structure &structure) const noexcept;
 
@@ -45,6 +51,8 @@ public:
 
 private:
     StructureGraph prepare_structure_graph(std::shared_ptr<const Structure> &structure) const;
+    StructureGraph prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const;
+    StructureGraph prepare_long_distance_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const;
 };
 
 void init_graph_id(pybind11::module &m);

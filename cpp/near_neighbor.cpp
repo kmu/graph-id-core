@@ -1,5 +1,8 @@
 #include "near_neighbor.h"
 #include <vector>
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+#include <pybind11/numpy.h>
 #include <pybind11/eval.h>
 #include <gtl/phmap.hpp>
 #include <Eigen/Core>
@@ -408,6 +411,90 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
         return result;
     }
 }
+
+std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
+    std::vector<std::vector<NearNeighborInfo>> result(structure.count);
+    
+    const auto nn = find_near_neighbors(structure, this->cutoff);
+    assert(int(nn.size()) == structure.count);
+    
+    std::vector<double> cutoff_cluster_list;
+    cutoff_cluster_list = get_cutoff_cluster(structure, this->n, this->cutoff, nn);
+    if (int(cutoff_cluster_list.size()) <= this->rank_k) {
+        return result;
+    }
+    
+    Eigen::VectorXd d(nn[this->n].size());
+    for (int j = 0; j < int(nn[this->n].size()); ++j) {
+        if (nn[this->n][j].distance < 1e-8) {
+            d(j) = 9999;
+        } else {
+            d(j) = nn[this->n][j].distance;
+        }
+    }
+    for (int j = 0; j < int(nn[this->n].size()); ++j) {
+        if ((d(j) <= cutoff_cluster_list.at(this->rank_k)) && (d(j) > cutoff_cluster_list.at(this->rank_k-1))) {
+            result[this->n].emplace_back(NearNeighborInfo{
+                    nn[this->n][j].all_coords_idx,
+                    d(j), // min_d / d(j) になぜしていたか分からないが、これ以降でdistの値を使わないので保留。
+                    nn[this->n][j].image,
+                    py::dict()
+            });
+        }
+    }
+    return result;
+}
+
+std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structure, int n, double cutoff, const auto &nn) const {
+    // サイトごとに3つの閾値を決定する
+
+    int nn_size = int(nn[n].size());
+    std::vector<std::vector<double>> distance_vec(nn_size, std::vector<double>(2));
+    
+    int count = 0;
+    for (const auto &neighbor: nn[n]) {
+        // const auto nn = neighs_dists
+        double dist = neighbor.distance;
+        distance_vec.at(count).at(0) = dist;
+        distance_vec.at(count).at(1) = 0.0;
+    }
+
+    std::vector<int> clustering_labels;
+    
+    //  py::scoped_interpreter guard{}; // Pythonインタープリタを開始
+
+    py::object sklearn = py::module::import("sklearn.cluster");
+    py::object DBSCAN = sklearn.attr("DBSCAN");
+
+    // py::array_t<double> data;
+    // Call DBSCAN
+    // py::object dbscan = DBSCAN(0.5, 2);
+    py::object dbscan = DBSCAN();
+    dbscan.attr("fit")(distance_vec);
+    py::list labels_py = dbscan.attr("labels_").cast<py::list>();
+    std::vector<int> labels;
+    for (const auto& item : labels_py) {
+        labels.push_back(item.cast<int>());
+    }
+
+    int max_label = *std::max_element(begin(labels), end(labels));
+    std::vector<double> max_dist_list(max_label+1);
+    for (int label_number = 0; label_number < max_label; label_number++) {
+        double max_dist = 0.0;
+        for (int i = 0; i < int(labels.size()); i++) {
+            int label = labels.at(i);
+            std::vector<double> distance = distance_vec.at(i);
+            if (label == label_number) {
+                max_dist = std::max(max_dist, distance.at(0));
+            }
+        }
+        max_dist_list.at(label_number) = max_dist;
+    }
+
+    std::sort(max_dist_list.begin(), max_dist_list.end());
+    return max_dist_list;
+}
+
 
 std::vector<std::vector<NearNeighborInfo>> MinimumOKeeffeNN::get_all_nn_info_cpp(const Structure &structure) const {
     const auto neighs_dists = find_near_neighbors(structure, this->cutoff);
@@ -1346,6 +1433,13 @@ void init_near_neighbor(pybind11::module &m) {
             .def(py::init<double, double>(),
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0);
+    
+    py::class_<LongDistanceNN, std::shared_ptr<LongDistanceNN>, NearNeighbor>(m, "LongDistanceNN")
+            .def(py::init<double, int, int, double>(),
+                 py::arg("tol") = 0.1,
+                 py::arg("n") = 0,
+                 py::arg("rank_k") = 3,
+                 py::arg("cutoff") = 6.0);
 
     py::class_<CrystalNN, std::shared_ptr<CrystalNN>, NearNeighbor>(m, "CrystalNN")
             .def(py::init<bool, bool, std::pair<double, double>, double, bool, double, int>(),
