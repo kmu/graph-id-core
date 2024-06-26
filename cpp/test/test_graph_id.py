@@ -26,10 +26,12 @@ class TestGraphIDGenerator(unittest.TestCase):
         b = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure():
             with self.subTest(name):
-                try:
-                    aid = a.get_id(s)
-                except Exception:
-                    self.skipTest("pymatgen error")
+                # try:
+                print(name)
+
+                aid = a.get_id(s)
+                # except Exception:
+                #     self.skipTest("pymatgen error")
                 self.assertEqual(aid, b.get_id(s))
 
 
