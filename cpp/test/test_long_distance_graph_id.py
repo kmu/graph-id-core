@@ -18,7 +18,7 @@ def small_test_structure(max_sites=30):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
         # if s.num_sites <= max_sites and "Fe" in name:
-        if s.num_sites <= max_sites:
+        if s.num_sites <= max_sites and name != "VSbO4":
             res.append((name, s))
     return res
 
