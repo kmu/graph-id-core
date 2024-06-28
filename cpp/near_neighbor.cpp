@@ -1,4 +1,5 @@
 #include "near_neighbor.h"
+#include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -414,16 +415,16 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
 
 std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
-    
+
     const auto nn = find_near_neighbors(structure, this->cutoff);
     assert(int(nn.size()) == structure.count);
-    
+
     std::vector<double> cutoff_cluster_list;
     cutoff_cluster_list = get_cutoff_cluster(structure, this->n, this->cutoff, nn);
     if (int(cutoff_cluster_list.size()) <= this->rank_k) {
         return result;
     }
-    
+
     Eigen::VectorXd d(nn[this->n].size());
     for (int j = 0; j < int(nn[this->n].size()); ++j) {
         if (nn[this->n][j].distance < 1e-8) {
@@ -449,6 +450,8 @@ std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structur
     // サイトごとに3つの閾値を決定する
 
     // std::vector<double> max_dist_list = {0.0, 1.2, 3.1, 5.2};
+    assert(n < nn.size());
+
     int nn_size = int(nn[n].size());
     std::vector<std::vector<double>> distance_vec(nn_size, std::vector<double>(2));
     
