@@ -1,5 +1,4 @@
 #include "graph_id.h"
-#include <iostream>
 #include "structure_graph.h"
 
 std::string GraphIDGenerator::get_id(const Structure &structure) const {
