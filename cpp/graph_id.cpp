@@ -1,4 +1,5 @@
 #include "graph_id.h"
+#include <iostream>
 #include "structure_graph.h"
 
 std::string GraphIDGenerator::get_id(const Structure &structure) const {
@@ -37,9 +38,9 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
 std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) const {
     auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
     std::vector<std::string> gids(this->rank_k);
+    const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
     for (int idx = 0; idx < this->rank_k; idx++){
         // MinimumDistanceNNでStructureGraphを作成する
-        const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
         std::vector<std::string> j_strs(structure.count);
         for (int j = 0; j < structure.count; j++){
             // const auto sg = _sg;
@@ -53,14 +54,14 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
             const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, this->rank_k, this->cutoff);
-            std::vector<std::string> cc_labels(sg.cc_nodes.size());
-            for (size_t i = 0; i < sg_for_cc.cc_nodes.size(); ++i) {
+            std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
+            for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
                 std::vector<std::string> labels = sg_for_cc.cc_cs[i];
                 std::sort(labels.begin(), labels.end());
-                cc_labels[i] = blake2b(join_string("-", labels));
+                cc_labels[i] = blake2b(join_string("-", labels), 16);
                 }
             std::sort(cc_labels.begin(), cc_labels.end());
-            std::string j_str = blake2b(join_string(":", {cc_labels[j]}), 16);
+            std::string j_str = blake2b(join_string(":", cc_labels), 16);
             j_strs.at(j) = j_str;
         }
         std::string gid = blake2b(join_string(":", j_strs), 16);
@@ -68,7 +69,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
     }
     std::string all_gid = blake2b(join_string(":", gids), 16);
 
-    return all_gid;
+    return elaborate_comp_dim(_sg, all_gid);
 }
 
 

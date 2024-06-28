@@ -367,7 +367,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
                     }
                     cs.finalize_this_depth();
                 }
-                cs_list.emplace_back(cs.string());
+                cs_list.emplace_back(blake2b(cs.string(), 16));
             }
             cc_cs.emplace_back(std::move(cs_list));
         }

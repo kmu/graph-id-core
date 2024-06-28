@@ -448,6 +448,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
 std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structure, int n, double cutoff, const auto &nn) const {
     // サイトごとに3つの閾値を決定する
 
+    // std::vector<double> max_dist_list = {0.0, 1.2, 3.1, 5.2};
     int nn_size = int(nn[n].size());
     std::vector<std::vector<double>> distance_vec(nn_size, std::vector<double>(2));
     
