@@ -17,8 +17,8 @@ def small_test_structure(max_sites=30):
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
-        # if s.num_sites <= max_sites and "Fe" in name:
-        if s.num_sites <= max_sites and name != "VSbO4":
+        if s.num_sites <= max_sites and "Fe" in name:
+        # if s.num_sites <= max_sites and name != "VSbO4":
             res.append((name, s))
     return res
 
