@@ -44,7 +44,7 @@ StructureGraph StructureGraph::with_individual_state_comp_strategy(
 ) {
     // auto sg = StructureGraph::with_empty_graph(structure);
     // assert(strategy == LongDistanceNN);
-    const auto &nn = LongDistanceNN(n=n, rank_k=rank_k, cutoff=cutoff).get_all_nn_info_cpp(*structure);
+    const auto &nn = LongDistanceNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
     assert(int(nn.size()) == structure->count);
     for (int from = 0; from < int(nn.size()); ++from) {
         for (size_t i = 0; i < nn[from].size(); ++i) {
