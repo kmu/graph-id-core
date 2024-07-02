@@ -42,7 +42,6 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
         // MinimumDistanceNNでStructureGraphを作成する
         std::vector<std::string> j_strs(structure.count);
         for (int j = 0; j < structure.count; j++){
-            // const auto sg = _sg;
             auto sg = _sg;
             // 原子jを含むedgeを削除する処理
             for (const auto& [key, value] : sg.graph_map){
@@ -52,13 +51,15 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             }
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
-            const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, this->rank_k, this->cutoff);
+            const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
             std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
-            for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
-                std::vector<std::string> labels = sg_for_cc.cc_cs[i];
-                std::sort(labels.begin(), labels.end());
-                cc_labels[i] = blake2b(join_string("-", labels), 16);
-                }
+            // TODO(tanimoto):  connected_componentsが複数ある場合は要検討
+            // for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
+            //     std::vector<std::string> labels = sg_for_cc.cc_cs[i];
+            //     std::sort(labels.begin(), labels.end());
+            //     // cc_labels[i] = blake2b(join_string("-", labels), 16);
+            //     cc_labels[i] = join_string("-", labels);
+            //     }
             std::sort(cc_labels.begin(), cc_labels.end());
             std::string j_str = blake2b(join_string(":", cc_labels), 16);
             j_strs.at(j) = j_str;

@@ -58,19 +58,16 @@ class LongDistanceGraphID(GraphIDGenerator):
                 for from_index, to_index, _, dct in _sg.graph.edges(idx, keys=True, data=True):
                     copied_sg.break_edge(from_index, to_index, dct["to_jimage"], allow_reverse=True)
                 sg = self.prepare_structure_graph(structure, copied_sg, idx, cluster_idx)
-                # n = len(sg.cc_cs)
-                # array = np.empty(
-                #     [
-                #         n,
-                #     ],
-                #     dtype=object,
-                # )
-                # for i, component in enumerate(sg.cc_cs):
-                #     array[i] = blake("-".join(sorted(component["cs_list"])))
-                # long_str_tmp = ":".join(np.sort(array))
-
-                # TODO(tanimoto): connected_componentsが複数ある場合は要検討 #  noqa: TD003, FIX002
-                long_str_tmp = blake("-".join(sorted(sg.cc_cs[0]["cs_list"])))
+                n = len(sg.cc_cs)
+                array = np.empty(
+                    [
+                        n,
+                    ],
+                    dtype=object,
+                )
+                for i, component in enumerate(sg.cc_cs):
+                    array[i] = blake("-".join(sorted(component["cs_list"])))
+                long_str_tmp = ":".join(np.sort(array))
                 long_str_list.append(long_str_tmp)
             long_str = ":".join(np.sort(long_str_list))
             gid = blake2b(long_str.encode("ascii"), digest_size=16).hexdigest()

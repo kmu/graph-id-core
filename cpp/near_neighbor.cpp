@@ -10,7 +10,6 @@
 
 #include "core.h"
 
-
 py::list NearNeighbor::get_all_nn_info(py::object &structure) {
     auto s = structure.cast<PymatgenStructure>();
     auto pymatgen = py::module_::import("pymatgen.core");
@@ -433,7 +432,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
         }
     }
     for (int j = 0; j < int(nn[this->n].size()); ++j) {
-        if ((d(j) <= cutoff_cluster_list.at(this->rank_k)) && (d(j) > cutoff_cluster_list.at(this->rank_k-1))) {
+        if ((this->rank_k > 0 && d(j) <= cutoff_cluster_list.at(this->rank_k)) && (d(j) > cutoff_cluster_list.at(this->rank_k-1)) || (this->rank_k == 0 && d(j) <= cutoff_cluster_list.at(this->rank_k))) {
             result[this->n].emplace_back(NearNeighborInfo{
                     nn[this->n][j].all_coords_idx,
                     d(j), // min_d / d(j) になぜしていたか分からないが、これ以降でdistの値を使わないので保留。
@@ -460,6 +459,7 @@ std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structur
         double dist = neighbor.distance;
         distance_vec.at(count).at(0) = dist;
         distance_vec.at(count).at(1) = 0.0;
+        count++;
     }
 
     std::vector<int> clustering_labels;
@@ -472,7 +472,7 @@ std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structur
     // py::array_t<double> data;
     // Call DBSCAN
     // py::object dbscan = DBSCAN(0.5, 2);
-    py::object dbscan = DBSCAN();
+    py::object dbscan = DBSCAN(py::arg("eps")=0.5, py::arg("min_samples")=2);
     dbscan.attr("fit")(distance_vec);
     py::list labels_py = dbscan.attr("labels_").cast<py::list>();
     std::vector<int> labels;
@@ -482,7 +482,7 @@ std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structur
 
     int max_label = *std::max_element(begin(labels), end(labels));
     std::vector<double> max_dist_list(max_label+1);
-    for (int label_number = 0; label_number < max_label; label_number++) {
+    for (int label_number = 0; label_number <= max_label; label_number++) {
         double max_dist = 0.0;
         for (int i = 0; i < int(labels.size()); i++) {
             int label = labels.at(i);
