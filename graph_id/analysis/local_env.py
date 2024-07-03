@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 from pymatgen.analysis.local_env import NearNeighbors, _get_default_radius, _get_radius
@@ -65,7 +65,7 @@ class LongDistanceNN(NearNeighbors):
         max_weight = round(cutoff_cluster_list[rank_k], 3)
         neighs_dists = structure.get_neighbors(site, max_weight)
         # is_periodic = isinstance(structure, Structure | IStructure) # Python 3.10 以降でのみサポート
-        is_periodic = isinstance(structure, Union[Structure, IStructure])
+        is_periodic = isinstance(structure, Structure) or isinstance(structure, IStructure)
         siw = []
 
         for nn in neighs_dists:

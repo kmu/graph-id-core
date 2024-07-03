@@ -53,13 +53,12 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
             const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
             std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
-            // TODO(tanimoto):  connected_componentsが複数ある場合は要検討
-            // for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
-            //     std::vector<std::string> labels = sg_for_cc.cc_cs[i];
-            //     std::sort(labels.begin(), labels.end());
-            //     // cc_labels[i] = blake2b(join_string("-", labels), 16);
-            //     cc_labels[i] = join_string("-", labels);
-            //     }
+            for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
+                std::vector<std::string> labels = sg_for_cc.cc_cs[i];
+                std::sort(labels.begin(), labels.end());
+                // cc_labels[i] = blake2b(join_string("-", labels), 16);
+                cc_labels[i] = join_string("-", labels);
+                }
             std::sort(cc_labels.begin(), cc_labels.end());
             std::string j_str = blake2b(join_string(":", cc_labels), 16);
             j_strs.at(j) = j_str;
