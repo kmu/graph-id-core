@@ -432,7 +432,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
         }
     }
     for (int j = 0; j < int(nn[this->n].size()); ++j) {
-        if ((this->rank_k > 0 && d(j) <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000) && (d(j) > round(1000*cutoff_cluster_list.at(this->rank_k-1))/1000) || (this->rank_k == 0 && d(j) <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000)) {
+        if ((this->rank_k > 0 && round(1000*d(j))/1000 <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000) && (round(1000*d(j))/1000 > round(1000*cutoff_cluster_list.at(this->rank_k-1))/1000) || (this->rank_k == 0 && round(1000*d(j))/1000 <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000)) {
             result[this->n].emplace_back(NearNeighborInfo{
                     nn[this->n][j].all_coords_idx,
                     d(j), // min_d / d(j) になぜしていたか分からないが、これ以降でdistの値を使わないので保留。
