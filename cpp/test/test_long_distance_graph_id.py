@@ -9,8 +9,6 @@ from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
 
-import faulthandler
-faulthandler.enable()
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
