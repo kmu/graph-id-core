@@ -62,8 +62,8 @@ class LongDistanceNN(NearNeighbors):
         if len(cutoff_cluster_list) <= rank_k:
             return []
 
+        neighs_dists = structure.get_neighbors(site, cutoff_cluster_list[rank_k])
         max_weight = round(cutoff_cluster_list[rank_k], 3)
-        neighs_dists = structure.get_neighbors(site, max_weight)
         # is_periodic = isinstance(structure, Structure | IStructure) # Python 3.10 以降でのみサポート
         is_periodic = isinstance(structure, Structure) or isinstance(structure, IStructure)
         siw = []

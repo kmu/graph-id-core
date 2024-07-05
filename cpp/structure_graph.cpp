@@ -1,4 +1,5 @@
 #include "structure_graph.h"
+#include <iostream>
 #include <Eigen/Core>
 #include <Eigen/LU>
 
@@ -336,15 +337,24 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
-
+    
+    std::cout << "cc_nodes.size(): " << cc_nodes.size() << std::endl;
     for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
         std::vector<std::string> cs_list;
         cs_list.reserve(cc_nodes[cc_i].size());
 
         const int depth = cc_diameter[cc_i] * depth_factor + additional_depth;
-
+        std::cout << "depth: " << depth << std::endl;
+        for (auto c: cc_nodes[cc_i]) {
+            std::cout << "c: " << c << std::endl;
+        }
+        std::cout << "n: " << n << std::endl;
+        std::cout << "flag: " << std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n) << std::endl;
         if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
+            std::cout << "if: True" << std::endl;
+            std::cout << "cc_nodes[cc_i].size(): " << cc_nodes[cc_i].size() << std::endl;
             for (const int focused_site_i: cc_nodes[cc_i]) {
+                std::cout << "focused_site_i: " << focused_site_i << std::endl;
                 if (PyErr_CheckSignals()) throw py::error_already_set();
                 CompositionalSequence cs;
                 cs.hash_cs = hash_cs;
@@ -358,6 +368,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
                     for (const auto &c_site: cs.get_current_starting_sites()) {
                         for (const auto &nni: graph[std::get<0>(c_site)]) {
                             auto &arr = std::get<1>(c_site);
+                            std::cout << "nni.site_index: " << nni.site_index << std::endl;
                             cs.count_composition_for_neighbors(nni.site_index, {
                                     nni.image[0] + arr[0],
                                     nni.image[1] + arr[1],
@@ -367,7 +378,11 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
                     }
                     cs.finalize_this_depth();
                 }
-                cs_list.emplace_back(blake2b(cs.string(), 16));
+                // cs_list.emplace_back(blake2b(cs.string(), 16));
+                cs_list.emplace_back(cs.string());
+            }
+            for (int idx = 0; idx < cs_list.size(); idx++) {
+                std::cout << "cs_list_idx: " << cs_list.at(idx) << std::endl;
             }
             cc_cs.emplace_back(std::move(cs_list));
         }

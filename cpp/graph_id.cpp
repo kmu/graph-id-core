@@ -1,5 +1,6 @@
 #include "graph_id.h"
 #include "structure_graph.h"
+#include <iostream>
 
 std::string GraphIDGenerator::get_id(const Structure &structure) const {
     auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
@@ -57,18 +58,29 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
                 std::vector<std::string> labels = sg_for_cc.cc_cs[i];
                 std::sort(labels.begin(), labels.end());
                 // cc_labels[i] = blake2b(join_string("-", labels), 16);
-                cc_labels[i] = join_string("-", labels);
+                std::cout << "join_string(-, labels): " << join_string("-", labels) << std::endl;
+                cc_labels[i] = blake2b(join_string("-", labels));
+                std::cout << "blake2b(join_string(-, labels)): " << blake2b(join_string("-", labels)) << std::endl;
                 }
             std::sort(cc_labels.begin(), cc_labels.end());
-            std::string j_str = blake2b(join_string(":", cc_labels), 16);
+            std::cout << "cc_lables: ";
+            for (auto cc_l: cc_labels) {
+                std::cout << cc_l;
+            }
+            std::cout << std::endl;
+            // std::string j_str = blake2b(join_string(":", cc_labels), 16);
+            std::string j_str = join_string(":", cc_labels);
+            std::cout << "j_str: " << j_str << std::endl;
             j_strs.at(j) = j_str;
         }
         std::string gid = blake2b(join_string(":", j_strs), 16);
+        std::cout << "gid: " << gid << std::endl;
         gids.at(idx) = gid;
     }
-    std::string all_gid = blake2b(join_string(":", gids), 16);
-
-    return elaborate_comp_dim(_sg, all_gid);
+    // std::string all_gid = blake2b(join_string(":", gids), 16);
+    std::string all_gid = join_string("", gids);
+    std::cout << "all_gid" << all_gid << std::endl;
+    return elaborate_comp_dim(_sg, blake2b(all_gid, 16));
 }
 
 
@@ -190,9 +202,10 @@ StructureGraph GraphIDGenerator::prepare_long_distance_structure_graph(int n, st
     }
 
     while (true) {
+        std::cout << "prepare_long_distance_structure_graph n_1: " << n << std::endl;
         sg.set_individual_compositional_sequence_node_attr(
-                true,
                 n,
+                false, // hash_cs
                 wyckoff,
                 additional_depth,
                 depth_factor,
