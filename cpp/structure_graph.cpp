@@ -106,38 +106,57 @@ void StructureGraph::break_edge(
         bool allow_reverse
 ) {
     assert(0 <= from && from < int(this->graph.size()));
+    std::cout << "assert(0 <= from && from < int(this->graph.size()));" << std::endl;
     assert(0 <= to && to < int(this->graph.size()));
+    std::cout << "assert(0 <= to && to < int(this->graph.size()));" << std::endl;
     // std::array<int, 3> image{};
 
     // 自分自身への辺は無視する
     if (from == to && image == std::array<int, 3>{0, 0, 0}) {
+        std::cout << "if (from == to && image == std::array<int, 3>{0, 0, 0}) {" << std::endl;
         return;
     }
     // 辺が存在する場合はそのまま取り除く
     if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {
+        std::cout << "if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {" << std::endl;
         // graph[from].erase(graph[from].begin() + iter);
         auto begin_it = graph[from].begin();
+        std::cout << "auto begin_it = graph[from].begin();" << std::endl;
         std::advance(begin_it, iter->second);
+        std::cout << "std::advance(begin_it, iter->second);" << std::endl;
         graph[from].erase(begin_it);
+        std::cout << "graph[from].erase(begin_it);" << std::endl;
         graph_map.erase(std::make_tuple(from, to, image));
+        std::cout << "graph_map.erase(std::make_tuple(from, to, image));" << std::endl;
         // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
         for (const auto& [key, value] : graph_map){
+            std::cout << "for (const auto& [key, value] : graph_map){" << std::endl;
             if (value > iter->second && std::get<0>(key) == from){
+                std::cout << "if (value > iter->second && std::get<0>(key) == from){" << std::endl;
                 graph_map[key] = value - 1;
+                std::cout << "graph_map[key] = value - 1;" << std::endl;
             }
         }
     }else{
         if(allow_reverse){
             // 逆向きの辺を削除する
             if(auto iter = graph_map.find(std::make_tuple(to, from, image));  iter != this->graph_map.end()){
+                std::cout << "if(auto iter = graph_map.find(std::make_tuple(to, from, image));  iter != this->graph_map.end()){" << std::endl;
                 auto begin_it = graph[from].begin();
+                std::cout << "auto begin_it = graph[from].begin();" << std::endl;
                 std::advance(begin_it, iter->second);
+                std::cout << "std::advance(begin_it, iter->second);" << std::endl;
                 graph[from].erase(begin_it);
+                std::cout << "graph[from].erase(begin_it);" << std::endl;
                 graph_map.erase(std::make_tuple(to, from, image));
+                std::cout << "graph_map.erase(std::make_tuple(to, from, image));" << std::endl;
                 // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
                 for (const auto& [key, value] : graph_map){
+                    std::cout << "for (const auto& [key, value] : graph_map){" << std::endl;
                     if (value > iter->second && std::get<0>(key) == to){
+                        std::cout << "if (value > iter->second && std::get<0>(key) == to){" << std::endl;
                         graph_map[key] = value - 1;
+                        std::cout << "graph_map[key] = value - 1;" << std::endl;
                     }
                 }
             }else{
