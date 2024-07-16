@@ -1,5 +1,6 @@
 #include "graph_id.h"
 #include "structure_graph.h"
+#include<iostream>
 
 std::string GraphIDGenerator::get_id(const Structure &structure) const {
     auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
@@ -36,36 +37,59 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
 
 std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) const {
     auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
+    std::cout << "auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});" << std::endl;
     std::vector<std::string> gids(this->rank_k);
+    std::cout << "std::vector<std::string> gids(this->rank_k);" << std::endl;
     const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
+    std::cout << "const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);" << std::endl;
     for (int idx = 0; idx < this->rank_k; idx++){
+        std::cout << "for (int idx = 0; idx < this->rank_k; idx++){" << std::endl;
         // MinimumDistanceNNでStructureGraphを作成する
         std::vector<std::string> j_strs(structure.count);
+        std::cout << "std::vector<std::string> j_strs(structure.count);" << std::endl;
         for (int j = 0; j < structure.count; j++){
+            std::cout << "for (int j = 0; j < structure.count; j++){" << std::endl;
             auto sg = _sg;
+            std::cout << "auto sg = _sg;" << std::endl;
             // 原子jを含むedgeを削除する処理
             for (const auto& [key, value] : sg.graph_map){
+                std::cout << "for (const auto& [key, value] : sg.graph_map){" << std::endl;
                 if (std::get<0>(key) == j){
+                    std::cout << "if (std::get<0>(key) == j){" << std::endl;
                     sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
+                    std::cout << "sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);" << std::endl;
                 }
             }
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
+            std::cout << "auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});" << std::endl;
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
+            std::cout << "auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});" << std::endl;
             const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
+            std::cout << "const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);" << std::endl;
             std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
+            std::cout << "std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());" << std::endl;
             for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
+                std::cout << "for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {" << std::endl;
                 std::vector<std::string> labels = sg_for_cc.cc_cs[i];
+                std::cout << "std::vector<std::string> labels = sg_for_cc.cc_cs[i];" << std::endl;
                 std::sort(labels.begin(), labels.end());
+                std::cout << "std::sort(labels.begin(), labels.end());" << std::endl;
                 // cc_labels[i] = blake2b(join_string("-", labels), 16);
                 cc_labels[i] = blake2b(join_string("-", labels));
+                std::cout << "cc_labels[i] = blake2b(join_string(-, labels));" << std::endl;
                 }
             std::sort(cc_labels.begin(), cc_labels.end());
+            std::cout << "std::sort(cc_labels.begin(), cc_labels.end());" << std::endl;
             // std::string j_str = blake2b(join_string(":", cc_labels), 16);
             std::string j_str = join_string(":", cc_labels);
+            std::cout << "std::string j_str = join_string(:, cc_labels);" << std::endl;
             j_strs.at(j) = j_str;
+            std::cout << "j_strs.at(j) = j_str;" << std::endl;
         }
         std::string gid = blake2b(join_string(":", j_strs), 16);
+        std::cout << "std::string gid = blake2b(join_string(:, j_strs), 16);" << std::endl;
         gids.at(idx) = gid;
+        std::cout << "gids.at(idx) = gid;" << std::endl;
     }
     // std::string all_gid = blake2b(join_string(":", gids), 16);
     std::string all_gid = join_string("", gids);
