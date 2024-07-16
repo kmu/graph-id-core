@@ -60,6 +60,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
                     std::cout << "sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);" << std::endl;
                 }
             }
+            std::cout << "}" << std::endl;
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
             std::cout << "auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});" << std::endl;
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
