@@ -93,6 +93,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
     }
     // std::string all_gid = blake2b(join_string(":", gids), 16);
     std::string all_gid = join_string("", gids);
+    std::cout << "std::string all_gid = join_string(, gids);" << std::endl;
     return elaborate_comp_dim(_sg, blake2b(all_gid, 16));
 }
 
