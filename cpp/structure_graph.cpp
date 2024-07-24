@@ -73,6 +73,33 @@ StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Stru
     };
 }
 
+StructureGraph StructureGraph::from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure) {
+    auto sg = StructureGraph::with_empty_graph(structure);
+
+    // PythonのStructureGraphからエッジを取得
+    py::list edges = py_sg.attr("graph").attr("edges");
+
+    // エッジを追加
+    for (auto& edge : edges) {
+        // edgeの詳細を取得し、C++のStructureGraphに追加します。
+        // ここではedgeがstd::pair<int, int>型と仮定しています。
+        std::tuple<int, int, int> e = edge.cast<std::tuple<int, int, int>>();
+        py::dict edges_property = py_sg.attr("graph").attr("edges")[edge];
+        std::array<int, 3> to_jimage_array;
+        auto to_jimage = edges_property["to_jimage"].cast<py::list>();
+        for (size_t i = 0; i < to_jimage_array.size(); ++i) {
+            to_jimage_array[i] = to_jimage[i].cast<int>();
+        }
+        sg.add_edge(std::get<0>(e), {0, 0, 0}, std::get<1>(e), to_jimage_array, std::get<2>(e));
+    }
+    sg.set_cc_diameter();
+    
+    return sg;
+}
+
+
+
+
 void StructureGraph::add_edge(
         int from,
         std::array<int, 3> from_image,
@@ -106,57 +133,43 @@ void StructureGraph::break_edge(
         bool allow_reverse
 ) {
     assert(0 <= from && from < int(this->graph.size()));
-    std::cout << "assert(0 <= from && from < int(this->graph.size()));" << std::endl;
     assert(0 <= to && to < int(this->graph.size()));
-    std::cout << "assert(0 <= to && to < int(this->graph.size()));" << std::endl;
     // std::array<int, 3> image{};
 
     // 自分自身への辺は無視する
     if (from == to && image == std::array<int, 3>{0, 0, 0}) {
-        std::cout << "if (from == to && image == std::array<int, 3>{0, 0, 0}) {" << std::endl;
         return;
     }
     // 辺が存在する場合はそのまま取り除く
     if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {
-        std::cout << "if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {" << std::endl;
         // graph[from].erase(graph[from].begin() + iter);
         auto begin_it = graph[from].begin();
-        std::cout << "auto begin_it = graph[from].begin();" << std::endl;
         std::advance(begin_it, iter->second);
-        std::cout << "std::advance(begin_it, iter->second);" << std::endl;
         graph[from].erase(begin_it);
-        std::cout << "graph[from].erase(begin_it);" << std::endl;
         graph_map.erase(std::make_tuple(from, to, image));
-        std::cout << "graph_map.erase(std::make_tuple(from, to, image));" << std::endl;
         // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
         for (const auto& [key, value] : graph_map){
-            std::cout << "for (const auto& [key, value] : graph_map){" << std::endl;
             if (value > iter->second && std::get<0>(key) == from){
-                std::cout << "if (value > iter->second && std::get<0>(key) == from){" << std::endl;
                 graph_map[key] = value - 1;
-                std::cout << "graph_map[key] = value - 1;" << std::endl;
             }
         }
     }else{
         if(allow_reverse){
             // 逆向きの辺を削除する
-            if(auto iter = graph_map.find(std::make_tuple(to, from, image));  iter != this->graph_map.end()){
-                std::cout << "if(auto iter = graph_map.find(std::make_tuple(to, from, image));  iter != this->graph_map.end()){" << std::endl;
-                auto begin_it = graph[from].begin();
-                std::cout << "auto begin_it = graph[from].begin();" << std::endl;
+            // 逆向きのimageを定義
+            std::array<int, 3> jimage;
+            for (int i = 0; i < image.size(); i++) {
+                jimage[i] = -image[i];
+            }
+            if(auto iter = graph_map.find(std::make_tuple(to, from, jimage));  iter != this->graph_map.end()){
+                auto begin_it = graph[to].begin();
                 std::advance(begin_it, iter->second);
-                std::cout << "std::advance(begin_it, iter->second);" << std::endl;
-                graph[from].erase(begin_it);
-                std::cout << "graph[from].erase(begin_it);" << std::endl;
-                graph_map.erase(std::make_tuple(to, from, image));
-                std::cout << "graph_map.erase(std::make_tuple(to, from, image));" << std::endl;
+                graph[to].erase(begin_it);
+                graph_map.erase(std::make_tuple(to, from, jimage));
                 // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
                 for (const auto& [key, value] : graph_map){
-                    std::cout << "for (const auto& [key, value] : graph_map){" << std::endl;
                     if (value > iter->second && std::get<0>(key) == to){
-                        std::cout << "if (value > iter->second && std::get<0>(key) == to){" << std::endl;
                         graph_map[key] = value - 1;
-                        std::cout << "graph_map[key] = value - 1;" << std::endl;
                     }
                 }
             }else{
@@ -475,6 +488,7 @@ py::object StructureGraph::to_py() const {
     return sg;
 }
 
+
 std::string CompositionalSequence::string() const {
     if (hash_cs) {
         return (*labels)[focused_site_i] + "-" + cs_for_hashing;
@@ -544,6 +558,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("use_previous_cs") = false)
             .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)
+            .def("from_py", &StructureGraph::from_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用
                 py::list arr;

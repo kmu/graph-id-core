@@ -46,6 +46,8 @@ public:
 
     static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure);
 
+    static StructureGraph from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure);
+
     void set_elemental_labels();
 
     void set_wyckoffs_label(double symmetry_tol = 0.1);
