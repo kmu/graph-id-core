@@ -54,9 +54,9 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             // 原子jを含むedgeを削除する処理
             for (const auto& [key, value] : sg.graph_map){
                 std::cout << "for (const auto& [key, value] : sg.graph_map){" << std::endl;
+                std::cout << "key size: " << std::tuple_size<decltype(key)>::value << std::endl;
                 if (std::get<0>(key) == j){
                     std::cout << "if (std::get<0>(key) == j){" << std::endl;
-                    std::cout << "key size: " << std::tuple_size<decltype(key)>::value << std::endl;
                     sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
                     std::cout << "sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);" << std::endl;
                 }
