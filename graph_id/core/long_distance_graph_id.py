@@ -55,8 +55,9 @@ class LongDistanceGraphID(GraphIDGenerator):
             for idx in range(len(structure)):
                 copied_sg = deepcopy(_sg)
                 # まず原子idxが含まれる結合を削除する
-                for from_index, to_index, _, dct in _sg.graph.edges(idx, keys=True, data=True):
-                    copied_sg.break_edge(from_index, to_index, dct["to_jimage"], allow_reverse=True)
+                for from_index, to_index, dct in _sg.graph.edges(keys=False, data=True):
+                    if from_index == idx or to_index == idx:
+                        copied_sg.break_edge(from_index, to_index, dct["to_jimage"], allow_reverse=True)
                 sg = self.prepare_structure_graph(structure, copied_sg, idx, cluster_idx)
                 n = len(sg.cc_cs)
                 array = np.empty(
@@ -66,6 +67,8 @@ class LongDistanceGraphID(GraphIDGenerator):
                     dtype=object,
                 )
                 for i, component in enumerate(sg.cc_cs):
+                    from icecream import ic
+                    ic("-".join(sorted(component["cs_list"])))
                     array[i] = blake("-".join(sorted(component["cs_list"])))
                 long_str_tmp = ":".join(np.sort(array))
                 long_str_list.append(long_str_tmp)
