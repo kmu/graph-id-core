@@ -399,6 +399,6 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 node_attributes[n] = self.starting_labels[n] + "_" + this_cs
                 cs_list.append(this_cs)
 
-            self.cc_cs.append({"site_i": cc, "cs_list": cs_list})
+                self.cc_cs.append({"site_i": cc, "cs_list": cs_list})
 
         nx.set_node_attributes(self.graph, values=node_attributes, name="compositional_sequence")

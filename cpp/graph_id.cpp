@@ -65,7 +65,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
                 std::vector<std::string> labels = sg_for_cc.cc_cs[i];
                 std::sort(labels.begin(), labels.end());
-                std::cout << "join_string(-, labels)" << join_string("-", labels) << std::endl;
+                // std::cout << "join_string(-, labels)" << join_string("-", labels) << std::endl;
                 // cc_labels[i] = blake2b(join_string("-", labels), 16);
                 cc_labels[i] = blake2b(join_string("-", labels));
                 }

@@ -374,7 +374,13 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         std::vector<std::string> cs_list;
         cs_list.reserve(cc_nodes[cc_i].size());
 
-        const int depth = cc_diameter[cc_i] * depth_factor + additional_depth;
+        // int d = cc_diameter[cc_i];
+        py::object distance_measures = py::module::import("networkx.algorithms.distance_measures");
+        py::object diameter = distance_measures.attr("diameter");
+        py::object py_structure_graph = this->to_py();
+        py::object ug = py_structure_graph.attr("graph").attr("to_undirected")();
+        int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
+        const int depth = d * depth_factor + additional_depth;
         if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
             // for (const int focused_site_i: cc_nodes[cc_i]) {
             if (PyErr_CheckSignals()) throw py::error_already_set();
@@ -388,6 +394,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
             // cs.seen_sites.insert(connected_site_to_uint64(focused_site_i, {0, 0, 0}));
             cs.seen_sites.insert(connected_site_to_uint64(n, {0, 0, 0}));
 
+            // std::cout << "depth: " << depth << std::endl;
             for (int di = 0; di < depth; ++di) {
                 for (const auto &c_site: cs.get_current_starting_sites()) {
                     for (const auto &nni: graph[std::get<0>(c_site)]) {

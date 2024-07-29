@@ -67,8 +67,6 @@ class LongDistanceGraphID(GraphIDGenerator):
                     dtype=object,
                 )
                 for i, component in enumerate(sg.cc_cs):
-                    from icecream import ic
-                    ic("-".join(sorted(component["cs_list"])))
                     array[i] = blake("-".join(sorted(component["cs_list"])))
                 long_str_tmp = ":".join(np.sort(array))
                 long_str_list.append(long_str_tmp)
