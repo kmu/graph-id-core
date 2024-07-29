@@ -47,13 +47,13 @@ StructureGraph StructureGraph::with_individual_state_comp_strategy(
     // assert(strategy == LongDistanceNN);
     const auto &nn = LongDistanceNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
     assert(int(nn.size()) == structure->count);
-    for (int from = 0; from < int(nn.size()); ++from) {
-        for (size_t i = 0; i < nn[from].size(); ++i) {
-            const auto &nni = nn[from][i];
-            sg.add_edge(from, {0, 0, 0}, nni.site_index, nni.image, nni.weight);
-            sg.add_edge(nni.site_index, nni.image, from, {0, 0, 0}, nni.weight);
-        }
+    // for (int from = 0; from < int(nn.size()); ++from) {
+    for (size_t i = 0; i < nn[n].size(); ++i) {
+        const auto &nni = nn[n][i];
+        sg.add_edge(n, {0, 0, 0}, nni.site_index, nni.image, nni.weight);
+        sg.add_edge(nni.site_index, nni.image, n, {0, 0, 0}, nni.weight);
     }
+    // }
     sg.set_cc_diameter();
     return sg;
 }
@@ -380,7 +380,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
             if (PyErr_CheckSignals()) throw py::error_already_set();
             CompositionalSequence cs;
             cs.hash_cs = hash_cs;
-            // cs.focused_site_i = focused_site_i;
+            cs.focused_site_i = n;
             cs.labels = &labels;
             cs.use_previous_sites = use_previous_cs || wyckoff;
             // cs.new_sites = {{focused_site_i, {0, 0, 0}}};

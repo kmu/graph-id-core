@@ -43,22 +43,22 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
         // MinimumDistanceNNでStructureGraphを作成する
         std::vector<std::string> j_strs(structure.count);
         for (int j = 0; j < structure.count; j++){
-            // auto sg = _sg;
-            py::object py_structure_graph = _sg.to_py();
+            auto sg = _sg;
+            // py::object py_structure_graph = _sg.to_py();
             // 原子jを含むedgeを削除する処理
             for (const auto& [key, value] : _sg.graph_map){
                 if (std::get<0>(key) == j){
-                    // sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
-                    py_structure_graph.attr("break_edge")(
-                        py::arg("from_index") = std::get<0>(key),
-                        py::arg("to_index") = std::get<1>(key),
-                        py::arg("to_jimage") = std::get<2>(key),
-                        py::arg("allow_reverse") = true
-                    );
+                    sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
+                    // py_structure_graph.attr("break_edge")(
+                    //     py::arg("from_index") = std::get<0>(key),
+                    //     py::arg("to_index") = std::get<1>(key),
+                    //     py::arg("to_jimage") = std::get<2>(key),
+                    //     py::arg("allow_reverse") = true
+                    // );
                 }
             }
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
-            auto sg = StructureGraph::from_py(py_structure_graph, _s_ptr);
+            // auto sg = StructureGraph::from_py(py_structure_graph, _s_ptr);
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
             const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
             std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
