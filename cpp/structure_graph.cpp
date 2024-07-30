@@ -369,19 +369,32 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
+
+    py::object distance_measures = py::module::import("networkx.algorithms.distance_measures");
+    py::object diameter = distance_measures.attr("diameter");
+    py::object networkx = py::module::import("networkx");
+    py::object py_structure_graph = this->to_py();
+    py::object ug = py_structure_graph.attr("graph").attr("to_undirected")();
     
-    for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
+    // for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
+    py::object cc = networkx.attr("connected_components")(ug);
+    std::vector<std::set<int>> cpp_vec;
+
+    for (const auto& item : cc) {
+        std::set<int> inner_vec = py::cast<std::set<int>>(item);
+        cpp_vec.push_back(inner_vec);
+    }
+    for (const auto &cc_vector: cpp_vec) {
         std::vector<std::string> cs_list;
-        cs_list.reserve(cc_nodes[cc_i].size());
+        // cs_list.reserve(cc_nodes[cc_i].size());
+        cs_list.reserve(cc_vector.size());
 
         // int d = cc_diameter[cc_i];
-        py::object distance_measures = py::module::import("networkx.algorithms.distance_measures");
-        py::object diameter = distance_measures.attr("diameter");
-        py::object py_structure_graph = this->to_py();
-        py::object ug = py_structure_graph.attr("graph").attr("to_undirected")();
-        int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
+        // int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
+        int d = diameter(ug.attr("subgraph")(cc_vector)).cast<int>();
         const int depth = d * depth_factor + additional_depth;
-        if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
+        // if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
+        if (std::count(cc_vector.begin(), cc_vector.end(), n)) {
             // for (const int focused_site_i: cc_nodes[cc_i]) {
             if (PyErr_CheckSignals()) throw py::error_already_set();
             CompositionalSequence cs;
