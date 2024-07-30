@@ -513,7 +513,19 @@ std::string CompositionalSequence::string() const {
     if (hash_cs) {
         return (*labels)[focused_site_i] + "-" + cs_for_hashing;
     } else {
-        return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
+        bool empty_bool = true;
+        for (const auto cs_str: compositional_seq) {
+            if (cs_str != "") {
+                empty_bool = false;
+            }
+        }
+        if (empty_bool) {
+            return (*labels)[focused_site_i] + "-";
+        }
+        else {
+            return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
+        }
+        
     }
 }
 
