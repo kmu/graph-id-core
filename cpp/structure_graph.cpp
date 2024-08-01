@@ -158,10 +158,9 @@ void StructureGraph::break_edge(
             // 逆向きの辺を削除する
             // 逆向きのimageを定義
             std::array<int, 3> jimage;
-            for (int i = 0; i < image.size(); i++) {
-                jimage[i] = -image[i];
-            }
-            if(auto iter = graph_map.find(std::make_tuple(to, from, jimage));  iter != this->graph_map.end()){
+            for (int i = 0; i < 3; i++) jimage[i] = -image[i];
+            // if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != this->graph_map.end()){
+            if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != graph_map.end()){
                 auto begin_it = graph[to].begin();
                 std::advance(begin_it, iter->second);
                 graph[to].erase(begin_it);

@@ -7,7 +7,7 @@
 #include <gtl/phmap.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
-
+#include <iostream>
 #include "core.h"
 
 py::list NearNeighbor::get_all_nn_info(py::object &structure) {
@@ -431,6 +431,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
             d(j) = nn[this->n][j].distance;
         }
     }
+    const double min_distance = d.minCoeff();
     for (int j = 0; j < int(nn[this->n].size()); ++j) {
         if (
             (this->rank_k > 0 
@@ -441,7 +442,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
         ) {
             result[this->n].emplace_back(NearNeighborInfo{
                     nn[this->n][j].all_coords_idx,
-                    d(j), // min_d / d(j) になぜしていたか分からないが、これ以降でdistの値を使わないので保留。
+                    min_distance / d(j), // min_d / d(j) になぜしていたか分からないが、これ以降でdistの値を使わないので保留。
                     nn[this->n][j].image,
                     py::dict()
             });
