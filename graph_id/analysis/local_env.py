@@ -90,24 +90,23 @@ class LongDistanceNN(NearNeighbors):
         DBSCANによって得られた距離のクラスターから結合判定の閾値を決定する
         """
 
-        # スーパーセルを作成し、6.0angまでの結合長を数え上げる
-        copy_structure = structure.copy()
-        supercell = copy_structure.make_supercell([3, 3, 3])
-        site_i = structure[n]
+        # # スーパーセルを作成し、6.0angまでの結合長を数え上げる
+        # copy_structure = structure.copy()
+        # supercell = copy_structure.make_supercell([3, 3, 3])
+        # site_i = structure[n]
 
-        site_index = None
-        for idx, site in enumerate(supercell):
-            # Siteのdistanceメソッドを使うとなぜか正しく距離が計算されない
-            if float(np.linalg.norm(site_i.coords - site.coords)) < 0.01:
-                site_index = idx
-                break
+        # site_index = None
+        # for idx, site in enumerate(supercell):
+        #     # Siteのdistanceメソッドを使うとなぜか正しく距離が計算されない
+        #     if float(np.linalg.norm(site_i.coords - site.coords)) < 0.01:
+        #         site_index = idx
+        #         break
 
         distance_list = []
-        for i in range(len(supercell)):
-            if i != site_index:
-                distance = supercell.get_distance(site_index, i)
-                if distance < cutoff:
-                    distance_list.append([distance, 0])
+        neighbors = structure.get_sites_in_sphere(structure[n].coords, cutoff)
+        for neighbor in neighbors:
+            dist = neighbor.nn_distance
+            distance_list.append([dist, 0])
 
         dbscan = DBSCAN(eps=0.5, min_samples=2)
         dbscan.fit(distance_list)

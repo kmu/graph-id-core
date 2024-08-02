@@ -7,7 +7,7 @@
 #include <gtl/phmap.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
-#include <iostream>
+
 #include "core.h"
 
 py::list NearNeighbor::get_all_nn_info(py::object &structure) {
