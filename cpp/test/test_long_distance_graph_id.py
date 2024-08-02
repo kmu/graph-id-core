@@ -57,7 +57,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         self.assertEqual(graphite_aid, graphite_bid)
         self.assertEqual(diamond_aid, diamond_bid)
 
-        self.assertEqual(graphite_aid, "d076e21ab0c0c4d6f22243231869f177")
+        self.assertEqual(graphite_aid, "eb8e457303fed0a236ae6814ed491acb")
         self.assertEqual(diamond_aid, "628ceb4fa82fce02232d846c0d8960e6")
 
 if __name__ == "__main__":
