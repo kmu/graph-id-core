@@ -1,5 +1,4 @@
 #include "structure_graph.h"
-#include <iostream>
 #include <Eigen/Core>
 #include <Eigen/LU>
 
@@ -406,7 +405,6 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
             // cs.seen_sites.insert(connected_site_to_uint64(focused_site_i, {0, 0, 0}));
             cs.seen_sites.insert(connected_site_to_uint64(n, {0, 0, 0}));
 
-            // std::cout << "depth: " << depth << std::endl;
             for (int di = 0; di < depth; ++di) {
                 for (const auto &c_site: cs.get_current_starting_sites()) {
                     for (const auto &nni: graph[std::get<0>(c_site)]) {
@@ -422,7 +420,6 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
             }
             // cs_list.emplace_back(blake2b(cs.string(), 16));
             cs_list.emplace_back(cs.string());
-            // std::cout << "cs.string(): " << cs.string() << std::endl;
         // }
             cc_cs.emplace_back(std::move(cs_list));
         }
