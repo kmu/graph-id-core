@@ -49,9 +49,10 @@ class LongDistanceGraphID(GraphIDGenerator):
 
     def get_id(self, structure):
         gid_list = []
+        _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
         for cluster_idx in range(self.max_cluster_num):
             long_str_list = []
-            _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
+            # _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
             for idx in range(len(structure)):
                 copied_sg = deepcopy(_sg)
                 # まず原子idxが含まれる結合を削除する
@@ -67,15 +68,20 @@ class LongDistanceGraphID(GraphIDGenerator):
                     dtype=object,
                 )
                 for i, component in enumerate(sg.cc_cs):
+                    # from icecream import ic
+                    # ic("-".join(sorted(component["cs_list"])))
                     array[i] = blake("-".join(sorted(component["cs_list"])))
+                    # array[i] = blake2b("-".join(sorted(component["cs_list"])).encode("ascii"), digest_size=16).hexdigest()
                 long_str_tmp = ":".join(np.sort(array))
+                # long_str_tmp = blake2b(":".join(np.sort(array)).encode("ascii"), digest_size=16).hexdigest()
                 long_str_list.append(long_str_tmp)
             long_str = ":".join(np.sort(long_str_list))
             gid = blake2b(long_str.encode("ascii"), digest_size=16).hexdigest()
             gid_list.append(gid)
 
         long_gid = "".join(gid_list)
-        return self.elaborate_comp_dim(sg, blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest())
+        # return self.elaborate_comp_dim(sg, blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest())
+        return blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
         
