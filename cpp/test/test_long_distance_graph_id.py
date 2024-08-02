@@ -37,6 +37,28 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
                 bid = b.get_long_distance_id(s)
 
                 self.assertEqual(aid, bid)
+    
+    def test_carbon_allotrope(self):
+        """
+        グラファイトとダイアモンドは次元を考慮することで区別していた
+        """
+        graphite = Structure.from_file(f"{test_file_dir}/graphite.cif")
+        diamond = Structure.from_file(f"{test_file_dir}/diamond.cif")
+
+        a = LongDistanceGraphID(max_cluster_num=3, cutoff=6.0)
+        b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
+
+        graphite_aid = a.get_id(graphite)
+        graphite_bid = b.get_long_distance_id(graphite)
+
+        diamond_aid = a.get_id(diamond)
+        diamond_bid = b.get_long_distance_id(diamond)
+
+        self.assertEqual(graphite_aid, graphite_bid)
+        self.assertEqual(diamond_aid, diamond_bid)
+
+        self.assertEqual(graphite_aid, "d076e21ab0c0c4d6f22243231869f177")
+        self.assertEqual(diamond_aid, "628ceb4fa82fce02232d846c0d8960e6")
 
 if __name__ == "__main__":
     unittest.main()
