@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import math
-import warnings
 from typing import Any
 
 import numpy as np
-from pymatgen.analysis.local_env import NearNeighbors, _get_default_radius, _get_radius
+from pymatgen.analysis.local_env import NearNeighbors
 from pymatgen.core import IStructure, Structure
 from sklearn.cluster import DBSCAN
 

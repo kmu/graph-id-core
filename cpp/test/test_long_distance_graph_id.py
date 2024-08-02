@@ -1,9 +1,7 @@
 import glob
 import os
 import unittest
-import pytest
 
-import graph_id
 from graph_id.core.long_distance_graph_id import LongDistanceGraphID
 from pymatgen.core import Structure
 

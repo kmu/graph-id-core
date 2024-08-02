@@ -1,11 +1,9 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphIDGenerator
 from graph_id.core.long_distance_graph_id import LongDistanceGraphID
 from graph_id.analysis.local_env import LongDistanceNN
-from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
-from pymatgen.core import Element, Lattice, Structure
+from pymatgen.core import Structure
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
