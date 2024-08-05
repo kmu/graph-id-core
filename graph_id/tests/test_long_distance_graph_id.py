@@ -15,7 +15,7 @@ class TestLongDistanceGraphID(TestCase):
         """
         s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
 
-        ldgid = LongDistanceGraphID(nn=LongDistanceNN(), max_cluster_num=3, cutoff=6.0)
+        ldgid = LongDistanceGraphID(nn=LongDistanceNN(), rank_k=3, cutoff=6.0)
 
         id_1 = ldgid.get_id(s)
 

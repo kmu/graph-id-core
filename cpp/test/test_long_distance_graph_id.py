@@ -25,7 +25,7 @@ def small_test_structure(max_sites=30):
 class TestLongDistanceGraphIDGenerator(unittest.TestCase):
     # @pytest.mark.limit_leaks("1 MB")
     def test_get_long_distance_id(self):
-        a = LongDistanceGraphID(max_cluster_num=3, cutoff=6.0)
+        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
         for name, s in small_test_structure():
             with self.subTest(name):
@@ -43,7 +43,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         graphite = Structure.from_file(f"{test_file_dir}/graphite.cif")
         diamond = Structure.from_file(f"{test_file_dir}/diamond.cif")
 
-        a = LongDistanceGraphID(max_cluster_num=3, cutoff=6.0)
+        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         graphite_aid = a.get_id(graphite)

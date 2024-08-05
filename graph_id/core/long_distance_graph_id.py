@@ -26,7 +26,7 @@ class LongDistanceGraphID(GraphIDGenerator):
         symmetry_tol=0.1,
         topology_only=False,
         loop=False,
-        max_cluster_num=3,
+        rank_k=3,
         cutoff=6.0,
     ) -> None:
         super().__init__(
@@ -39,7 +39,7 @@ class LongDistanceGraphID(GraphIDGenerator):
             loop,
         )
 
-        self.max_cluster_num = max_cluster_num
+        self.rank_k = rank_k
         self.cutoff = cutoff
 
         if nn is None:
@@ -50,7 +50,7 @@ class LongDistanceGraphID(GraphIDGenerator):
     def get_id(self, structure):
         gid_list = []
         _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
-        for cluster_idx in range(self.max_cluster_num):
+        for cluster_idx in range(self.rank_k):
             long_str_list = []
             # _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
             for idx in range(len(structure)):
