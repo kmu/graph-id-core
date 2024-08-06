@@ -81,6 +81,22 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s1_aid, "4c1d6581dacf78dfc8d3da5bdc07b0d5")
         self.assertEqual(s2_aid, "d701ce2ac1a778013c49e0d4d1fe8645")
 
+    def test_empty_compositional_sequence(self):
+        """
+        空のCompositionalSequenceを持つサイトができる構造
+        空のCompositionalSequenceをハイフンでつながない処理にしている
+        """
+        s_298 = Structure.from_file(f"{test_file_dir}/298 K.cif")
+
+        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
+
+        s_298_aid = a.get_id(s_298)
+        s_298_bid = b.get_long_distance_id(s_298)
+
+        self.assertEqual(s_298_aid, s_298_bid)
+        self.assertEqual(s_298_aid, "18a8dce917bce31f14aa96352ec2d24b")
+
     def test_sort_jstrs(self):
         """
         各サイトのCompositionalSequenceをソートしていないと
