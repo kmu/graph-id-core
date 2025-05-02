@@ -33,6 +33,31 @@ StructureGraph StructureGraph::with_local_env_strategy(
     return sg;
 }
 
+StructureGraph StructureGraph::with_individual_state_comp_strategy(
+        const std::shared_ptr<const Structure> &structure,
+        // const std::shared_ptr<const StructureGraph> &sg,
+        StructureGraph &sg,
+        // const NearNeighbor &strategy,
+        int n,
+        int rank_k,
+        double cutoff
+) {
+    // auto sg = StructureGraph::with_empty_graph(structure);
+    // assert(strategy == LongDistanceNN);
+    const auto &nn = LongDistanceNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
+    assert(int(nn.size()) == structure->count);
+    // for (int from = 0; from < int(nn.size()); ++from) {
+    for (size_t i = 0; i < nn[n].size(); ++i) {
+        const auto &nni = nn[n][i];
+        sg.add_edge(n, {0, 0, 0}, nni.site_index, nni.image, nni.weight);
+        sg.add_edge(nni.site_index, nni.image, n, {0, 0, 0}, nni.weight);
+    }
+    // }
+    sg.set_cc_diameter();
+    return sg;
+}
+
+
 StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Structure> &structure) {
     const auto n = structure->count;
     if (n == 0) throw py::value_error("Structure must have at least one site.");
@@ -46,6 +71,33 @@ StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Stru
             {},
     };
 }
+
+StructureGraph StructureGraph::from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure) {
+    auto sg = StructureGraph::with_empty_graph(structure);
+
+    // PythonのStructureGraphからエッジを取得
+    py::list edges = py_sg.attr("graph").attr("edges");
+
+    // エッジを追加
+    for (auto& edge : edges) {
+        // edgeの詳細を取得し、C++のStructureGraphに追加します。
+        // ここではedgeがstd::pair<int, int>型と仮定しています。
+        std::tuple<int, int, int> e = edge.cast<std::tuple<int, int, int>>();
+        py::dict edges_property = py_sg.attr("graph").attr("edges")[edge];
+        std::array<int, 3> to_jimage_array;
+        auto to_jimage = edges_property["to_jimage"].cast<py::list>();
+        for (size_t i = 0; i < to_jimage_array.size(); ++i) {
+            to_jimage_array[i] = to_jimage[i].cast<int>();
+        }
+        sg.add_edge(std::get<0>(e), {0, 0, 0}, std::get<1>(e), to_jimage_array, std::get<2>(e));
+    }
+    sg.set_cc_diameter();
+    
+    return sg;
+}
+
+
+
 
 void StructureGraph::add_edge(
         int from,
@@ -71,6 +123,60 @@ void StructureGraph::add_edge(
 
     this->graph[from].emplace_back(NearNeighborInfo{to, weight, image, std::nullopt});
     this->graph_map[std::make_tuple(from, to, image)] = int(this->graph[from].size() - 1);
+}
+
+void StructureGraph::break_edge(
+        int from,
+        int to,
+        std::array<int, 3> image,
+        bool allow_reverse
+) {
+    assert(0 <= from && from < int(this->graph.size()));
+    assert(0 <= to && to < int(this->graph.size()));
+    // std::array<int, 3> image{};
+
+    // 自分自身への辺は無視する
+    if (from == to && image == std::array<int, 3>{0, 0, 0}) {
+        return;
+    }
+    // 辺が存在する場合はそのまま取り除く
+    if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {
+        // graph[from].erase(graph[from].begin() + iter);
+        auto begin_it = graph[from].begin();
+        std::advance(begin_it, iter->second);
+        graph[from].erase(begin_it);
+        graph_map.erase(std::make_tuple(from, to, image));
+        // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
+        for (const auto& [key, value] : graph_map){
+            if (value > iter->second && std::get<0>(key) == from){
+                graph_map[key] = value - 1;
+            }
+        }
+    }else{
+        if(allow_reverse){
+            // 逆向きの辺を削除する
+            // 逆向きのimageを定義
+            std::array<int, 3> jimage;
+            for (int i = 0; i < 3; i++) jimage[i] = -image[i];
+            // if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != this->graph_map.end()){
+            if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != graph_map.end()){
+                auto begin_it = graph[to].begin();
+                std::advance(begin_it, iter->second);
+                graph[to].erase(begin_it);
+                graph_map.erase(std::make_tuple(to, from, jimage));
+                // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
+                for (const auto& [key, value] : graph_map){
+                    if (value > iter->second && std::get<0>(key) == to){
+                        graph_map[key] = value - 1;
+                    }
+                }
+            }else{
+                throw std::logic_error(
+                    "Edge cannot be broken between from_index and to_index; "
+                    "no edge exists between those sites.");
+            }
+        }
+    }
 }
 
 // グラフの連結成分とその直径を計算する
@@ -252,6 +358,74 @@ void StructureGraph::set_compositional_sequence_node_attr(
     }
 }
 
+void StructureGraph::set_individual_compositional_sequence_node_attr(
+        int n,
+        bool hash_cs,
+        bool wyckoff,
+        int additional_depth,
+        int depth_factor,
+        bool use_previous_cs
+) {
+    cc_cs.resize(0);
+
+    py::object distance_measures = py::module::import("networkx.algorithms.distance_measures");
+    py::object diameter = distance_measures.attr("diameter");
+    py::object networkx = py::module::import("networkx");
+    py::object py_structure_graph = this->to_py();
+    py::object ug = py_structure_graph.attr("graph").attr("to_undirected")();
+    
+    // for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
+    py::object cc = networkx.attr("connected_components")(ug);
+    std::vector<std::set<int>> cpp_vec;
+
+    for (const auto& item : cc) {
+        std::set<int> inner_vec = py::cast<std::set<int>>(item);
+        cpp_vec.push_back(inner_vec);
+    }
+    for (const auto &cc_vector: cpp_vec) {
+        std::vector<std::string> cs_list;
+        // cs_list.reserve(cc_nodes[cc_i].size());
+        cs_list.reserve(cc_vector.size());
+
+        // int d = cc_diameter[cc_i];
+        // int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
+        int d = diameter(ug.attr("subgraph")(cc_vector)).cast<int>();
+        const int depth = d * depth_factor + additional_depth;
+        // if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
+        if (std::count(cc_vector.begin(), cc_vector.end(), n)) {
+            // for (const int focused_site_i: cc_nodes[cc_i]) {
+            if (PyErr_CheckSignals()) throw py::error_already_set();
+            CompositionalSequence cs;
+            cs.hash_cs = hash_cs;
+            cs.focused_site_i = n;
+            cs.labels = &labels;
+            cs.use_previous_sites = use_previous_cs || wyckoff;
+            // cs.new_sites = {{focused_site_i, {0, 0, 0}}};
+            cs.new_sites = {{n, {0, 0, 0}}};
+            // cs.seen_sites.insert(connected_site_to_uint64(focused_site_i, {0, 0, 0}));
+            cs.seen_sites.insert(connected_site_to_uint64(n, {0, 0, 0}));
+
+            for (int di = 0; di < depth; ++di) {
+                for (const auto &c_site: cs.get_current_starting_sites()) {
+                    for (const auto &nni: graph[std::get<0>(c_site)]) {
+                        auto &arr = std::get<1>(c_site);
+                        cs.count_composition_for_neighbors(nni.site_index, {
+                                nni.image[0] + arr[0],
+                                nni.image[1] + arr[1],
+                                nni.image[2] + arr[2]
+                        });
+                    }
+                }
+                cs.finalize_this_depth();
+            }
+            // cs_list.emplace_back(blake2b(cs.string(), 16));
+            cs_list.emplace_back(cs.string());
+        // }
+            cc_cs.emplace_back(std::move(cs_list));
+        }
+    }
+}
+
 bool
 StructureGraph::rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate) {
     size_t n = seen.size();
@@ -330,11 +504,24 @@ py::object StructureGraph::to_py() const {
     return sg;
 }
 
+
 std::string CompositionalSequence::string() const {
     if (hash_cs) {
         return (*labels)[focused_site_i] + "-" + cs_for_hashing;
     } else {
-        return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
+        bool empty_bool = true;
+        for (const auto cs_str: compositional_seq) {
+            if (cs_str != "") {
+                empty_bool = false;
+            }
+        }
+        if (empty_bool) {
+            return (*labels)[focused_site_i] + "-";
+        }
+        else {
+            return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
+        }
+        
     }
 }
 
@@ -399,6 +586,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("use_previous_cs") = false)
             .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)
+            .def("from_py", &StructureGraph::from_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用
                 py::list arr;

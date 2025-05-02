@@ -317,6 +317,28 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
+class LongDistanceNN : public NearNeighbor{
+private:
+    double tol;
+    int n;
+    int rank_k;
+    double cutoff;
+public:
+    explicit LongDistanceNN(double tol = 0.1, int n = 0, int rank_k = 3, double cutoff = 6.0) {
+        this->tol = tol;
+        this->n = n;
+        this->rank_k = rank_k;
+        this->cutoff = cutoff;
+    };
+
+    bool structures_allowed() override { return true; };
+
+    bool molecules_allowed() override { return true; };
+
+    std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
+    std::vector<double> get_cutoff_cluster(const Structure &structure, int n, double cutoff, const auto &nn) const;
+};
+
 class CrystalNN : public NearNeighbor {
 private:
     bool weighted_cn;
