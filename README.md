@@ -7,7 +7,7 @@
 ```
 git submodule init
 git submodule update
-pip install graph_id
+pip install -e .
 ```
 
 ### Installation on mirai
