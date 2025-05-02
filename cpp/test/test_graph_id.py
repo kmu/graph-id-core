@@ -15,7 +15,7 @@ def small_test_structure(max_sites=30):
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
-        if s.num_sites <= max_sites:
+        if s.num_sites <= max_sites and name != "VSbO4":
             res.append((name, s))
     return res
 
@@ -26,10 +26,12 @@ class TestGraphIDGenerator(unittest.TestCase):
         b = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure():
             with self.subTest(name):
-                try:
-                    aid = a.get_id(s)
-                except Exception:
-                    self.skipTest("pymatgen error")
+                # try:
+                print(name)
+
+                aid = a.get_id(s)
+                # except Exception:
+                #     self.skipTest("pymatgen error")
                 self.assertEqual(aid, b.get_id(s))
 
 

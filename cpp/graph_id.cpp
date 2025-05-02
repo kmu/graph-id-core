@@ -34,6 +34,55 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
     return ids;
 }
 
+std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) const {
+    auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
+    std::vector<std::string> gids(this->rank_k);
+    const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
+    for (int idx = 0; idx < this->rank_k; idx++){
+        // MinimumDistanceNNでStructureGraphを作成する
+        std::vector<std::string> j_strs(structure.count);
+        for (int j = 0; j < structure.count; j++){
+            auto sg = _sg;
+            // py::object py_structure_graph = _sg.to_py();
+            // 原子jを含むedgeを削除する処理
+            for (const auto& [key, value] : _sg.graph_map){
+                if (std::get<0>(key) == j || std::get<1>(key) == j){
+                    sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
+                    // py_structure_graph.attr("break_edge")(
+                    //     py::arg("from_index") = std::get<0>(key),
+                    //     py::arg("to_index") = std::get<1>(key),
+                    //     py::arg("to_jimage") = std::get<2>(key),
+                    //     py::arg("allow_reverse") = true
+                    // );
+                }
+            }
+            auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
+            // auto sg = StructureGraph::from_py(py_structure_graph, _s_ptr);
+            auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
+            const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
+            std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
+            for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
+                std::vector<std::string> labels = sg_for_cc.cc_cs[i];
+                std::sort(labels.begin(), labels.end());
+                cc_labels[i] = blake2b(join_string("-", labels));
+                // cc_labels[i] = blake2b(join_string("-", labels), 16);
+            }
+            std::sort(cc_labels.begin(), cc_labels.end());
+            // std::string j_str = blake2b(join_string(":", cc_labels), 16);
+            std::string j_str = join_string(":", cc_labels);
+            j_strs.at(j) = j_str;
+        }
+        std::sort(j_strs.begin(), j_strs.end());
+        std::string gid = blake2b(join_string(":", j_strs), 16);
+        gids.at(idx) = gid;
+    }
+    // std::string all_gid = blake2b(join_string(":", gids), 16);
+    std::string all_gid = join_string("", gids);
+    // return elaborate_comp_dim(_sg, blake2b(all_gid, 16));
+    return blake2b(all_gid, 16);
+}
+
+
 std::string GraphIDGenerator::elaborate_comp_dim(const StructureGraph &sg, const std::string &gid) const {
     int dim = sg.get_dimensionality_larsen();
     if (!topology_only) {
@@ -91,19 +140,110 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
     return sg;
 }
 
+// TODO 一つのクラスにまとめる。もしくは継承を使う。
+StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const {
+    auto sg = StructureGraph::with_local_env_strategy(structure, MinimumDistanceNN());
+    bool use_previous_cs = false;
+
+    auto labels = structure->species_strings;
+    auto prev_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+
+    if (wyckoff) {
+        sg.set_wyckoffs_label(symmetry_tol);
+    } else if (topology_only) {
+        sg.labels = std::vector<std::string>(structure->count, "X");
+    } else if (loop) {
+        sg.set_loops(depth_factor, additional_depth);
+    } else {
+        sg.set_elemental_labels();
+    }
+
+    while (true) {
+        sg.set_compositional_sequence_node_attr(
+                true,
+                wyckoff,
+                additional_depth,
+                depth_factor,
+                use_previous_cs
+        );
+
+        labels.resize(0);
+        for (const auto &v: sg.cc_cs)
+            for (const auto &s: v)
+                labels.emplace_back(s);
+        auto new_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+        if (new_num_uniq == prev_num_uniq) {
+            break;
+        }
+        prev_num_uniq = new_num_uniq;
+    }
+
+    return sg;
+}
+
+StructureGraph GraphIDGenerator::prepare_long_distance_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const {
+    // LongDistanceNNのインスタンスを渡す
+    // auto sg = StructureGraph::with_individual_state_comp_strategy(structure, sg, LongDistanceNN, n, rank_k, cutoff);
+    auto sg = StructureGraph::with_individual_state_comp_strategy(structure, *_sg, n, rank_k, cutoff);
+    bool use_previous_cs = false;
+
+    auto labels = structure->species_strings;
+    auto prev_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+
+    if (wyckoff) {
+        sg.set_wyckoffs_label(symmetry_tol);
+    } else if (topology_only) {
+        sg.labels = std::vector<std::string>(structure->count, "X");
+    } else if (loop) {
+        sg.set_loops(depth_factor, additional_depth);
+    } else {
+        sg.set_elemental_labels();
+    }
+
+    while (true) {
+        sg.set_individual_compositional_sequence_node_attr(
+                n,
+                false, // hash_cs
+                wyckoff,
+                additional_depth,
+                depth_factor,
+                use_previous_cs
+        );
+
+        labels.resize(0);
+        for (const auto &v: sg.cc_cs)
+            for (const auto &s: v)
+                labels.emplace_back(s);
+        auto new_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+        if (new_num_uniq == prev_num_uniq) {
+            break; 
+        }
+        prev_num_uniq = new_num_uniq;
+    }
+
+    return sg;
+}
+
+
 void init_graph_id(pybind11::module &m) {
     py::class_<GraphIDGenerator>(m, "GraphIDGenerator")
-            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool>(),
+            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool, int, double>(),
                  py::arg("nn") = nullptr,
                  py::arg("wyckoff") = false,
                  py::arg("depth_factor") = 2,
                  py::arg("additional_depth") = 1,
                  py::arg("symmetry_tol") = 0.1,
                  py::arg("topology_only") = false,
-                 py::arg("loop") = false)
+                 py::arg("loop") = false,
+                 py::arg("rank_k") = 3,
+                 py::arg("cutoff") = 6.0)
             .def("get_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));
+            })
+            .def("get_long_distance_id", [](const GraphIDGenerator &gig, py::object &structure) {
+                auto s = structure.cast<PymatgenStructure>();
+                return gig.get_long_distance_id(Structure(s));
             })
             .def("get_id_catch_error", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();

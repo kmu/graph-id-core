@@ -85,6 +85,45 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 )
 
         return sg
+    
+    @staticmethod
+    def with_indivisual_state_comp_strategy(structure, strategy, _sg, n, weights=False, rank_k=1, cutoff=6.0):
+        """
+        Constructor for StructureGraph, using a StateCompNN strategy
+        from :Class: `chemsys.pymatgen.analysis.local_env`.
+        :param structure: Structure object
+        :param strategy: an instance of StateCompNN
+        :param n: (int) an index of focused site
+        :param weights: if True, use weights from local_env class
+            (consult relevant class for their meaning)
+        :rank_k: (int) cluster_idx
+        :cutoff: (float)
+        :return:
+        """
+
+        if not strategy.structures_allowed:
+            raise ValueError(  # noqa: TRY003
+                "Chosen strategy is not designed for use with structures!",  # noqa: EM101
+            )
+
+        nn_info = strategy.get_nn_info(structure, n, rank_k, cutoff)
+
+        for neighbor in nn_info:
+            # local_env will always try to add two edges
+            # for any one bond, one from site u to site v
+            # and another form site v to site u: this is
+            # harmless, so warn_duplicates=False
+            _sg.add_edge(
+                from_index=n,
+                from_jimage=(0, 0, 0),
+                to_index=neighbor["site_index"],
+                to_jimage=neighbor["image"],
+                weight=neighbor["weight"] if weights else None,
+                warn_duplicates=False,
+                edge_properties=neighbor["edge_properties"],
+            )
+
+        return _sg
 
     def set_elemental_labels(self):
         self.starting_labels = [site.species_string for site in self.structure]
@@ -317,3 +356,49 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             hashed_all_loops = blake2b(seed_str_all_loops.encode(), digest_size=16).hexdigest()
 
             self.starting_labels.append(hashed_all_loops)
+
+    def set_indivisual_compositional_sequence_node_attr(
+        self,
+        n: int,
+        hash_cs: bool = False,
+        wyckoff: bool = False,
+        additional_depth: int = 0,
+        depth_factor: int = 2,
+        use_previous_cs: bool = False,
+    ) -> None:
+        node_attributes = {}
+        self.cc_cs = []
+        get_connected_sites_light = functools.lru_cache(maxsize=None)(self.get_connected_sites_light)
+
+        ug = self.graph.to_undirected()
+
+        for cc in nx.connected_components(ug):
+            cs_list = []
+
+            d = diameter(ug.subgraph(cc))
+
+            if n in cc:
+                depth = depth_factor * d + additional_depth
+
+                cs = CompositionalSequence(
+                    focused_site_i=n,
+                    starting_labels=self.starting_labels,
+                    hash_cs=hash_cs,
+                    use_previous_cs=use_previous_cs or wyckoff,
+                )
+
+                for _this_depth in range(depth):
+                    for c_site in cs.get_current_starting_sites():
+                        nsites = get_connected_sites_light(c_site[0], c_site[1])
+                        cs.count_composition_for_neighbors(nsites)
+
+                    cs.finalize_this_depth()
+
+                this_cs = str(cs)
+
+                node_attributes[n] = self.starting_labels[n] + "_" + this_cs
+                cs_list.append(this_cs)
+
+                self.cc_cs.append({"site_i": cc, "cs_list": cs_list})
+
+        nx.set_node_attributes(self.graph, values=node_attributes, name="compositional_sequence")

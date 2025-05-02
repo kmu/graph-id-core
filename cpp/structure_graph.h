@@ -35,8 +35,18 @@ public:
     static StructureGraph with_local_env_strategy(
             const std::shared_ptr<const Structure> &structure,
             const NearNeighbor &strategy);
+    
+    static StructureGraph with_individual_state_comp_strategy(
+            const std::shared_ptr<const Structure> &structure,
+            StructureGraph &sg,
+        //     const NearNeighbor &strategy,
+            int n,
+            int rank_k,
+            double coutoff);
 
     static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure);
+
+    static StructureGraph from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure);
 
     void set_elemental_labels();
 
@@ -52,17 +62,33 @@ public:
             bool use_previous_cs
     );
 
+    void set_individual_compositional_sequence_node_attr(
+            int n,
+            bool hash_cs,
+            bool wyckoff,
+            int additional_depth,
+            int depth_factor,
+            bool use_previous_cs
+    );
+
     int get_dimensionality_larsen() const;
 
     py::object to_py() const;
 
-private:
+public:
     void add_edge(
             int from,
             std::array<int, 3> from_image,
             int to,
             std::array<int, 3> to_image,
             double weight
+    );
+
+    void break_edge(
+            int from,
+            int to,
+            std::array<int, 3> image,
+            bool allow_reverse
     );
 
     void set_cc_diameter();
