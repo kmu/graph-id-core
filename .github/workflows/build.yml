@@ -38,6 +38,7 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {project}/tests/py/ -v"
           # Test on a subset of Python versions to speed up CI
           CIBW_TEST_SKIP: "cp36-* cp37-* cp38-* cp39-*"
+          CIBW_SKIP: "pp*"  # pybind11 doesn't support PyPy. Therefore skip PyPy.
         with:
           package-dir: .
           output-dir: wheelhouse
