@@ -35,7 +35,7 @@ jobs:
           CIBW_BEFORE_BUILD_WINDOWS: "if exist build rmdir /s /q build"
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.15
           CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: "pytest {project}/graph_id/tests/ -v"
+          CIBW_TEST_COMMAND: "pytest {project}/tests/py/ -v"
           # Test on a subset of Python versions to speed up CI
           CIBW_TEST_SKIP: "cp36-* cp37-*"
         with:

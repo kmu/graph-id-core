@@ -46,7 +46,6 @@ jobs:
 
     - name: Run pytest
       run: poetry run pytest -v
-
     - if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
       name: Format check
       run: |
@@ -56,3 +55,4 @@ jobs:
       name: Lint check
       run: |
         poetry run pysen run lint
+
