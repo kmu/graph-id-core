@@ -18,26 +18,9 @@ scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
-pysen = {version = "^0.10.4", extras = ["lint"]}
 pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "pybind11~=2.11.1", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.pysen]
-version = "0.10"
-
-[tool.pysen.lint]
-enable_black = true
-enable_flake8 = true
-enable_isort = true
-enable_mypy = false
-mypy_preset = "strict"
-line_length = 119
-py_version = "py38"
-[[tool.pysen.lint.mypy_targets]]
-  paths = ["."]
-
-[tool.pytest.ini_options]
-testpaths = ["graph_id", "cpp"]
