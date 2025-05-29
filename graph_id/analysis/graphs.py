@@ -67,7 +67,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 "Chosen strategy is not designed for use with structures! " "Please choose another strategy."
             )
 
-        sg = StructureGraph.with_empty_graph(structure, name="bonds")
+        sg = StructureGraph.from_empty_graph(structure, name="bonds")
 
         for n, neighbors in enumerate(strategy.get_all_nn_info(structure)):
             for neighbor in neighbors:
