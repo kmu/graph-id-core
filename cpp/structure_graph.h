@@ -44,7 +44,7 @@ public:
             int rank_k,
             double coutoff);
 
-    static StructureGraph with_empty_graph(const std::shared_ptr<const Structure> &structure);
+    static StructureGraph from_empty_graph(const std::shared_ptr<const Structure> &structure);
 
     static StructureGraph from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure);
 
