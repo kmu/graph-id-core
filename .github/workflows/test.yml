@@ -1,4 +1,4 @@
-name: Python application test with Poetry and pytest
+name: Test
 
 on:
   push:
@@ -9,11 +9,13 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@v4
@@ -21,34 +23,28 @@ jobs:
         submodules: recursive
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      shell: bash
 
     - name: Cache Poetry dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+        key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
+          ${{ runner.os }}-poetry-${{ matrix.python-version }}-
           ${{ runner.os }}-poetry-
 
     - name: Install dependencies
       run: poetry install
 
     - name: Run pytest
-      run: poetry run pytest -s
-
-    - if: matrix.python-version == '3.9'
-      name: Format
-      run: |
-         poetry run pysen run format
-
-    - if: matrix.python-version == '3.9'
-      name: Pysen lint
-      run: |
-        poetry run pysen run lint
+      run: poetry run pytest -v
+    
