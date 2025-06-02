@@ -206,14 +206,14 @@ struct Lattice {
         }
     }
 
-    // Eigen は Fortran 配列のように列優先だが、numpy は行優先なので Pymatgen の行列を転地して格納する。
+    // Eigen uses column-major ordering like Fortran arrays, but numpy uses row-major, so we store the Pymatgen matrix transposed.
     Eigen::Matrix3d matrix;
     Eigen::Matrix3d inv_matrix;
     std::array<bool, 3> pbc{true, true, true};
 };
 
-// C++ でいちいち python のオブジェクトにアクセスするオーバーヘッドを避けるために使う PymatgenStructure のコピー。
-// Molecule も透過的に扱える
+// A copy of PymatgenStructure used to avoid the overhead of accessing Python objects repeatedly in C++.
+// Can also handle Molecule transparently
 struct Structure {
     Structure() = default;
 
@@ -259,9 +259,9 @@ static const uint64_t hash_seed0 = 0xc3a5c85c97cb3127ULL;
 static const uint64_t hash_seed1 = 0xb492b66fbe98f273ULL;
 static const uint64_t hash_seed2 = 0x9ae16a3b2f90404fULL;
 
-// x, y を 64bit 整数として、それらを組み合わせて 64bit 整数を作るハッシュ関数
-// CityHash (http://code.google.com/p/cityhash/) の一部を参考にした。
-// hash_combine(hash_seed0, x) などと利用する
+// Hash function that combines two 64-bit integers x and y to create a 64-bit integer
+// Based on parts of CityHash (http://code.google.com/p/cityhash/)
+// Usage: hash_combine(hash_seed0, x) etc.
 inline uint64_t hash_combine(uint64_t x, uint64_t y) {
     const uint64_t kMul = 0x9ddfea08eb382d69ULL;
     uint64_t a = (x ^ y) * kMul;

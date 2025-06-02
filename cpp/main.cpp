@@ -11,13 +11,13 @@ void init_structure_graph(py::module &m);
 void init_graph_id(py::module &m);
 
 PYBIND11_MODULE(graph_id_cpp, m) {
-    // モジュールの初期化
+    // Initialize the module
     init_core(m);
     init_near_neighbor(m);
     init_structure_graph(m);
     init_graph_id(m);
 
-    // pyproject.toml に定義した version を __version__ に設定する。
+    // Set the version defined in pyproject.toml to __version__
 #ifdef VERSION_INFO
     m.attr("__version__") = TO_LITERAL(VERSION_INFO);
 #else

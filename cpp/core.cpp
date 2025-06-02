@@ -19,8 +19,8 @@ std::string join_string(const std::string &delimiter, const std::vector<std::str
 }
 
 void init_core(py::module_ &m) {
-    // void f(PymatgenStructure& s) にたいして Python から f(Structure.from_file("...")) などと呼び出せるように
-    // 暗黙の型変換を定義する。
+    // Define implicit type conversions so that Python calls like f(Structure.from_file("..."))
+    // can be made to void f(PymatgenStructure& s).
 
     // PymatgenSite
     py::class_<PymatgenSite>(m, "PymatgenSite")
