@@ -19,7 +19,7 @@ StructureGraph StructureGraph::with_local_env_strategy(
         const std::shared_ptr<const Structure> &structure,
         const NearNeighbor &strategy
 ) {
-    auto sg = StructureGraph::with_empty_graph(structure);
+    auto sg = StructureGraph::from_empty_graph(structure);
     const auto &nn = strategy.get_all_nn_info_cpp(*structure);
     assert(int(nn.size()) == structure->count);
     for (int from = 0; from < int(nn.size()); ++from) {
@@ -42,7 +42,7 @@ StructureGraph StructureGraph::with_individual_state_comp_strategy(
         int rank_k,
         double cutoff
 ) {
-    // auto sg = StructureGraph::with_empty_graph(structure);
+    // auto sg = StructureGraph::from_empty_graph(structure);
     // assert(strategy == LongDistanceNN);
     const auto &nn = LongDistanceNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
     assert(int(nn.size()) == structure->count);
@@ -58,7 +58,7 @@ StructureGraph StructureGraph::with_individual_state_comp_strategy(
 }
 
 
-StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Structure> &structure) {
+StructureGraph StructureGraph::from_empty_graph(const std::shared_ptr<const Structure> &structure) {
     const auto n = structure->count;
     if (n == 0) throw py::value_error("Structure must have at least one site.");
     return StructureGraph{
@@ -73,7 +73,7 @@ StructureGraph StructureGraph::with_empty_graph(const std::shared_ptr<const Stru
 }
 
 StructureGraph StructureGraph::from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure) {
-    auto sg = StructureGraph::with_empty_graph(structure);
+    auto sg = StructureGraph::from_empty_graph(structure);
 
     // PythonのStructureGraphからエッジを取得
     py::list edges = py_sg.attr("graph").attr("edges");
@@ -486,7 +486,7 @@ int StructureGraph::get_dimensionality_larsen() const {
 
 py::object StructureGraph::to_py() const {
     py::object PmgStructureGraph = py::module::import("pymatgen.analysis.graphs").attr("StructureGraph");
-    py::object sg = PmgStructureGraph.attr("with_empty_graph")(this->structure->py_structure.obj);
+    py::object sg = PmgStructureGraph.attr("from_empty_graph")(this->structure->py_structure.obj);
     for (int i = 0; size_t(i) < this->graph.size(); i++) {
         for (const auto &nni: this->graph[i]) {
             if (i <= nni.site_index) {
@@ -571,8 +571,8 @@ void init_structure_graph(pybind11::module &m) {
             .def_static("with_local_env_strategy", [](PymatgenStructure &s, NearNeighbor &nn) {
                 return StructureGraph::with_local_env_strategy(std::make_shared<Structure>(s), nn);
             })
-            .def_static("with_empty_graph", [](PymatgenStructure &s) {
-                return StructureGraph::with_empty_graph(std::make_shared<Structure>(s));
+            .def_static("from_empty_graph", [](PymatgenStructure &s) {
+                return StructureGraph::from_empty_graph(std::make_shared<Structure>(s));
             })
             .def("set_elemental_labels", &StructureGraph::set_elemental_labels)
             .def("set_wyckoffs", &StructureGraph::set_wyckoffs_label, py::arg("symmetry_tol") = 0.1) // 互換性

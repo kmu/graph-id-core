@@ -13,7 +13,8 @@ std::string GraphIDGenerator::get_id(const Structure &structure) const {
     std::sort(cc_labels.begin(), cc_labels.end());
     std::string gid = blake2b(join_string(":", cc_labels), 16);
 
-    return elaborate_comp_dim(sg, gid);
+    // return elaborate_comp_dim(sg, gid);
+    return gid;
 }
 
 std::string GraphIDGenerator::get_id_catch_error(const Structure &structure) const noexcept {
@@ -216,7 +217,7 @@ StructureGraph GraphIDGenerator::prepare_long_distance_structure_graph(int n, st
                 labels.emplace_back(s);
         auto new_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
         if (new_num_uniq == prev_num_uniq) {
-            break; 
+            break;
         }
         prev_num_uniq = new_num_uniq;
     }
