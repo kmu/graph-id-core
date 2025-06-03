@@ -36,7 +36,7 @@ class TestGraphIDGenerator(unittest.TestCase):
 
     def test_digest_size(self):
         a_4 = graph_id_cpp.GraphIDGenerator(digest_size=4)
-        s = Structure.from_file(glob.glob(os.path.join(test_file_dir, "*.cif"))[0])
+        s = Structure.from_file(os.path.join("tests/py/test_files/Fe.cif"))
         aid_4 = a_4.get_id(s)
         self.assertEqual(len(aid_4), 8)
 
