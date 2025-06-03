@@ -17,6 +17,12 @@ from pymatgen.analysis.local_env import (
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
 
+from pymatgen.analysis.graphs import MoleculeGraph, StructureGraph
+from pymatgen.analysis.local_env import CrystalNN
+
+from pymatgen.core import Element, Lattice, Molecule, Structure
+from pymatgen.util.testing import MatSciTest
+
 from .imports import graph_id_cpp
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
@@ -228,6 +234,151 @@ class TestCrystalNN(TestNN):
 
     def test_structures(self):
         self.run_for_small_structures(CrystalNN(), graph_id_cpp.CrystalNN())
+
+    def setup_method(self):
+        self.lifepo4 = self.get_structure("LiFePO4")
+        self.lifepo4.add_oxidation_state_by_guess()
+        self.he_bcc = self.get_structure("He_BCC")
+        self.he_bcc.add_oxidation_state_by_guess()
+
+        self.disordered_struct = Structure(
+            Lattice.cubic(3),
+            [{"Fe": 0.4, "C": 0.3, "Mn": 0.3}, "O"],
+            [[0, 0, 0], [0.5, 0.5, 0.5]],
+        )
+        self.disordered_struct_with_majority = Structure(
+            Lattice.cubic(3), [{"Fe": 0.6, "C": 0.4}, "O"], [[0, 0, 0], [0.5, 0.5, 0.5]]
+        )
+
+    def test_sanity(self):
+        cnn = graph_id_cpp.CrystalNN()
+        expected_msg = "The weighted_cn parameter and use_weights parameter should match"
+        with pytest.raises(ValueError, match=expected_msg):
+            cnn.get_cn(self.lifepo4, 0, use_weights=True)
+
+        cnn = graph_id_cpp.CrystalNN(weighted_cn=True)
+        with pytest.raises(ValueError, match=expected_msg):
+            cnn.get_cn(self.lifepo4, 0, use_weights=False)
+
+    def test_discrete_cn(self):
+        cnn = graph_id_cpp.CrystalNN()
+        cn_array = []
+        expected_array = 8 * [6] + 20 * [4]
+        for idx, _ in enumerate(self.lifepo4):
+            cn_array.append(cnn.get_cn(self.lifepo4, idx))
+
+        assert cn_array == expected_array
+
+    def test_weighted_cn(self):
+        cnn = graph_id_cpp.CrystalNN(weighted_cn=True)
+        cn_array = []
+
+        # fmt: off
+        expected_array = [
+            5.863, 5.8716, 5.863, 5.8716, 5.7182, 5.7182, 5.719, 5.7181, 3.991, 3.991, 3.991,
+            3.9907, 3.5997, 3.525, 3.4133, 3.4714, 3.4727, 3.4133, 3.525, 3.5997, 3.5997, 3.525,
+            3.4122, 3.4738, 3.4728, 3.4109, 3.5259, 3.5997,
+        ]
+        # fmt: on
+        for idx, _ in enumerate(self.lifepo4):
+            cn_array.append(cnn.get_cn(self.lifepo4, idx, use_weights=True))
+
+        assert_allclose(expected_array, cn_array, 2)
+
+    def test_weighted_cn_no_oxid(self):
+        cnn = graph_id_cpp.CrystalNN(weighted_cn=True)
+        # fmt: off
+        expected_array = [
+            5.8962, 5.8996, 5.8962, 5.8996, 5.7195, 5.7195, 5.7202, 5.7194, 4.0012, 4.0012,
+            4.0012, 4.0009, 3.3897, 3.2589, 3.1218, 3.1914, 3.1914, 3.1218, 3.2589, 3.3897,
+            3.3897, 3.2589, 3.1207, 3.1924, 3.1915, 3.1207, 3.2598, 3.3897,
+        ]
+        # fmt: on
+        struct = self.lifepo4.copy().remove_oxidation_states()
+        cn_array = [cnn.get_cn(struct, idx, use_weights=True) for idx in range(len(struct))]
+
+        assert_allclose(expected_array, cn_array, 2)
+
+    def test_fixed_length(self):
+        cnn = graph_id_cpp.CrystalNN(fingerprint_length=30)
+        nn_data = cnn.get_nn_data(self.lifepo4, 0)
+        assert len(nn_data.cn_weights) == 30
+        assert len(nn_data.cn_nninfo) == 30
+
+    def test_cation_anion(self):
+        cnn = graph_id_cpp.CrystalNN(weighted_cn=True, cation_anion=True)
+        assert cnn.get_cn(self.lifepo4, 0, use_weights=True) == approx(5.8630, abs=1e-2)
+
+    def test_x_diff_weight(self):
+        cnn = graph_id_cpp.CrystalNN(weighted_cn=True, x_diff_weight=0)
+        assert cnn.get_cn(self.lifepo4, 0, use_weights=True) == approx(5.8630, abs=1e-2)
+
+    def test_noble_gas_material(self):
+        cnn = graph_id_cpp.CrystalNN()
+
+        assert cnn.get_cn(self.he_bcc, 0, use_weights=False) == 0
+
+        cnn = graph_id_cpp.CrystalNN(distance_cutoffs=(1.25, 5))
+        assert cnn.get_cn(self.he_bcc, 0, use_weights=False) == 8
+
+    def test_shifted_sites(self):
+        cnn = graph_id_cpp.CrystalNN()
+
+        sites = [[0.0, 0.2, 0.2], [0, 0, 0]]
+        struct = Structure([7, 0, 0, 0, 7, 0, 0, 0, 7], ["I"] * len(sites), sites)
+        bonded_struct = cnn.get_bonded_structure(struct)
+
+        sites_shifted = [[1.0, 0.2, 0.2], [0, 0, 0]]
+        struct_shifted = Structure([7, 0, 0, 0, 7, 0, 0, 0, 7], ["I"] * len(sites_shifted), sites_shifted)
+        bonded_struct_shifted = cnn.get_bonded_structure(struct_shifted)
+
+        assert len(bonded_struct.get_connected_sites(0)) == len(bonded_struct_shifted.get_connected_sites(0))
+
+    def test_get_cn(self):
+        cnn = graph_id_cpp.CrystalNN()
+
+        site_0_coord_num = cnn.get_cn(self.disordered_struct, 0, on_disorder="take_max_species")
+        site_0_coord_num_strict_majority = cnn.get_cn(
+            self.disordered_struct_with_majority, 0, on_disorder="take_majority_strict"
+        )
+        assert site_0_coord_num == 8
+        assert site_0_coord_num == site_0_coord_num_strict_majority
+
+        with pytest.raises(
+            ValueError,
+            match="Site 0 has no majority species, the max species is Fe with occupancy 0.4",
+        ):
+            cnn.get_cn(self.disordered_struct, 0, on_disorder="take_majority_strict")
+        with pytest.raises(
+            ValueError,
+            match="enerating StructureGraphs for disordered Structures is unsupported. Pass on_disorder=",
+        ):
+            cnn.get_cn(self.disordered_struct, 0, on_disorder="error")
+
+    def test_get_bonded_structure(self):
+        cnn = graph_id_cpp.CrystalNN()
+
+        structure_graph = cnn.get_bonded_structure(self.disordered_struct, on_disorder="take_max_species")
+        structure_graph_strict_majority = cnn.get_bonded_structure(
+            self.disordered_struct_with_majority, on_disorder="take_majority_strict"
+        )
+        structure_graph_drop_majority = cnn.get_bonded_structure(
+            self.disordered_struct_with_majority, on_disorder="take_majority_drop"
+        )
+
+        assert isinstance(structure_graph, StructureGraph)
+        assert len(structure_graph) == 2
+        assert structure_graph == structure_graph_strict_majority == structure_graph_drop_majority
+
+        with pytest.raises(
+            ValueError,
+            match="Site 0 has no majority species, the max species is Fe with occupancy 0.4",
+        ):
+            cnn.get_bonded_structure(self.disordered_struct, 0, on_disorder="take_majority_strict")
+
+        expected_msg = "Generating StructureGraphs for disordered Structures is unsupported. Pass on_disorder="
+        with pytest.raises(ValueError, match=expected_msg):
+            cnn.get_bonded_structure(self.disordered_struct, 0, on_disorder="error")
 
 
 class TestCutoffDictNN(TestNN):
