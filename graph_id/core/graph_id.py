@@ -67,7 +67,7 @@ class GraphIDGenerator:
         for i, component in enumerate(sg.cc_cs):
             array[i] = blake("-".join(sorted(component["cs_list"])))
         long_str = ":".join(np.sort(array))
-        gid = blake2b(long_str.encode("ascii"), digest_size=digest_size).hexdigest()
+        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
         gid = self.elaborate_comp_dim(sg, gid)
 

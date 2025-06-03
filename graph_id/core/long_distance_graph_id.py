@@ -77,12 +77,12 @@ class LongDistanceGraphID(GraphIDGenerator):
                 # long_str_tmp = blake2b(":".join(np.sort(array)).encode("ascii"), digest_size=16).hexdigest()
                 long_str_list.append(long_str_tmp)
             long_str = ":".join(np.sort(long_str_list))
-            gid = blake2b(long_str.encode("ascii"), digest_size=digest_size).hexdigest()
+            gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
             gid_list.append(gid)
 
         long_gid = "".join(gid_list)
         # return self.elaborate_comp_dim(sg, blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest())
-        return blake2b(long_gid.encode("ascii"), digest_size=digest_size).hexdigest()
+        return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
         
