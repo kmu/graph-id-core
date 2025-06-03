@@ -48,7 +48,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             // 原子jを含むedgeを削除する処理
             for (const auto& [key, value] : _sg.graph_map){
                 if (std::get<0>(key) == j || std::get<1>(key) == j){
-                    sg.break_edge(get<0>(key), get<1>(key), get<2>(key), true);
+                    sg.break_edge(std::get<0>(key), std::get<1>(key), std::get<2>(key), true);
                     // py_structure_graph.attr("break_edge")(
                     //     py::arg("from_index") = std::get<0>(key),
                     //     py::arg("to_index") = std::get<1>(key),
