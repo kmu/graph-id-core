@@ -1,6 +1,7 @@
 import glob
 import os.path
 import unittest
+import pytest
 
 import numpy as np
 from pymatgen.analysis.local_env import (
@@ -16,6 +17,13 @@ from pymatgen.analysis.local_env import (
 )
 from pymatgen.core import Molecule, Structure
 from pymatgen.optimization.neighbors import find_points_in_spheres
+
+from pymatgen.analysis.graphs import MoleculeGraph, StructureGraph
+from pymatgen.analysis.local_env import CrystalNN
+
+from pymatgen.core import Element, Lattice, Molecule, Structure
+from pymatgen.core.periodic_table import Specie
+from pymatgen.util.testing import MatSciTest
 
 from .imports import graph_id_cpp
 
@@ -228,6 +236,36 @@ class TestCrystalNN(TestNN):
 
     def test_structures(self):
         self.run_for_small_structures(CrystalNN(), graph_id_cpp.CrystalNN())
+
+class TestPmgCrystalNN(TestNN):
+# class TestCustomCrystalNN(unittest.TestCase):
+    def setUp(self):
+        self.lattice = Lattice.cubic(10)
+        self.nacl_structure = Structure(
+            self.lattice,
+            [Specie("Na", 1), Specie("Cl", -1)],
+            [[0, 0, 0], [0.5, 0, 0]],  # Distance 5, relative to cell this is 0.05
+        )
+        self.fe_o_structure = Structure(
+            self.lattice,
+            [Specie("Fe", 2), Specie("O", -2)],  # Ensure species have oxi_state and X
+            [[0, 0, 0], [2, 0, 0]],
+        )  # Dist 2A
+
+    def test_get_nn_data_cation_anion(self):
+        """Test CrystalNN.get_nn_data with cation_anion=True (covers lines 348-355)."""
+        nn = CrystalNN(cation_anion=True)
+        nn_data = nn.get_nn_data(self.nacl_structure, 0)  # Na+ at site 0
+        assert nn_data is not None
+        if nn_data.all_nninfo:  # Check if any neighbors found
+            for entry in nn_data.all_nninfo:
+                assert entry["site"].specie.symbol == "Cl"
+                assert entry["site"].specie.oxi_state * self.nacl_structure[0].specie.oxi_state < 0
+
+        # Test ValueError if no valid targets
+        s_no_valid_targets = Structure(self.lattice, [Specie("Na", 1), Specie("K", 1)], [[0, 0, 0], [0.5, 0, 0]])
+        with pytest.raises(ValueError, match="No valid targets for site within cation_anion constraint!"):
+            nn.get_nn_data(s_no_valid_targets, 0)
 
 
 class TestCutoffDictNN(TestNN):
