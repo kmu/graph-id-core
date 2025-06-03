@@ -35,10 +35,10 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
                 bid = b.get_long_distance_id(s)
 
                 self.assertEqual(aid, bid)
-    
+
     def test_carbon_allotrope(self):
         """
-        グラファイトとダイアモンドは次元を考慮することで区別していた
+        Assert that graphite and diamond have different IDs
         """
         graphite = Structure.from_file(f"{test_file_dir}/graphite.cif")
         diamond = Structure.from_file(f"{test_file_dir}/diamond.cif")
@@ -60,8 +60,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
     def test_one_site_structure(self):
         """
-        サイトが1つだけの構造
-        結合ができていないと全て同じIDになる
+        Structures with only one site
+        If there is no bond, all structures have the same ID
         """
         s1 = Structure.from_file(f"{test_file_dir}/mp-121.cif")
         s2 = Structure.from_file(f"{test_file_dir}/mp-611219.cif")
@@ -83,8 +83,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
     def test_empty_compositional_sequence(self):
         """
-        空のCompositionalSequenceを持つサイトができる構造
-        空のCompositionalSequenceをハイフンでつながない処理にしている
+        Structures with an empty CompositionalSequence
+        If there is no bond, all structures have the same ID
         """
         s_298 = Structure.from_file(f"{test_file_dir}/298 K.cif")
 
@@ -99,8 +99,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
     def test_sort_jstrs(self):
         """
-        各サイトのCompositionalSequenceをソートしていないと
-        IDが変わってしまう構造
+        If the CompositionalSequence of each site is not sorted,
+        the ID will change.
         """
         s_1078 = Structure.from_file(f"{test_file_dir}/1078 K.cif")
 
@@ -115,7 +115,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
     def test_break_edge(self):
         """
-        break_edgeする際に逆向きの辺も削除しないとIDが変わってしまう構造
+        If the reverse edge is not deleted when break_edge is called,
+        the ID will change.
         """
         s_ca = Structure.from_file(f"{test_file_dir}/mp-1067285.cif")
 
@@ -130,8 +131,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
     def test_no_supercell_structure(self):
         """
-        スーパーセルを作るだけだと6.0angまでの結合を
-        全ては見つけられない構造
+        If only a supercell is made,
+        all bonds up to 6.0 angstroms are not found.
         """
 
         s_si = Structure.from_file(f"{test_file_dir}/mp-1056579.cif")

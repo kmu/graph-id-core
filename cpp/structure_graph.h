@@ -17,11 +17,11 @@ class StructureGraph {
 public:
     std::shared_ptr<const Structure> structure;
 
-    // 連結リスト形式のグラフ
+    // A graph in a linked list format
     std::vector<std::vector<NearNeighborInfo>> graph;
 
-    // from, to, jiamge のタプルから graph[from] の NearNeighborInfo への index へのマップ
-    // graph_map[from, to, image] = index のとき、graph[from][index] が to への NearNeighborInfo である。
+    // A map from a tuple of from, to, and image to the index of NearNeighborInfo in graph[from]
+    // When graph_map[from, to, image] = index, graph[from][index] is the NearNeighborInfo to to.
     std::map<std::tuple<int, int, std::array<int, 3>>, int> graph_map;
 
     std::vector<std::string> labels;
@@ -35,7 +35,7 @@ public:
     static StructureGraph with_local_env_strategy(
             const std::shared_ptr<const Structure> &structure,
             const NearNeighbor &strategy);
-    
+
     static StructureGraph with_individual_state_comp_strategy(
             const std::shared_ptr<const Structure> &structure,
             StructureGraph &sg,
