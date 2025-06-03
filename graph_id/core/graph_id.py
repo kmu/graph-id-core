@@ -28,6 +28,7 @@ class GraphIDGenerator:
         symmetry_tol=0.1,
         topology_only=False,
         loop=False,
+        digest_size=16,
     ):
         """
         comp_dim: include composition and dimensionality as the prefix
@@ -50,6 +51,7 @@ class GraphIDGenerator:
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
         self.loop = loop
+        self.digest_size = digest_size
 
     # def get_graph_I#
 
@@ -65,7 +67,7 @@ class GraphIDGenerator:
         for i, component in enumerate(sg.cc_cs):
             array[i] = blake("-".join(sorted(component["cs_list"])))
         long_str = ":".join(np.sort(array))
-        gid = blake2b(long_str.encode("ascii"), digest_size=16).hexdigest()
+        gid = blake2b(long_str.encode("ascii"), digest_size=digest_size).hexdigest()
 
         gid = self.elaborate_comp_dim(sg, gid)
 

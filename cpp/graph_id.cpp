@@ -11,7 +11,7 @@ std::string GraphIDGenerator::get_id(const Structure &structure) const {
         cc_labels[i] = blake2b(join_string("-", labels));
     }
     std::sort(cc_labels.begin(), cc_labels.end());
-    std::string gid = blake2b(join_string(":", cc_labels), 16);
+    std::string gid = blake2b(join_string(":", cc_labels), digest_size);
 
     // return elaborate_comp_dim(sg, gid);
     return gid;
@@ -74,13 +74,13 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             j_strs.at(j) = j_str;
         }
         std::sort(j_strs.begin(), j_strs.end());
-        std::string gid = blake2b(join_string(":", j_strs), 16);
+        std::string gid = blake2b(join_string(":", j_strs), digest_size);
         gids.at(idx) = gid;
     }
     // std::string all_gid = blake2b(join_string(":", gids), 16);
     std::string all_gid = join_string("", gids);
     // return elaborate_comp_dim(_sg, blake2b(all_gid, 16));
-    return blake2b(all_gid, 16);
+    return blake2b(all_gid, digest_size);
 }
 
 
@@ -228,7 +228,7 @@ StructureGraph GraphIDGenerator::prepare_long_distance_structure_graph(int n, st
 
 void init_graph_id(pybind11::module &m) {
     py::class_<GraphIDGenerator>(m, "GraphIDGenerator")
-            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool, int, double>(),
+            .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool, int, double, int>(),
                  py::arg("nn") = nullptr,
                  py::arg("wyckoff") = false,
                  py::arg("depth_factor") = 2,
@@ -237,7 +237,8 @@ void init_graph_id(pybind11::module &m) {
                  py::arg("topology_only") = false,
                  py::arg("loop") = false,
                  py::arg("rank_k") = 3,
-                 py::arg("cutoff") = 6.0)
+                 py::arg("cutoff") = 6.0,
+                 py::arg("digest_size") = 16)
             .def("get_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));
