@@ -34,6 +34,12 @@ class TestGraphIDGenerator(unittest.TestCase):
                 #     self.skipTest("pymatgen error")
                 self.assertEqual(aid, b.get_id(s))
 
+    def test_digest_size(self):
+        a_4 = graph_id_cpp.GraphIDGenerator(digest_size=4)
+        s = Structure.from_file(os.path.join("tests/py/test_files/Fe.cif"))
+        aid_4 = a_4.get_id(s)
+        self.assertEqual(len(aid_4), 8)
+
 
 if __name__ == "__main__":
     unittest.main()

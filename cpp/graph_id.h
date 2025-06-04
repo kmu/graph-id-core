@@ -15,6 +15,7 @@ public:
     bool loop = false;
     int rank_k = 3;
     double cutoff = 6.0;
+    int digest_size = 16;
 
     GraphIDGenerator(
             const std::shared_ptr<const NearNeighbor> &nn,
@@ -25,10 +26,11 @@ public:
             bool topology_only,
             bool loop,
             int rank_k,
-            double cutoff
+            double cutoff,
+            int digest_size
     ) : wyckoff(wyckoff), depth_factor(depth_factor), additional_depth(additional_depth),
         symmetry_tol(symmetry_tol), topology_only(topology_only), loop(loop),
-        rank_k(rank_k), cutoff(cutoff) {
+        rank_k(rank_k), cutoff(cutoff), digest_size(digest_size) {
         if (nn) {
             this->nn = nn;
         } else {

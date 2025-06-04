@@ -176,7 +176,8 @@ VoronoiNN::get_all_voronoi_polyhedra(const Structure &structure) const {
             }
 
             Eigen::Matrix3Xd qvoronoi_input(3, flat.size());
-            for (int i = 0; const auto &nn: flat) {
+            int i = 0;
+            for (const auto &nn: flat) {
                 qvoronoi_input.col(i++) = nn.xyz(structure);
             }
 
@@ -801,7 +802,8 @@ double CrystalNN::semicircle_integral(const std::vector<double> &dist_bins, int 
 void CrystalNN::transform_to_length(CrystalNN::NNData &nn_data, int length) {
     if (length == 0) return;
     for (int cn = 0; cn < length; ++cn) {
-        if (!nn_data.cn_weights.contains(cn)) {
+        // if (!nn_data.cn_weights.contains(cn)) {
+        if (nn_data.cn_weights.find(cn) == nn_data.cn_weights.end()){
             nn_data.cn_weights[cn] = 0;
             nn_data.cn_nninfo[cn] = {};
         }
