@@ -15,7 +15,7 @@ public:
     bool loop = false;
     int rank_k = 3;
     double cutoff = 6.0;
-    int digest_size = 16;
+    int digest_size = 8;
 
     GraphIDGenerator(
             const std::shared_ptr<const NearNeighbor> &nn,

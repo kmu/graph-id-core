@@ -28,7 +28,7 @@ class LongDistanceGraphID(GraphIDGenerator):
         loop=False,
         rank_k=3,
         cutoff=6.0,
-        digest_size=16,
+        digest_size=8,
     ) -> None:
         super().__init__(
             nn,

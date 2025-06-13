@@ -348,12 +348,12 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 loop_elements = standardize_loop(loop_elements)
 
                 seed_str = "-".join(loop_elements)
-                hashed_loop = blake2b(seed_str.encode(), digest_size=16).hexdigest()
+                hashed_loop = blake2b(seed_str.encode(), digest_size=8).hexdigest()
 
                 all_loop_strings.append(hashed_loop)
 
             seed_str_all_loops = ":".join(sorted(all_loop_strings))
-            hashed_all_loops = blake2b(seed_str_all_loops.encode(), digest_size=16).hexdigest()
+            hashed_all_loops = blake2b(seed_str_all_loops.encode(), digest_size=8).hexdigest()
 
             self.starting_labels.append(hashed_all_loops)
 
