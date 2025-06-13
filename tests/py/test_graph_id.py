@@ -34,14 +34,14 @@ class TestGraphIDGenerator(TestCase):
             wyckoff=True,
         )
 
-        self.assertEqual("NaCl-3D-85844dcbb16110e5c27bb042ea794cf9", gid.get_id(nacl))
-        self.assertEqual("CsNa3Cl4-3D-6f29b7e87826fe2a433e502eb1e6e670", gid.get_id(cscl))
+        self.assertEqual("NaCl-3D-88c8e156db1b0fd9", gid.get_id(nacl))
+        self.assertEqual("CsNa3Cl4-3D-1a85e9c5247fb74a", gid.get_id(cscl))
 
-        self.assertEqual("3D-ddab0ca91146bfcb0b6029c2690dd616", gid_topo.get_id(nacl))
-        self.assertEqual("3D-ddab0ca91146bfcb0b6029c2690dd616", gid_topo.get_id(cscl))
+        self.assertEqual("3D-c144aa1ceffbd9af", gid_topo.get_id(nacl))
+        self.assertEqual("3D-c144aa1ceffbd9af", gid_topo.get_id(cscl))
 
-        self.assertEqual("3D-866249dfed8626b6c900e533beb58a57", gid_topo_wyckoff.get_id(nacl))
-        self.assertEqual("3D-866249dfed8626b6c900e533beb58a57", gid_topo_wyckoff.get_id(cscl))
+        self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(nacl))
+        self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(cscl))
 
     def test_LiMnTeO(self):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
@@ -63,7 +63,7 @@ class TestGraphIDGenerator(TestCase):
         gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
         id_1 = gid.get_id(s1)
 
-        self.assertEqual(id_1, "VSbO4-0D-1351c328b38b4ad4737264fdc4be6e47")
+        self.assertEqual(id_1, "VSbO4-0D-e50201525efe4cd5")
 
     def test_quartz(self):
         alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
@@ -75,7 +75,7 @@ class TestGraphIDGenerator(TestCase):
         id_b = gid.get_id(beta)
 
         self.assertEqual(id_a, id_b)
-        self.assertEqual(id_a, "SiO2-3D-20a961a2a8c4c132946f8d7329f3960e")
+        self.assertEqual(id_a, "SiO2-3D-aab30488e82694e7")
 
         gid = GraphIDGenerator(wyckoff=True)
 
@@ -84,7 +84,7 @@ class TestGraphIDGenerator(TestCase):
 
         self.assertNotEqual(id_a_w, id_a)
         self.assertNotEqual(id_a_w, id_b_w)
-        self.assertEqual(id_a_w, "SiO2-3D-c0771f6df4439f53243ff2607a78bb4a")
+        self.assertEqual(id_a_w, "SiO2-3D-a37c720fadbbd609")
 
     def test_carbon(self):
         layer = Structure.from_file(f"{TEST_FILES}/mp-48.cif")

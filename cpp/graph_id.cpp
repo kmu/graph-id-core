@@ -238,7 +238,7 @@ void init_graph_id(pybind11::module &m) {
                  py::arg("loop") = false,
                  py::arg("rank_k") = 3,
                  py::arg("cutoff") = 6.0,
-                 py::arg("digest_size") = 16)
+                 py::arg("digest_size") = 8)
             .def("get_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));

@@ -40,6 +40,12 @@ class TestGraphIDGenerator(unittest.TestCase):
         aid_4 = a_4.get_id(s)
         self.assertEqual(len(aid_4), 8)
 
+    def test_default_digest_size(self):
+        a = graph_id_cpp.GraphIDGenerator() # default: digest_size=8
+        s = Structure.from_file(os.path.join("tests/py/test_files/Fe.cif"))
+        aid = a.get_id(s)
+        self.assertEqual(len(aid), 16)
+
 
 if __name__ == "__main__":
     unittest.main()

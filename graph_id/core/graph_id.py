@@ -28,7 +28,7 @@ class GraphIDGenerator:
         symmetry_tol=0.1,
         topology_only=False,
         loop=False,
-        digest_size=16,
+        digest_size=8,
     ):
         """
         comp_dim: include composition and dimensionality as the prefix

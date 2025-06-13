@@ -19,5 +19,5 @@ class TestLongDistanceGraphID(TestCase):
 
         id_1 = ldgid.get_id(s)
 
-        assert id_1 == "52c959e1543449ed5d47fcbfe0bec2ff"
+        assert id_1 == "3b2bcf29df1ce648"
         

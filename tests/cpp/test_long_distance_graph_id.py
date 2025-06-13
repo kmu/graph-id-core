@@ -55,8 +55,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         self.assertEqual(graphite_aid, graphite_bid)
         self.assertEqual(diamond_aid, diamond_bid)
 
-        self.assertEqual(graphite_aid, "eb8e457303fed0a236ae6814ed491acb")
-        self.assertEqual(diamond_aid, "628ceb4fa82fce02232d846c0d8960e6")
+        self.assertEqual(graphite_aid, "06f29c886936a611")
+        self.assertEqual(diamond_aid, "0ff44c1761e1940e")
 
     def test_one_site_structure(self):
         """
@@ -78,8 +78,8 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s1_aid, s1_bid)
         self.assertEqual(s2_aid, s2_bid)
 
-        self.assertEqual(s1_aid, "4c1d6581dacf78dfc8d3da5bdc07b0d5")
-        self.assertEqual(s2_aid, "d701ce2ac1a778013c49e0d4d1fe8645")
+        self.assertEqual(s1_aid, "5b39d303b4c6149a")
+        self.assertEqual(s2_aid, "be82ee60bfd614a3")
 
     def test_empty_compositional_sequence(self):
         """
@@ -95,7 +95,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         s_298_bid = b.get_long_distance_id(s_298)
 
         self.assertEqual(s_298_aid, s_298_bid)
-        self.assertEqual(s_298_aid, "18a8dce917bce31f14aa96352ec2d24b")
+        self.assertEqual(s_298_aid, "3f8e7842377ffa36")
 
     def test_sort_jstrs(self):
         """
@@ -111,7 +111,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         s_1078_bid = b.get_long_distance_id(s_1078)
 
         self.assertEqual(s_1078_aid, s_1078_bid)
-        self.assertEqual(s_1078_aid, "9c59aafb0dec3cae9a54db39544cf762")
+        self.assertEqual(s_1078_aid, "39b5c4ae1aa4aa4c")
 
     def test_break_edge(self):
         """
@@ -127,7 +127,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         s_ca_bid = b.get_long_distance_id(s_ca)
 
         self.assertEqual(s_ca_aid, s_ca_bid)
-        self.assertEqual(s_ca_aid, "6c022438a0f73d7122716edb769f2959")
+        self.assertEqual(s_ca_aid, "35d25fa388dfaed6")
 
     def test_no_supercell_structure(self):
         """
@@ -144,7 +144,7 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         s_si_bid = b.get_long_distance_id(s_si)
 
         self.assertEqual(s_si_aid, s_si_bid)
-        self.assertEqual(s_si_aid, "e140bcc85363351dba38629faacf2257")
+        self.assertEqual(s_si_aid, "fc7064789538834f")
 
 
 if __name__ == "__main__":
