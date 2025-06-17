@@ -317,14 +317,14 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
-class LongDistanceNN : public NearNeighbor{
+class DistanceClusteringNN : public NearNeighbor{
 private:
     double tol;
     int n;
     int rank_k;
     double cutoff;
 public:
-    explicit LongDistanceNN(double tol = 0.1, int n = 0, int rank_k = 3, double cutoff = 6.0) {
+    explicit DistanceClusteringNN(double tol = 0.1, int n = 0, int rank_k = 3, double cutoff = 6.0) {
         this->tol = tol;
         this->n = n;
         this->rank_k = rank_k;

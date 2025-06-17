@@ -2,7 +2,7 @@ import glob
 import os
 import unittest
 
-from graph_id.core.long_distance_graph_id import LongDistanceGraphID
+from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
@@ -22,17 +22,17 @@ def small_test_structure(max_sites=30):
     return res
 
 
-class TestLongDistanceGraphIDGenerator(unittest.TestCase):
+class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
     # @pytest.mark.limit_leaks("1 MB")
-    def test_get_long_distance_id(self):
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+    def test_get_distance_clustering_id(self):
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
         for name, s in small_test_structure():
             with self.subTest(name):
                 print(name)
 
                 aid = a.get_id(s)
-                bid = b.get_long_distance_id(s)
+                bid = b.get_distance_clustering_id(s)
 
                 self.assertEqual(aid, bid)
 
@@ -43,14 +43,14 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         graphite = Structure.from_file(f"{test_file_dir}/graphite.cif")
         diamond = Structure.from_file(f"{test_file_dir}/diamond.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         graphite_aid = a.get_id(graphite)
-        graphite_bid = b.get_long_distance_id(graphite)
+        graphite_bid = b.get_distance_clustering_id(graphite)
 
         diamond_aid = a.get_id(diamond)
-        diamond_bid = b.get_long_distance_id(diamond)
+        diamond_bid = b.get_distance_clustering_id(diamond)
 
         self.assertEqual(graphite_aid, graphite_bid)
         self.assertEqual(diamond_aid, diamond_bid)
@@ -66,14 +66,14 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         s1 = Structure.from_file(f"{test_file_dir}/mp-121.cif")
         s2 = Structure.from_file(f"{test_file_dir}/mp-611219.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         s1_aid = a.get_id(s1)
-        s1_bid = b.get_long_distance_id(s1)
+        s1_bid = b.get_distance_clustering_id(s1)
 
         s2_aid = a.get_id(s2)
-        s2_bid = b.get_long_distance_id(s2)
+        s2_bid = b.get_distance_clustering_id(s2)
 
         self.assertEqual(s1_aid, s1_bid)
         self.assertEqual(s2_aid, s2_bid)
@@ -88,11 +88,11 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         """
         s_298 = Structure.from_file(f"{test_file_dir}/298 K.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         s_298_aid = a.get_id(s_298)
-        s_298_bid = b.get_long_distance_id(s_298)
+        s_298_bid = b.get_distance_clustering_id(s_298)
 
         self.assertEqual(s_298_aid, s_298_bid)
         self.assertEqual(s_298_aid, "3f8e7842377ffa36")
@@ -104,11 +104,11 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         """
         s_1078 = Structure.from_file(f"{test_file_dir}/1078 K.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         s_1078_aid = a.get_id(s_1078)
-        s_1078_bid = b.get_long_distance_id(s_1078)
+        s_1078_bid = b.get_distance_clustering_id(s_1078)
 
         self.assertEqual(s_1078_aid, s_1078_bid)
         self.assertEqual(s_1078_aid, "39b5c4ae1aa4aa4c")
@@ -120,11 +120,11 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
         """
         s_ca = Structure.from_file(f"{test_file_dir}/mp-1067285.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         s_ca_aid = a.get_id(s_ca)
-        s_ca_bid = b.get_long_distance_id(s_ca)
+        s_ca_bid = b.get_distance_clustering_id(s_ca)
 
         self.assertEqual(s_ca_aid, s_ca_bid)
         self.assertEqual(s_ca_aid, "35d25fa388dfaed6")
@@ -137,11 +137,11 @@ class TestLongDistanceGraphIDGenerator(unittest.TestCase):
 
         s_si = Structure.from_file(f"{test_file_dir}/mp-1056579.cif")
 
-        a = LongDistanceGraphID(rank_k=3, cutoff=6.0)
+        a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
 
         s_si_aid = a.get_id(s_si)
-        s_si_bid = b.get_long_distance_id(s_si)
+        s_si_bid = b.get_distance_clustering_id(s_si)
 
         self.assertEqual(s_si_aid, s_si_bid)
         self.assertEqual(s_si_aid, "fc7064789538834f")
