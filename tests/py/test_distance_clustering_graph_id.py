@@ -1,21 +1,21 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.long_distance_graph_id import LongDistanceGraphID
-from graph_id.analysis.local_env import LongDistanceNN
+from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
+from graph_id.analysis.local_env import DistanceClusteringNN
 from pymatgen.core import Structure
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
 
-class TestLongDistanceGraphID(TestCase):
+class TestDistanceClusteringGraphID(TestCase):
     def test_small(self):
         """
         Sc単体構造についてのテスト
         """
         s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
 
-        ldgid = LongDistanceGraphID(nn=LongDistanceNN(), rank_k=3, cutoff=6.0)
+        ldgid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0)
 
         id_1 = ldgid.get_id(s)
 

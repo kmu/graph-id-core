@@ -29,7 +29,7 @@ def _get_original_site(structure, site):
     raise Exception("Site not found!")  # noqa: TRY002, TRY003, EM101
 
 
-class LongDistanceNN(NearNeighbors):
+class DistanceClusteringNN(NearNeighbors):
     # 結合長のクラスタリングによって原子に近いクラスター順に番号を振る
     # その番号と元素記号を使ってGraph IDを計算する
     def __init__(self) -> None:

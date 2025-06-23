@@ -3,7 +3,7 @@ from hashlib import blake2b
 
 import networkx as nx
 import numpy as np
-from graph_id.analysis.local_env import LongDistanceNN
+from graph_id.analysis.local_env import DistanceClusteringNN
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from graph_id.analysis.graphs import StructureGraph
 from graph_id.core.graph_id import GraphIDGenerator
@@ -16,7 +16,7 @@ def blake(s):
     return blake2b(s.encode()).hexdigest()
 
 
-class LongDistanceGraphID(GraphIDGenerator):
+class DistanceClusteringGraphID(GraphIDGenerator):
     def __init__(  # noqa: PLR0913
         self,
         nn=None,
@@ -46,7 +46,7 @@ class LongDistanceGraphID(GraphIDGenerator):
         self.digest_size = digest_size
 
         if nn is None:
-            self.nn = LongDistanceNN()
+            self.nn = DistanceClusteringNN()
         else:
             self.nn = nn
 

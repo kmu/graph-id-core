@@ -43,8 +43,8 @@ StructureGraph StructureGraph::with_individual_state_comp_strategy(
         double cutoff
 ) {
     // auto sg = StructureGraph::from_empty_graph(structure);
-    // assert(strategy == LongDistanceNN);
-    const auto &nn = LongDistanceNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
+    // assert(strategy == DistanceClusteringNN);
+    const auto &nn = DistanceClusteringNN(0.1, n, rank_k, cutoff).get_all_nn_info_cpp(*structure);
     assert(int(nn.size()) == structure->count);
     // for (int from = 0; from < int(nn.size()); ++from) {
     for (size_t i = 0; i < nn[n].size(); ++i) {

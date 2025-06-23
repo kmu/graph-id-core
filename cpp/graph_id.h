@@ -39,7 +39,7 @@ public:
     }
 
     std::string get_id(const Structure &structure) const;
-    std::string get_long_distance_id(const Structure &structure) const;
+    std::string get_distance_clustering_id(const Structure &structure) const;
 
     std::string get_id_catch_error(const Structure &structure) const noexcept;
 
@@ -54,7 +54,7 @@ public:
 private:
     StructureGraph prepare_structure_graph(std::shared_ptr<const Structure> &structure) const;
     StructureGraph prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const;
-    StructureGraph prepare_long_distance_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const;
+    StructureGraph prepare_disctance_clustering_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const;
 };
 
 void init_graph_id(pybind11::module &m);

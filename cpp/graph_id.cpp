@@ -35,7 +35,7 @@ std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Struct
     return ids;
 }
 
-std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) const {
+std::string GraphIDGenerator::get_distance_clustering_id(const Structure &structure) const {
     auto s_ptr = std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
     std::vector<std::string> gids(this->rank_k);
     const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
@@ -60,7 +60,7 @@ std::string GraphIDGenerator::get_long_distance_id(const Structure &structure) c
             auto _s_ptr =  std::shared_ptr<const Structure>(&structure, [](const Structure *) {});
             // auto sg = StructureGraph::from_py(py_structure_graph, _s_ptr);
             auto _sg_ptr = std::shared_ptr<StructureGraph>(&sg, [](StructureGraph *) {});
-            const auto sg_for_cc = prepare_long_distance_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
+            const auto sg_for_cc = prepare_disctance_clustering_structure_graph(j, _s_ptr, _sg_ptr, idx, this->cutoff);
             std::vector<std::string> cc_labels(sg_for_cc.cc_cs.size());
             for (size_t i = 0; i < sg_for_cc.cc_cs.size(); ++i) {
                 std::vector<std::string> labels = sg_for_cc.cc_cs[i];
@@ -182,9 +182,9 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
     return sg;
 }
 
-StructureGraph GraphIDGenerator::prepare_long_distance_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const {
-    // LongDistanceNNのインスタンスを渡す
-    // auto sg = StructureGraph::with_individual_state_comp_strategy(structure, sg, LongDistanceNN, n, rank_k, cutoff);
+StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const {
+    // DistanceClusteringNNのインスタンスを渡す
+    // auto sg = StructureGraph::with_individual_state_comp_strategy(structure, sg, DistanceClusteringNN, n, rank_k, cutoff);
     auto sg = StructureGraph::with_individual_state_comp_strategy(structure, *_sg, n, rank_k, cutoff);
     bool use_previous_cs = false;
 
@@ -243,9 +243,9 @@ void init_graph_id(pybind11::module &m) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));
             })
-            .def("get_long_distance_id", [](const GraphIDGenerator &gig, py::object &structure) {
+            .def("get_distance_clustering_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
-                return gig.get_long_distance_id(Structure(s));
+                return gig.get_distance_clustering_id(Structure(s));
             })
             .def("get_id_catch_error", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();

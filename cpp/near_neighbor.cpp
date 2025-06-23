@@ -412,7 +412,7 @@ std::vector<std::vector<NearNeighborInfo>> MinimumDistanceNN::get_all_nn_info_cp
     }
 }
 
-std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(const Structure &structure) const {
+std::vector<std::vector<NearNeighborInfo>> DistanceClusteringNN::get_all_nn_info_cpp(const Structure &structure) const {
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
 
     const auto nn = find_near_neighbors(structure, this->cutoff);
@@ -452,7 +452,7 @@ std::vector<std::vector<NearNeighborInfo>> LongDistanceNN::get_all_nn_info_cpp(c
     return result;
 }
 
-std::vector<double> LongDistanceNN::get_cutoff_cluster(const Structure &structure, int n, double cutoff, const auto &nn) const {
+std::vector<double> DistanceClusteringNN::get_cutoff_cluster(const Structure &structure, int n, double cutoff, const auto &nn) const {
     // サイトごとに3つの閾値を決定する
 
     // std::vector<double> max_dist_list = {0.0, 1.2, 3.1, 5.2};
@@ -1446,7 +1446,7 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0);
     
-    py::class_<LongDistanceNN, std::shared_ptr<LongDistanceNN>, NearNeighbor>(m, "LongDistanceNN")
+    py::class_<DistanceClusteringNN, std::shared_ptr<DistanceClusteringNN>, NearNeighbor>(m, "DistanceClusteringNN")
             .def(py::init<double, int, int, double>(),
                  py::arg("tol") = 0.1,
                  py::arg("n") = 0,
