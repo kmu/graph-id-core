@@ -17,6 +17,29 @@ std::string GraphIDGenerator::get_id(const Structure &structure) const {
     return gid;
 }
 
+std::string GraphIDGenerator::get_id_with_structure_graph(py::object py_structure_graph) const {
+    // PythonのStructureGraphから構造体を取得
+    py::object py_structure = py_structure_graph.attr("structure");
+    auto s = py_structure.cast<PymatgenStructure>();
+    auto s_ptr = std::make_shared<const Structure>(s);
+    
+    const auto sg_from_py = StructureGraph::from_py(py_structure_graph);
+    
+    // 既存のStructureGraphに対してラベル設定とcompositional sequenceの処理を適用
+    auto sg = prepare_structure_graph_from_existing(s_ptr,sg_from_py);
+    
+    std::vector<std::string> cc_labels(sg.cc_nodes.size());
+    for (size_t i = 0; i < sg.cc_nodes.size(); ++i) {
+        std::vector<std::string> labels = sg.cc_cs[i];
+        std::sort(labels.begin(), labels.end());
+        cc_labels[i] = blake2b(join_string("-", labels));
+    }
+    std::sort(cc_labels.begin(), cc_labels.end());
+    std::string gid = blake2b(join_string(":", cc_labels), digest_size);
+
+    return gid;
+}
+
 std::string GraphIDGenerator::get_id_catch_error(const Structure &structure) const noexcept {
     try {
         return this->get_id(structure);
@@ -103,6 +126,46 @@ bool GraphIDGenerator::are_same(const Structure &structure1, const Structure &st
 
 StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const Structure> &structure) const {
     auto sg = StructureGraph::with_local_env_strategy(structure, *this->nn);
+    bool use_previous_cs = false;
+
+    auto labels = structure->species_strings;
+    auto prev_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+
+    if (wyckoff) {
+        sg.set_wyckoffs_label(symmetry_tol);
+    } else if (topology_only) {
+        sg.labels = std::vector<std::string>(structure->count, "X");
+    } else if (loop) {
+        sg.set_loops(depth_factor, additional_depth);
+    } else {
+        sg.set_elemental_labels();
+    }
+
+    while (true) {
+        sg.set_compositional_sequence_node_attr(
+                true,
+                wyckoff,
+                additional_depth,
+                depth_factor,
+                use_previous_cs
+        );
+
+        labels.resize(0);
+        for (const auto &v: sg.cc_cs)
+            for (const auto &s: v)
+                labels.emplace_back(s);
+        auto new_num_uniq = std::unique(labels.begin(), labels.end()) - labels.begin();
+        if (new_num_uniq == prev_num_uniq) {
+            break;
+        }
+        prev_num_uniq = new_num_uniq;
+    }
+
+    return sg;
+}
+
+StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shared_ptr<const Structure> &structure, const StructureGraph &sg_from_py) const {
+    auto sg = sg_from_py;  // コピーを作成
     bool use_previous_cs = false;
 
     auto labels = structure->species_strings;
@@ -242,6 +305,9 @@ void init_graph_id(pybind11::module &m) {
             .def("get_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_id(Structure(s));
+            })
+            .def("get_id_with_structure_graph", [](const GraphIDGenerator &gig, py::object &py_structure_graph) {
+                return gig.get_id_with_structure_graph(py_structure_graph);
             })
             .def("get_distance_clustering_id", [](const GraphIDGenerator &gig, py::object &structure) {
                 auto s = structure.cast<PymatgenStructure>();

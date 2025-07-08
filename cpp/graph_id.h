@@ -39,6 +39,7 @@ public:
     }
 
     std::string get_id(const Structure &structure) const;
+    std::string get_id_with_structure_graph(py::object py_structure_graph) const;
     std::string get_distance_clustering_id(const Structure &structure) const;
 
     std::string get_id_catch_error(const Structure &structure) const noexcept;
@@ -53,6 +54,7 @@ public:
 
 private:
     StructureGraph prepare_structure_graph(std::shared_ptr<const Structure> &structure) const;
+    StructureGraph prepare_structure_graph_from_existing(std::shared_ptr<const Structure> &structure, const StructureGraph &sg) const;
     StructureGraph prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const;
     StructureGraph prepare_disctance_clustering_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const;
 };
