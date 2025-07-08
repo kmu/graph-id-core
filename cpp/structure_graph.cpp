@@ -72,7 +72,9 @@ StructureGraph StructureGraph::from_empty_graph(const std::shared_ptr<const Stru
     };
 }
 
-StructureGraph StructureGraph::from_py(py::object py_sg, const PymatgenStructure &structure) {
+StructureGraph StructureGraph::from_py(py::object py_sg) {
+    py::object py_structure = py_sg.attr("structure");
+    auto structure = py_structure.cast<PymatgenStructure>();
     auto s_ptr = std::make_shared<const Structure>(structure);
     auto sg = StructureGraph::from_empty_graph(s_ptr);
 
