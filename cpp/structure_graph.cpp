@@ -72,8 +72,9 @@ StructureGraph StructureGraph::from_empty_graph(const std::shared_ptr<const Stru
     };
 }
 
-StructureGraph StructureGraph::from_py(py::object py_sg, const std::shared_ptr<const Structure> &structure) {
-    auto sg = StructureGraph::from_empty_graph(structure);
+StructureGraph StructureGraph::from_py(py::object py_sg, const PymatgenStructure &structure) {
+    auto s_ptr = std::make_shared<const Structure>(structure);
+    auto sg = StructureGraph::from_empty_graph(s_ptr);
 
     // PythonのStructureGraphからエッジを取得
     py::list edges = py_sg.attr("graph").attr("edges");
@@ -89,7 +90,17 @@ StructureGraph StructureGraph::from_py(py::object py_sg, const std::shared_ptr<c
         for (size_t i = 0; i < to_jimage_array.size(); ++i) {
             to_jimage_array[i] = to_jimage[i].cast<int>();
         }
+        
+        // 双方向のエッジを追加（with_local_env_strategyと同じ方法）
         sg.add_edge(std::get<0>(e), {0, 0, 0}, std::get<1>(e), to_jimage_array, std::get<2>(e));
+        
+        // 逆向きのimageを計算
+        std::array<int, 3> from_jimage_array;
+        for (size_t i = 0; i < from_jimage_array.size(); ++i) {
+            from_jimage_array[i] = -to_jimage_array[i];
+        }
+        
+        sg.add_edge(std::get<1>(e), to_jimage_array, std::get<0>(e), {0, 0, 0}, std::get<2>(e));
     }
     sg.set_cc_diameter();
     
@@ -586,7 +597,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("use_previous_cs") = false)
             .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)
-            .def("from_py", &StructureGraph::from_py)
+            .def_static("from_py", &StructureGraph::from_py)
             .def("get_connected_site_index", [](const StructureGraph &sg) {
                 // テスト用
                 py::list arr;
