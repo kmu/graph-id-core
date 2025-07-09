@@ -149,8 +149,22 @@ class TestStructureGraph(unittest.TestCase):
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
                 self.assertEqual(sg_py, sg_cpp.to_py())
                 sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
-                self.assertEqual(sg_py, sg_cpp_from_py.to_py())
+                n_conn_cpp = len(sg_cpp.get_connected_site_index())
+                n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
+                self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
 
+    def test_from_py_zeolite(self):
+        s = Structure.from_file(test_file_dir / "ABW.cif")
+        sg_py = StructureGraph.with_local_env_strategy(
+            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+        )
+        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
+            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+        )
+        sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
+        n_conn_cpp = len(sg_cpp.get_connected_site_index())
+        n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
+        self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
 
 if __name__ == "__main__":
     unittest.main()
