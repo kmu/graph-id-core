@@ -9,7 +9,9 @@ from pymatgen.core import Lattice, Structure
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+test_file_dir = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
+)
 
 
 def small_test_structure(max_sites=30):
@@ -43,7 +45,9 @@ class TestStructureGraph(unittest.TestCase):
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
                 ug = sg_py.graph.to_undirected()
-                diameter = [nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)]
+                diameter = [
+                    nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)
+                ]
                 self.assertListEqual(diameter, sg_cpp.cc_diameter)
 
     def test_graph_diameter_not_strongly_connected(self):
@@ -54,17 +58,27 @@ class TestStructureGraph(unittest.TestCase):
                     ["H"] * 4,
                     [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]],
                 )
-                sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
+                sg_py = StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
+                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
                 ug = sg_py.graph.to_undirected()
-                diameter = [nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)]
+                diameter = [
+                    nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)
+                ]
                 self.assertEqual(diameter, sg_cpp.cc_diameter)
 
     def test_set_elemental_labels(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
+                sg_py = StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
+                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
                 sg_py.set_elemental_labels()
                 sg_cpp.set_elemental_labels()
                 self.assertListEqual(sg_py.starting_labels, sg_cpp.labels)
@@ -72,8 +86,12 @@ class TestStructureGraph(unittest.TestCase):
     def test_set_wyckoff_labels(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
+                sg_py = StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
+                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
+                    s, graph_id_cpp.MinimumDistanceNN()
+                )
                 sg_py.set_wyckoffs()
                 sg_cpp.set_wyckoffs()
                 self.assertListEqual(sg_py.starting_labels, sg_cpp.labels)
@@ -122,7 +140,23 @@ class TestStructureGraph(unittest.TestCase):
                 nn = graph_id_cpp.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
-                self.assertEqual(get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen())
+                self.assertEqual(
+                    get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
+                )
+
+    def test_get_dimensionality_larsen_corner_case(self):
+        s = Structure.from_file(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../py/test_files/structure_for_dimensionality_larsen.cif",
+            )
+        )
+        nn = graph_id_cpp.CutOffDictNN({("Si", "O"): 2.0})
+        sg_py = StructureGraph.with_local_env_strategy(s, nn)
+        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+        self.assertEqual(
+            get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
+        )
 
 
 if __name__ == "__main__":
