@@ -143,10 +143,7 @@ class TestStructureGraph(unittest.TestCase):
 
     def test_get_dimensionality_larsen_corner_case(self):
         s = Structure.from_file(
-            os.path.join(
-                os.path.dirname(__file__),
-                "../py/test_files/structure_for_dimensionality_larsen.cif",
-            )
+            test_file_dir / "structure_for_dimensionality_larsen.cif"
         )
         nn = graph_id_cpp.CutOffDictNN({("Si", "O"): 2.0})
         sg_py = StructureGraph.with_local_env_strategy(s, nn)
