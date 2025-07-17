@@ -439,18 +439,40 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
     }
 }
 
+int StructureGraph::calculate_rank(const gtl::flat_hash_set<std::array<int, 3>> &vertices) {
+    size_t n = vertices.size();
+    if (n == 0) return -1;
+    if (n == 1) return 0;
+    
+    // 最初の頂点を基準点として、他の頂点との相対位置を計算
+    std::vector<std::array<int, 3>> vertices_vec(vertices.begin(), vertices.end());
+    const auto& base_vertex = vertices_vec[0];
+    Eigen::Matrix3Xd relative_positions(3, n - 1);
+    
+    for (size_t i = 1; i < vertices_vec.size(); ++i) {
+        relative_positions.col(i - 1) << 
+            vertices_vec[i][0] - base_vertex[0],
+            vertices_vec[i][1] - base_vertex[1], 
+            vertices_vec[i][2] - base_vertex[2];
+    }
+    
+    return int(relative_positions.fullPivLu().rank());
+}
+
 bool
 StructureGraph::rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate) {
     size_t n = seen.size();
     if (n == 0) return true;
 
-    Eigen::Matrix3Xd images(3, n + 1);
-    int i = 0;
-    for (const std::array<int, 3> &image: seen) {
-        images.col(i++) << image[0], image[1], image[2];
-    }
-    images.col(i++) << candidate[0], candidate[1], candidate[2];
-    return (n - 1) < size_t(images.fullPivLu().rank());
+    // 既存の頂点セットに新しい頂点を追加
+    gtl::flat_hash_set<std::array<int, 3>> extended_vertices = seen;
+    extended_vertices.insert(candidate);
+    
+    // 拡張された頂点セットのランクを計算
+    int rank1 = calculate_rank(extended_vertices);
+    int rank0 = n - 1;  // 既存の頂点セットのランク
+    
+    return rank1 > rank0;
 }
 
 /// Larsen らの方法で次元を計算する
@@ -491,7 +513,10 @@ int StructureGraph::get_dimensionality_larsen() const {
                 queue.emplace_back(comp_j, image_j);
             }
         }
-        max_dim = std::max(max_dim, int(seen_comp_vertices[node].size() - 1));
+        // Pythonの実装に合わせて、rank関数を使用して次元を計算
+        int dim = calculate_rank(seen_comp_vertices[node]);
+
+        max_dim = std::max(max_dim, dim);
         if (max_dim == 3) return 3;
     }
     return max_dim;

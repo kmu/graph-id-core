@@ -141,6 +141,20 @@ class TestStructureGraph(unittest.TestCase):
                     get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
                 )
 
+    def test_get_dimensionality_larsen_corner_case(self):
+        s = Structure.from_file(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../py/test_files/structure_for_dimensionality_larsen.cif",
+            )
+        )
+        nn = graph_id_cpp.CutOffDictNN({("Si", "O"): 2.0})
+        sg_py = StructureGraph.with_local_env_strategy(s, nn)
+        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+        self.assertEqual(
+            get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
+        )
+
     def test_from_py(self):
         for name, s in small_test_structure():
             with self.subTest(name):
@@ -165,6 +179,7 @@ class TestStructureGraph(unittest.TestCase):
         n_conn_cpp = len(sg_cpp.get_connected_site_index())
         n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
         self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
+
 
 if __name__ == "__main__":
     unittest.main()
