@@ -1,6 +1,5 @@
-import glob
-import os
 import unittest
+from pathlib import Path
 
 import networkx as nx
 from graph_id.analysis.graphs import StructureGraph
@@ -9,15 +8,13 @@ from pymatgen.core import Lattice, Structure
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
-)
+test_file_dir = Path(__file__).parent.parent.parent / "tests" / "py" / "test_files"
 
 
 def small_test_structure(max_sites=30):
     res = []
-    for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-        name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
+    for p in test_file_dir.glob("*.cif"):
+        name = p.stem.replace("-", "_")
         s = Structure.from_file(p)
         if s.num_sites <= max_sites:
             res.append((name, s))
@@ -146,10 +143,7 @@ class TestStructureGraph(unittest.TestCase):
 
     def test_get_dimensionality_larsen_corner_case(self):
         s = Structure.from_file(
-            os.path.join(
-                os.path.dirname(__file__),
-                "../py/test_files/structure_for_dimensionality_larsen.cif",
-            )
+            test_file_dir / "structure_for_dimensionality_larsen.cif"
         )
         nn = graph_id_cpp.CutOffDictNN({("Si", "O"): 2.0})
         sg_py = StructureGraph.with_local_env_strategy(s, nn)
@@ -157,6 +151,31 @@ class TestStructureGraph(unittest.TestCase):
         self.assertEqual(
             get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
         )
+
+    def test_from_py(self):
+        for name, s in small_test_structure():
+            with self.subTest(name):
+                nn = graph_id_cpp.MinimumDistanceNN()
+                sg_py = StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                self.assertEqual(sg_py, sg_cpp.to_py())
+                sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
+                n_conn_cpp = len(sg_cpp.get_connected_site_index())
+                n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
+                self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
+
+    def test_from_py_zeolite(self):
+        s = Structure.from_file(test_file_dir / "ABW.cif")
+        sg_py = StructureGraph.with_local_env_strategy(
+            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+        )
+        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
+            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+        )
+        sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
+        n_conn_cpp = len(sg_cpp.get_connected_site_index())
+        n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
+        self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
 
 
 if __name__ == "__main__":
