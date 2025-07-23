@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "graph-id"
+name = "graph-id-core"
 version = "0.1.0"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
