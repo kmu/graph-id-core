@@ -49,3 +49,34 @@ jobs:
         asset_path: ./dist/*.whl
         asset_name: project.whl
         asset_content_type: application/octet-stream
+
+  wait-for-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for PyPI propagation
+        run: |
+          sleep 60
+
+  test-install:
+    needs: [build, wait-for-pypi]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Install from PyPI
+        run: |
+          python -m venv venv
+          source venv/bin/activate || venv\Scripts\activate
+          pip install --upgrade pip
+          pip install graph-id-core
+      - name: Test import
+        run: |
+          source venv/bin/activate || venv\Scripts\activate
+          python -c "import graph_id"
+
