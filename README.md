@@ -3,10 +3,6 @@
 # Graph ID
 
 ## Installation 
-### PyPI
-```
-pip install graph-id-core
-```
 
 ### GitHub
 ```
