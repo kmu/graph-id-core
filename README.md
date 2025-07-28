@@ -4,9 +4,14 @@
 
 ## Installation 
 
+### From pypi
+
 ```
-git clone https://github.com/kmu/graph-id-core.git
-git submodule init
-git submodule update
-pip install -e .
+pip install graph-id-core
+```
+
+### From GitHub
+
+```
+pip install git+https://github.com/kmu/graph-id-core.git
 ```
