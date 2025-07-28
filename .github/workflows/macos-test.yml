@@ -1,0 +1,19 @@
+name: Test on macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11  # 任意のバージョン
+
+      - name: Install package
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install graph-id-core
