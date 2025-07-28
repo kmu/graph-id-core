@@ -16,4 +16,5 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
+          pip install -i https://test.pypi.org/simple/ graph-id-core
           pip install graph-id-core
