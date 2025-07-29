@@ -7,10 +7,18 @@ jobs:
   test:
     runs-on: macos-latest
     steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11  # 任意のバージョン
+
+      - name: Set CMAKE_PREFIX_PATH environment variable
+        run: echo "CMAKE_PREFIX_PATH=$(python -m pybind11 --cmakedir)" >> $GITHUB_ENV
 
       - name: Install package
         run: |
