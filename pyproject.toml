@@ -1,10 +1,20 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
 packages = [{include = "graph_id"}]
+
+include = [
+    "library/**/*",
+    "cpp/**/*",
+    "CMakeLists.txt",
+    "build.py",
+    "*.h",
+    "*.cpp",
+    "*.hpp"
+]
 
 [tool.poetry.build]
 script = "build.py"
