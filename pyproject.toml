@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
