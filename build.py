@@ -120,7 +120,7 @@ class CMakeBuild(build_ext):
 
 def build(setup_kwargs):
     ext_modules = [
-        CMakeExtension("graph_id_cpp"),
+        CMakeExtension("graph_id_cpp", sourcedir="."),
     ]
     setup_kwargs.update(
         {
