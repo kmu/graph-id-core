@@ -36,8 +36,11 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
-        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
-        extdir = ext_fullpath.parent.resolve()
+        # ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
+        # extdir = ext_fullpath.parent.resolve().parent / "src" / "graph_id"
+        extdir = Path(self.build_lib).absolute()
+        build_temp = Path(self.build_temp) / ext.name
+        build_temp.mkdir(parents=True, exist_ok=True)
 
         # Using this requires trailing slash for auto-detection & inclusion of
         # auxiliary "native" libs
