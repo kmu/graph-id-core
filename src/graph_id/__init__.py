@@ -10,7 +10,7 @@ except PackageNotFoundError:
     __version__ = "unknown"
 
 def __getattr__(name):
-    cpp = importlib.import_module("graph_id.graph_id_cpp")
+    cpp = importlib.import_module(__name__ + ".graph_id_cpp")
     if hasattr(cpp, name):
         return getattr(cpp, name)
-    raise AttributeError(f"module 'graph_id' has no attribute '{name}'")
+    raise AttributeError(f"module {__name__} has no attribute '{name}'")
