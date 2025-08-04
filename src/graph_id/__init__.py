@@ -1,4 +1,4 @@
-from . import graph_id_cpp as _cpp
+import importlib
 try:
     from importlib.metadata import version, PackageNotFoundError
 except ImportError:
@@ -9,6 +9,8 @@ try:
 except PackageNotFoundError:
     __version__ = "unknown"
 
-__all__ = getattr(_cpp, '__all__', [name for name in dir(_cpp) if not name.startswith('_')])
-globals().update({name: getattr(_cpp, name) for name in __all__})
-
+def __getattr__(name):
+    cpp = importlib.import_module("graph_id.graph_id_cpp")
+    if hasattr(cpp, name):
+        return getattr(cpp, name)
+    raise AttributeError(f"module 'graph_id' has no attribute '{name}'")
