@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphIDGenerator
+from graph_id_py.core.graph_id import GraphIDGenerator
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 

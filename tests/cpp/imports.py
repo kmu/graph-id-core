@@ -11,4 +11,4 @@ mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make
 
 path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../build"))
 sys.path.insert(0, path)
-import graph_id_cpp  # noqa: E402,F401
+import graph_id  # noqa: E402,F401

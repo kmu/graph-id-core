@@ -3,8 +3,8 @@ import os.path
 import timeit
 import unittest
 
-from graph_id import GraphIDGenerator
-from graph_id.analysis.graphs import StructureGraph
+from graph_id_py import GraphIDGenerator
+from graph_id_py.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import (
     BrunnerNN_real,
     CrystalNN,
@@ -16,7 +16,7 @@ from pymatgen.analysis.local_env import (
 )
 from pymatgen.core import Structure
 
-from .imports import graph_id_cpp
+import graph_id
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -48,38 +48,38 @@ def run_benchmark(pymatgen, our_nn):
 class TestBenchmark(unittest.TestCase):
     def test_voronoi(self):
         print("VoronoiNN:")
-        run_benchmark(VoronoiNN(), graph_id_cpp.VoronoiNN())
+        run_benchmark(VoronoiNN(), graph_id.VoronoiNN())
 
     def test_minimum_distance(self):
         print("MinimumDistanceNN:")
-        run_benchmark(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
+        run_benchmark(MinimumDistanceNN(), graph_id.MinimumDistanceNN())
 
     def test_minimum_okeefee(self):
         print("MinimumOKeeffeNN:")
-        run_benchmark(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
+        run_benchmark(MinimumOKeeffeNN(), graph_id.MinimumOKeeffeNN())
 
     def test_crystal(self):
         print("CrystalNN:")
-        run_benchmark(CrystalNN(), graph_id_cpp.CrystalNN())
+        run_benchmark(CrystalNN(), graph_id.CrystalNN())
 
     def test_cut_off_dict(self):
         print("CutOffDictNN:")
-        run_benchmark(CutOffDictNN.from_preset("vesta_2019"), graph_id_cpp.CutOffDictNN.from_preset("vesta_2019"))
+        run_benchmark(CutOffDictNN.from_preset("vesta_2019"), graph_id.CutOffDictNN.from_preset("vesta_2019"))
 
     def test_brunner(self):
         print("BrunnerNN_real:")
-        run_benchmark(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real())
+        run_benchmark(BrunnerNN_real(), graph_id.BrunnerNN_real())
 
     def test_econ(self):
         print("EconNN:")
-        run_benchmark(EconNN(), graph_id_cpp.EconNN())
+        run_benchmark(EconNN(), graph_id.EconNN())
 
     def test_structure_graph(self):
         print("StructureGraph.set_compositional_sequence_node_attr:")
         py = StructureGraph
-        cpp = graph_id_cpp.StructureGraph
+        cpp = graph_id.StructureGraph
         for name, s in small_test_structure():
-            nn = graph_id_cpp.MinimumDistanceNN()
+            nn = graph_id.MinimumDistanceNN()
 
             def f(cls):
                 sg = cls.with_local_env_strategy(s, nn)  # noqa: B023
@@ -101,7 +101,7 @@ class TestBenchmark(unittest.TestCase):
     def test_graph_id(self):
         print("GraphIDGenerator.get_id:")
         a = GraphIDGenerator()
-        b = graph_id_cpp.GraphIDGenerator()
+        b = graph_id.GraphIDGenerator()
         for name, s in small_test_structure():
             try:
                 N = 1
@@ -115,11 +115,11 @@ class TestBenchmark(unittest.TestCase):
             except Exception as e:
                 print(e)
 
-    def test_graph_id_cpp_only(self):
+    def test_graph_id_only(self):
         print("GraphIDGenerator.get_id:")
         import numpy as np
 
-        g = graph_id_cpp.GraphIDGenerator()
+        g = graph_id.GraphIDGenerator()
         for name, s in small_test_structure(1000):
             try:
                 N = 1000

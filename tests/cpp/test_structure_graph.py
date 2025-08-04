@@ -2,11 +2,11 @@ import unittest
 from pathlib import Path
 
 import networkx as nx
-from graph_id.analysis.graphs import StructureGraph
+from graph_id_py.analysis.graphs import StructureGraph
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.core import Lattice, Structure
 
-from .imports import graph_id_cpp
+import graph_id
 
 test_file_dir = Path(__file__).parent.parent.parent / "tests" / "py" / "test_files"
 
@@ -25,9 +25,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_graph(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 py = list(sg_py.graph.to_undirected().edges())
                 py = sorted(py + [(b, a) for a, b in py])
                 cpp = sg_cpp.get_connected_site_index()
@@ -38,9 +38,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_graph_diameter(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 ug = sg_py.graph.to_undirected()
                 diameter = [
                     nx.diameter(ug.subgraph(cc)) for cc in nx.connected_components(ug)
@@ -56,10 +56,10 @@ class TestStructureGraph(unittest.TestCase):
                     [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]],
                 )
                 sg_py = StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                    s, graph_id.MinimumDistanceNN()
                 )
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(
+                    s, graph_id.MinimumDistanceNN()
                 )
                 ug = sg_py.graph.to_undirected()
                 diameter = [
@@ -71,10 +71,10 @@ class TestStructureGraph(unittest.TestCase):
         for name, s in small_test_structure():
             with self.subTest(name):
                 sg_py = StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                    s, graph_id.MinimumDistanceNN()
                 )
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(
+                    s, graph_id.MinimumDistanceNN()
                 )
                 sg_py.set_elemental_labels()
                 sg_cpp.set_elemental_labels()
@@ -84,10 +84,10 @@ class TestStructureGraph(unittest.TestCase):
         for name, s in small_test_structure():
             with self.subTest(name):
                 sg_py = StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                    s, graph_id.MinimumDistanceNN()
                 )
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
-                    s, graph_id_cpp.MinimumDistanceNN()
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(
+                    s, graph_id.MinimumDistanceNN()
                 )
                 sg_py.set_wyckoffs()
                 sg_cpp.set_wyckoffs()
@@ -96,9 +96,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_set_compositional_sequence_node_attr(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 sg_py.set_elemental_labels()
                 sg_cpp.set_elemental_labels()
                 sg_py.set_compositional_sequence_node_attr()
@@ -108,9 +108,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_set_compositional_sequence_node_attr_hash(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 sg_py.set_elemental_labels()
                 sg_cpp.set_elemental_labels()
                 sg_py.set_compositional_sequence_node_attr(hash_cs=True)
@@ -120,9 +120,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_set_compositional_sequence_node_attr_twice(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 sg_py.set_elemental_labels()
                 sg_cpp.set_elemental_labels()
                 sg_py.set_compositional_sequence_node_attr()
@@ -134,9 +134,9 @@ class TestStructureGraph(unittest.TestCase):
     def test_get_dimensionality_larsen(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 self.assertEqual(
                     get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
                 )
@@ -145,9 +145,9 @@ class TestStructureGraph(unittest.TestCase):
         s = Structure.from_file(
             test_file_dir / "structure_for_dimensionality_larsen.cif"
         )
-        nn = graph_id_cpp.CutOffDictNN({("Si", "O"): 2.0})
+        nn = graph_id.CutOffDictNN({("Si", "O"): 2.0})
         sg_py = StructureGraph.with_local_env_strategy(s, nn)
-        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+        sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
         self.assertEqual(
             get_dimensionality_larsen(sg_py), sg_cpp.get_dimensionality_larsen()
         )
@@ -155,11 +155,11 @@ class TestStructureGraph(unittest.TestCase):
     def test_from_py(self):
         for name, s in small_test_structure():
             with self.subTest(name):
-                nn = graph_id_cpp.MinimumDistanceNN()
+                nn = graph_id.MinimumDistanceNN()
                 sg_py = StructureGraph.with_local_env_strategy(s, nn)
-                sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, nn)
+                sg_cpp = graph_id.StructureGraph.with_local_env_strategy(s, nn)
                 self.assertEqual(sg_py, sg_cpp.to_py())
-                sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
+                sg_cpp_from_py = graph_id.StructureGraph.from_py(sg_py)
                 n_conn_cpp = len(sg_cpp.get_connected_site_index())
                 n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
                 self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)
@@ -167,12 +167,12 @@ class TestStructureGraph(unittest.TestCase):
     def test_from_py_zeolite(self):
         s = Structure.from_file(test_file_dir / "ABW.cif")
         sg_py = StructureGraph.with_local_env_strategy(
-            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+            s, graph_id.CutOffDictNN({("Si", "O"): 2})
         )
-        sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(
-            s, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+        sg_cpp = graph_id.StructureGraph.with_local_env_strategy(
+            s, graph_id.CutOffDictNN({("Si", "O"): 2})
         )
-        sg_cpp_from_py = graph_id_cpp.StructureGraph.from_py(sg_py)
+        sg_cpp_from_py = graph_id.StructureGraph.from_py(sg_py)
         n_conn_cpp = len(sg_cpp.get_connected_site_index())
         n_conn_cpp_from_py = len(sg_cpp_from_py.get_connected_site_index())
         self.assertEqual(n_conn_cpp, n_conn_cpp_from_py)

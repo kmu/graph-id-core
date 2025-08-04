@@ -2,10 +2,10 @@ import glob
 import os
 import unittest
 
-import graph_id
+from graph_id_py.core.graph_id import GraphIDGenerator as PyGraphIDGenerator
 from pymatgen.core import Structure
 
-from .imports import graph_id_cpp
+import graph_id
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -26,8 +26,8 @@ def small_test_structure(max_sites=30):
 
 class TestLoopGraphIDGenerator(unittest.TestCase):
     def test_get_id(self):
-        a = graph_id.GraphIDGenerator(loop=True)
-        b = graph_id_cpp.GraphIDGenerator(loop=True)
+        a = PyGraphIDGenerator(loop=True)
+        b = graph_id.GraphIDGenerator(loop=True)
         for name, s in small_test_structure():
             with self.subTest(name):
 

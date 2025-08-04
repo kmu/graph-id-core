@@ -25,7 +25,7 @@ from pymatgen.core import Element, Lattice, Molecule, Structure
 from pymatgen.core.periodic_table import Specie
 from pymatgen.util.testing import MatSciTest
 
-from .imports import graph_id_cpp
+import graph_id
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
@@ -89,7 +89,7 @@ class TestNNHelper(unittest.TestCase):
                         tol=1e-8,
                     )
                     a = self.sort(indices_a, indices_b, images, distances)
-                    indices_a2, indices_b2, images2, distances2 = graph_id_cpp.find_near_neighbors(
+                    indices_a2, indices_b2, images2, distances2 = graph_id.find_near_neighbors(
                         s.cart_coords,
                         s.cart_coords,
                         r,
@@ -122,17 +122,17 @@ class TestNNHelper(unittest.TestCase):
 
 class TestVoronoiNN(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.VoronoiNN().structures_allowed)
+        self.assertTrue(graph_id.VoronoiNN().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.VoronoiNN().molecules_allowed)
+        self.assertFalse(graph_id.VoronoiNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(VoronoiNN(), graph_id_cpp.VoronoiNN())
+        self.run_for_small_structures(VoronoiNN(), graph_id.VoronoiNN())
 
     def test_get_voronoi_polyhedra(self):
         pmg = VoronoiNN()
-        cpp = graph_id_cpp.VoronoiNN()
+        cpp = graph_id.VoronoiNN()
         for name, s in small_test_structure():
             with self.subTest(name):
                 for i in range(s.num_sites):
@@ -142,7 +142,7 @@ class TestVoronoiNN(TestNN):
 
     def test_get_all_voronoi_polyhedra(self):
         pmg = VoronoiNN()
-        cpp = graph_id_cpp.VoronoiNN()
+        cpp = graph_id.VoronoiNN()
         for name, s in small_test_structure():
             with self.subTest(name):
                 try:
@@ -192,17 +192,17 @@ class TestVoronoiNN(TestNN):
 
 class TestMinimumDistanceNN(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.MinimumDistanceNN().structures_allowed)
+        self.assertTrue(graph_id.MinimumDistanceNN().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertTrue(graph_id_cpp.MinimumDistanceNN().molecules_allowed)
+        self.assertTrue(graph_id.MinimumDistanceNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
+        self.run_for_small_structures(MinimumDistanceNN(), graph_id.MinimumDistanceNN())
 
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
-        cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(m)
+        cpp_result = graph_id.MinimumDistanceNN().get_all_nn_info(m)
         try:
             pymatgen_result = MinimumDistanceNN().get_all_nn_info(m)
         except Exception as e:
@@ -212,30 +212,30 @@ class TestMinimumDistanceNN(TestNN):
 
     def test_structures_get_all_sites(self):
         self.run_for_small_structures(
-            MinimumDistanceNN(get_all_sites=True), graph_id_cpp.MinimumDistanceNN(get_all_sites=True)
+            MinimumDistanceNN(get_all_sites=True), graph_id.MinimumDistanceNN(get_all_sites=True)
         )
 
 
 class TestMinimumOKeeffeNN(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.MinimumOKeeffeNN().structures_allowed)
+        self.assertTrue(graph_id.MinimumOKeeffeNN().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertTrue(graph_id_cpp.MinimumOKeeffeNN().molecules_allowed)
+        self.assertTrue(graph_id.MinimumOKeeffeNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
+        self.run_for_small_structures(MinimumOKeeffeNN(), graph_id.MinimumOKeeffeNN())
 
 
 class TestCrystalNN(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.CrystalNN().structures_allowed)
+        self.assertTrue(graph_id.CrystalNN().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.CrystalNN().molecules_allowed)
+        self.assertFalse(graph_id.CrystalNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(CrystalNN(), graph_id_cpp.CrystalNN())
+        self.run_for_small_structures(CrystalNN(), graph_id.CrystalNN())
 
 class TestPmgCrystalNN(TestNN):
 # class TestCustomCrystalNN(unittest.TestCase):
@@ -271,12 +271,12 @@ class TestPmgCrystalNN(TestNN):
 class TestCutoffDictNN(TestNN):
     def test_structures(self):
         self.run_for_small_structures(
-            CutOffDictNN.from_preset("vesta_2019"), graph_id_cpp.CutOffDictNN.from_preset("vesta_2019")
+            CutOffDictNN.from_preset("vesta_2019"), graph_id.CutOffDictNN.from_preset("vesta_2019")
         )
 
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
-        cpp_result = graph_id_cpp.CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
+        cpp_result = graph_id.CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
         try:
             pymatgen_result = CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
         except Exception as e:
@@ -286,57 +286,57 @@ class TestCutoffDictNN(TestNN):
 
     def test_structures_with_dict(self):
         d = CutOffDictNN.from_preset("vesta_2019").cut_off_dict
-        self.run_for_small_structures(CutOffDictNN(cut_off_dict=d), graph_id_cpp.CutOffDictNN(cut_off_dict=d))
+        self.run_for_small_structures(CutOffDictNN(cut_off_dict=d), graph_id.CutOffDictNN(cut_off_dict=d))
 
     def test_structures_with_empty_dict(self):
-        self.run_for_small_structures(CutOffDictNN(), graph_id_cpp.CutOffDictNN())
+        self.run_for_small_structures(CutOffDictNN(), graph_id.CutOffDictNN())
 
 
 class TestBrunnerNNReciprocal(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_reciprocal().structures_allowed)
+        self.assertTrue(graph_id.BrunnerNN_reciprocal().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_reciprocal().molecules_allowed)
+        self.assertFalse(graph_id.BrunnerNN_reciprocal().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(BrunnerNN_reciprocal(), graph_id_cpp.BrunnerNN_reciprocal())
+        self.run_for_small_structures(BrunnerNN_reciprocal(), graph_id.BrunnerNN_reciprocal())
 
 
 class TestBrunnerNNRelative(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_relative().structures_allowed)
+        self.assertTrue(graph_id.BrunnerNN_relative().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_relative().molecules_allowed)
+        self.assertFalse(graph_id.BrunnerNN_relative().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(BrunnerNN_relative(), graph_id_cpp.BrunnerNN_relative())
+        self.run_for_small_structures(BrunnerNN_relative(), graph_id.BrunnerNN_relative())
 
 
 class TestBrunnerNNReal(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_real().structures_allowed)
+        self.assertTrue(graph_id.BrunnerNN_real().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_real().molecules_allowed)
+        self.assertFalse(graph_id.BrunnerNN_real().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real())
+        self.run_for_small_structures(BrunnerNN_real(), graph_id.BrunnerNN_real())
 
 
 class TestEconNN(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.EconNN().structures_allowed)
+        self.assertTrue(graph_id.EconNN().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertTrue(graph_id_cpp.EconNN().molecules_allowed)
+        self.assertTrue(graph_id.EconNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(EconNN(), graph_id_cpp.EconNN())
+        self.run_for_small_structures(EconNN(), graph_id.EconNN())
 
     def test_structures_using_fir(self):
-        self.run_for_small_structures(EconNN(use_fictive_radius=True), graph_id_cpp.EconNN(use_fictive_radius=True))
+        self.run_for_small_structures(EconNN(use_fictive_radius=True), graph_id.EconNN(use_fictive_radius=True))
 
 
 if __name__ == "__main__":

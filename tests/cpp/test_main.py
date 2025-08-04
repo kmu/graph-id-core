@@ -1,8 +1,8 @@
 import unittest
 
-from .imports import graph_id_cpp
+import graph_id
 
 
 class TestMail(unittest.TestCase):
     def test_import(self):
-        print(graph_id_cpp.__version__)
+        print(graph_id.__version__)

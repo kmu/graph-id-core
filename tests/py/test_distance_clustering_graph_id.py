@@ -1,8 +1,8 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
-from graph_id.analysis.local_env import DistanceClusteringNN
+from graph_id_py.core.distance_clustering_graph_id import DistanceClusteringGraphID
+from graph_id_py.analysis.local_env import DistanceClusteringNN
 from pymatgen.core import Structure
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
