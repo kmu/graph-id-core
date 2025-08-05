@@ -16,7 +16,8 @@ include = [
     "build.py",
     "*.h",
     "*.cpp",
-    "*.hpp"
+    "*.hpp",
+    "src/graph_id/*.so"
 ]
 
 [tool.poetry.build]
