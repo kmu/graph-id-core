@@ -17,7 +17,7 @@ pybind11_add_module(graph_id_cpp
         cpp/core.h
 )
 set_target_properties(graph_id_cpp PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src/graph_id"
 )
 target_compile_definitions(graph_id_cpp
         PRIVATE VERSION_INFO=${VERSION_INFO})
