@@ -36,9 +36,17 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
-        # ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
-        # extdir = ext_fullpath.parent.resolve().parent / "src" / "graph_id"
-        extdir = Path(self.build_lib).absolute()
+        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
+        extdir = ext_fullpath.parent.resolve()
+        
+        # Ensure the extension is built in the correct location for the package structure
+        if "src" in str(extdir):
+            # If we're building for src layout, put it in src/graph_id
+            extdir = Path.cwd() / "src" / "graph_id"
+        else:
+            # Otherwise use the default location
+            extdir = Path(self.build_lib).absolute()
+            
         build_temp = Path(self.build_temp) / ext.name
         build_temp.mkdir(parents=True, exist_ok=True)
 
