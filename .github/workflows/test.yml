@@ -56,7 +56,7 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
-    - name: Debug: Check built files
+    - name: Check built files
       run: |
         find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
         ls -la src/graph_id/ || echo "src/graph_id directory not found"
