@@ -69,11 +69,7 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          VERSION=$(grep -Po '(?<=^version\s*=\s*")[^"]+' pyproject.toml)
-          if [ -z "$VERSION" ]; then
-            echo "Error: Could not find version in pyproject.toml"
-            exit 1
-          fi
+          VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       
       - name: Create Git tag
