@@ -12,6 +12,11 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write
+  id-token: write    
+
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -60,6 +65,18 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(python -m build --sdist --wheel --outdir dist_tmp >/dev/null 2>&1 \
+                    && tar -xOf dist_tmp/*.tar.gz */PKG-INFO | grep '^Version:' | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Create Git tag
+        run: |
+          git tag v${{ steps.get_version.outputs.version }}
+          git push origin v${{ steps.get_version.outputs.version }}
 
       - name: Install Poetry
         run: |
