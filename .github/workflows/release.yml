@@ -120,6 +120,11 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Get version
         run: |
           VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
