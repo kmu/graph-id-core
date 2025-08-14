@@ -157,30 +157,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.11
-      - name: Install from PyPI (Linux/macOS)
-        if: runner.os != 'Windows'
+
+      - name: Install from PyPI
         run: |
           python -m venv venv
-          source venv/bin/activate
           pip install --upgrade pip
           pip install graph-id-core
 
-      - name: Install from PyPI (Windows)
-        if: runner.os == 'Windows'
+      - name: Test import
         run: |
-          python -m venv venv
-          venv\bin\activate
-          pip install --upgrade pip
-          pip install graph-id-core
-
-      - name: Test import (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          source venv/bin/activate || venv\Scripts\activate
-          python -c "import graph_id"
-
-      - name: Test import (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          source venv/bin/activate || venv\Scripts\activate
           python -c "import graph_id"
