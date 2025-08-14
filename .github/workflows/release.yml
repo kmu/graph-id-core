@@ -120,9 +120,15 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Get version
+        run: |
+          VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_ENV
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ env.version }}
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
