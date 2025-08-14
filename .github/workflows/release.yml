@@ -158,7 +158,7 @@ jobs:
         with:
           python-version: 3.11
       - name: Install from PyPI (Linux/macOS)
-        if: runner.os != "windows-latest"
+        if: runner.os != 'Windows'
         run: |
           python -m venv venv
           source venv/bin/activate
@@ -166,7 +166,7 @@ jobs:
           pip install graph-id-core
 
       - name: Install from PyPI (Windows)
-        if: runner.os == "windows-latest"
+        if: runner.os == 'Windows'
         run: |
           python -m venv venv
           venv\bin\activate
@@ -174,13 +174,13 @@ jobs:
           pip install graph-id-core
 
       - name: Test import (Linux/macOS)
-        if: runner.os != "windows-latest"
+        if: runner.os != 'Windows'
         run: |
           source venv/bin/activate || venv\Scripts\activate
           python -c "import graph_id"
 
       - name: Test import (Windows)
-        if: runner.os == "windows-latest"
+        if: runner.os == 'Windows'
         run: |
           source venv/bin/activate || venv\Scripts\activate
           python -c "import graph_id"
