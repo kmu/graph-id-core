@@ -1,8 +1,9 @@
 name: Build and Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - release
   workflow_dispatch:
     inputs:
       test_pypi:
@@ -10,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+
+permissions:
+  contents: write
+  id-token: write    
+
 
 jobs:
   build_wheels:
@@ -60,6 +66,17 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Create Git tag
+        run: |
+          git tag v${{ steps.get_version.outputs.version }}
+          git push origin v${{ steps.get_version.outputs.version }}
+
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
@@ -79,7 +96,7 @@ jobs:
     environment: release
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.ref == 'refs/heads/release'
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -95,7 +112,7 @@ jobs:
   upload_release_assets:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.ref == 'refs/heads/release'
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -103,23 +120,23 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        run: |
+          VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_ENV
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ env.version }}
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/*.whl
-          asset_name: project.whl
-          asset_content_type: application/octet-stream
 
   wait-for-pypi:
     needs: upload_release_assets
@@ -140,14 +157,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.11
+
       - name: Install from PyPI
         run: |
           python -m venv venv
-          source venv/bin/activate || venv\Scripts\activate
           pip install --upgrade pip
           pip install graph-id-core
+
       - name: Test import
         run: |
-          source venv/bin/activate || venv\Scripts\activate
           python -c "import graph_id"
-
