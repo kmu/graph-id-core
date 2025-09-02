@@ -8,6 +8,7 @@ from pymatgen.core import Lattice, Structure
 
 from .imports import graph_id_cpp
 
+
 test_file_dir = Path(__file__).parent.parent.parent / "tests" / "py" / "test_files"
 
 
