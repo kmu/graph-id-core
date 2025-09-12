@@ -103,7 +103,7 @@ Graph ID is particularly useful for:
 - **High-throughput Screening**: Rapid identification of unique structures in computational workflows
 - **Polymorph Identification**: Distinguishing between different polymorphs of the same composition
 
-## Web Service
+## Web Service (experimental)
 
 You can search materials using Graph ID at [matfinder.net](https://matfinder.net).
 
