@@ -134,10 +134,7 @@ model = Pipeline(
 model.fit(X_train, y_train)
 y_test_pred = model.predict(X_test)
 mae = mean_absolute_error(y_test, y_test_pred)
-print(mae)
-
-train_df.graph_id
-test_df
+print(f"MAE of whole test data: {mae}")
 
 obs_df = test_df[test_df.graph_id.isin(train_df.graph_id)]
 novel_df = test_df[test_df.graph_id.isin(train_df.graph_id) is False]
@@ -149,31 +146,29 @@ y_obs = obs_df["formation_energy_per_atom"].values
 y_novel = novel_df["formation_energy_per_atom"].values
 
 y_obs_pred = model.predict(X_obs)
-mae = mean_absolute_error(y_obs, y_obs_pred)
-print("OBS")
-print(mae)
-
-df4 = pd.DataFrame({"actual": y_obs, "pred": y_obs_pred})
-df4["kind"] = "observed"
+obs_mae = mean_absolute_error(y_obs, y_obs_pred)
 
 y_novel_pred = model.predict(X_novel)
-mae = mean_absolute_error(y_novel, y_novel_pred)
-print("ACT")
-print(mae)
+novel_mae = mean_absolute_error(y_novel, y_novel_pred)
 
-df5 = pd.DataFrame({"actual": y_novel_pred, "pred": y_novel})
-df5["kind"] = "novel"
+print(f"MAE of leaked test data: {obs_mae}")
+print(f"MAE of unleaked test data: {novel_mae}")
 
-df6 = pd.concat([df4, df5])
-df6.to_csv("train3_df6.csv", index=False)
+obs_df = pd.DataFrame({"actual": y_obs, "pred": y_obs_pred})
+obs_df["kind"] = "observed"
+
+novel_df = pd.DataFrame({"actual": y_novel_pred, "pred": y_novel})
+novel_df["kind"] = "novel"
+
+leaked_unleaked_result_df = pd.concat([obs_df, novel_df])
+leaked_unleaked_result_df.to_csv("leaked_unleaked_result_df.csv", index=False)
 
 y_train_pred = model.predict(X_train)
-mae = mean_absolute_error(y_train, y_train_pred)
-print("ACT")
-print(mae)
+train_mae = mean_absolute_error(y_train, y_train_pred)
+print(f"MAE of train data: {train_mae}")
 
-df7 = pd.DataFrame({"actual": y_train_pred, "pred": y_train})
-df7["kind"] = "train"
+train_df = pd.DataFrame({"actual": y_train_pred, "pred": y_train})
+train_df["kind"] = "train"
 
-df8 = pd.concat([df6, df7])
-df8.to_csv("train3_df8.csv", index=False)
+test_train_df = pd.concat([leaked_and_unleaked_result_df, train_df])
+test_train_df.to_csv("test_train_df.csv", index=False)
