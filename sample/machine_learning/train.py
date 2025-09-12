@@ -18,7 +18,7 @@ from matminer.featurizers.structure import (
     StructureComposition,
 )
 from pymatgen.core import Structure
-import graph_id_core
+import graph_id_cpp
 # from graph_id.core.graph_id import GraphIDGenerator
 # read json from a file
 from monty.serialization import loadfn
