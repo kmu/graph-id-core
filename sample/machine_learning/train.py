@@ -18,7 +18,7 @@ from matminer.featurizers.structure import (
     StructureComposition,
 )
 from pymatgen.core import Structure
-import graph_id
+import graph_id_core
 # from graph_id.core.graph_id import GraphIDGenerator
 # read json from a file
 from monty.serialization import loadfn
@@ -71,7 +71,7 @@ pickle_path = "mp.2019.04.01.pickle"
 
 if not os.path.exists(pickle_path):
   # Download from https://figshare.com/articles/dataset/Graphs_of_Materials_Project_20190401/8097992
-  json_path = "mp.2019.04.01.json"
+  json_path = "/LARGE0/gr10163/tanimoto/data/mp.2019.04.01.json"
   data = loadfn(json_path)
   d1 = pd.DataFrame(data)
 
