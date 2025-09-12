@@ -91,6 +91,18 @@ crystal_gen = GraphIDGenerator(nn=CrystalNN())
 crystal_id = crystal_gen.get_id(structure)
 ```
 
+### Search Structures from Database(graph-id-db)
+```python
+from graph_id_cpp import GraphIDGenerator
+from graphid_db import Finder
+
+gen = GraphIDGenerator()
+graph_id = gen.get_id(structure)
+
+# Search for structures in graph-id-db using GraphID
+finder = Finder()
+entry = finder.find(graph_id)
+```
 ## Examples
 
 More comprehensive examples can be found in the [`tests/`](tests/) directory.
