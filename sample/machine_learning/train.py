@@ -81,7 +81,7 @@ if not os.path.exists(pickle_path):
   d2["structure"] = d2["cif"]
   del d2["cif"]
 
-  gid_gen = graph_id.GraphIDGenerator()
+  gid_gen = graph_id_cpp.GraphIDGenerator()
   print("Calculating Graph IDs...")
 
   d3 = featurizer.featurize_dataframe(d2, "structure", ignore_errors=None)
