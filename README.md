@@ -94,9 +94,10 @@ crystal_id = crystal_gen.get_id(structure)
 
 ### Search Structures from Database 
 
-Use `graph-id-db` to search structures in the Materials Project
+Use `graph-id-db` to search structures in the Materials Project using precomputed Graph ID stored in `graph-id-db`
 
 ```python
+# pip install graph-id-db
 from graph_id_cpp import GraphIDGenerator
 from graphid_db import Finder
 from pymatgen.core import Structure, Lattice
