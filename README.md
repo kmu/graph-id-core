@@ -108,7 +108,7 @@ structure = Structure.from_spacegroup(
     ["Na", "Cl"],
     [[0, 0, 0], [0.5, 0.5, 0.5]]
 )
-s
+
 gen = GraphIDGenerator()
 graph_id = gen.get_id(structure)
 
