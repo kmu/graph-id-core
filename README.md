@@ -99,7 +99,7 @@ Use `graph-id-db` to search structures in the Materials Project using precompute
 ```python
 # pip install graph-id-db
 from graph_id_cpp import GraphIDGenerator
-from graphid_db import Finder
+from graph_id_db import Finder
 from pymatgen.core import Structure, Lattice
 
 
