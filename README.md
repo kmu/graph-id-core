@@ -87,15 +87,28 @@ wyckoff_gen = GraphIDGenerator(wyckoff=True)
 wyckoff_id = wyckoff_gen.get_id(structure)
 
 # Use different neighbor detection
-crystal_gen = GraphIDGenerator(nn=CrystalNN())
+crystal_gen = GraphIDGenerator(nn=CrystalNN())  # Faster CrystalNN using C++ is also available
 crystal_id = crystal_gen.get_id(structure)
+
 ```
 
-### Search Structures from Database(graph-id-db)
+### Search Structures from Database 
+
+Use `graph-id-db` to search structures in the Materials Project using precomputed Graph ID stored in `graph-id-db`
+
 ```python
+# pip install graph-id-db
 from graph_id_cpp import GraphIDGenerator
 from graph_id_db import Finder
+from pymatgen.core import Structure, Lattice
 
+structure = Structure.from_spacegroup(
+    "Fm-3m",
+    Lattice.cubic(5.692),
+    ["Na", "Cl"],
+    [[0, 0, 0], [0.5, 0.5, 0.5]]
+)
+s
 gen = GraphIDGenerator()
 graph_id = gen.get_id(structure)
 
@@ -103,6 +116,9 @@ graph_id = gen.get_id(structure)
 finder = Finder()
 entry = finder.find(graph_id)
 ```
+
+
+
 ## Examples
 
 More comprehensive examples can be found in the [`tests/`](tests/) directory.
