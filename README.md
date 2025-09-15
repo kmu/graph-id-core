@@ -102,7 +102,6 @@ from graph_id_cpp import GraphIDGenerator
 from graph_id_db import Finder
 from pymatgen.core import Structure, Lattice
 
-
 structure = Structure.from_spacegroup(
     "Fm-3m",
     Lattice.cubic(5.692),
