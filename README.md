@@ -99,7 +99,7 @@ Use `graph-id-db` to search structures in the Materials Project using precompute
 ```python
 # pip install graph-id-db
 from graph_id_cpp import GraphIDGenerator
-from graph_id_db import Finder
+
 from pymatgen.core import Structure, Lattice
 
 structure = Structure.from_spacegroup(
@@ -107,21 +107,21 @@ structure = Structure.from_spacegroup(
     Lattice.cubic(5.692),
     ["Na", "Cl"],
     [[0, 0, 0], [0.5, 0.5, 0.5]]
-)
-
+).get_primitive_structure()
 gen = GraphIDGenerator()
 graph_id = gen.get_id(structure)
+print(f"Graph ID of NaCl is {graph_id}")
+
+from graph_id_db import Finder
 
 # Search for structures in graph-id-db using GraphID
 finder = Finder()
-entry = finder.find(graph_id)
+finder.find(graph_id)
 ```
-
-
 
 ## Examples
 
-More comprehensive examples can be found in the [`tests/`](tests/) directory.
+More comprehensive examples can be found in the [`tests/`](tests/) and [`examples`](examples/) directories.
 
 ## Applications
 
