@@ -27,6 +27,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake
+
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
@@ -44,6 +55,23 @@ jobs:
 
     - name: Install dependencies
       run: poetry install
+
+    - name: Build C++ extension with CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(python3 -m pybind11 --cmakedir)
+        cmake --build . --config Release
+
+    - name: Copy built extension to package
+      run: |
+        find build -name "graph_id_cpp*.so" -exec cp {} graph_id/ \;
+
+    - name: Check built files
+      run: |
+        find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
+        ls -la src/graph_id/ || echo "src/graph_id directory not found"
+        poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
       run: poetry run pytest -v
