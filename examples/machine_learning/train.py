@@ -112,8 +112,8 @@ else:
         df = pd.DataFrame([d3["descriptors"]], columns=d3["feat_names"])
         df["graph_id"] = d3["graph_id"]
         df["path"] = path
-
-    df = d3.copy()
+    else:
+        df = d3.copy()
     df.to_csv("train_energy_df.csv", index=False)
 
     # if "mpid" not in df.columns:
