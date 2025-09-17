@@ -69,11 +69,20 @@ class CifToStructure(ConversionFeaturizer):  # type: ignore
 
 pickle_path = "mp.2019.04.01.pickle"
 
+def get_id_from_str(structure_str):
+    structure = Structure.from_str(input_string=structure_str, fmt="cif")
+    gid_gen = graph_id_cpp.GraphIDGenerator()
+    gid = gid_gen.get_id(structure)
+
+    return gid
+
+
 if not os.path.exists(pickle_path):
   # Download from https://figshare.com/articles/dataset/Graphs_of_Materials_Project_20190401/8097992
   json_path = "mp.2019.04.01.json"
   data = loadfn(json_path)
   d1 = pd.DataFrame(data)
+  d1["graph_id"] = d1["structure"].apply(get_id_from_str)
 
   c2s = CifToStructure()
   d2 = c2s.featurize_dataframe(d1, col_id="structure")
@@ -81,11 +90,11 @@ if not os.path.exists(pickle_path):
   d2["structure"] = d2["cif"]
   del d2["cif"]
 
-  gid_gen = graph_id_cpp.GraphIDGenerator()
+  gid_gen = graph_id.GraphIDGenerator()
   print("Calculating Graph IDs...")
 
   d3 = featurizer.featurize_dataframe(d2, "structure", ignore_errors=None)
-  d3["graph_id"] = gid_gen.get_many_ids(d3["structure"].values, parallel=True)
+#   d3["graph_id"] = gid_gen.get_many_ids(d3["structure"].values, parallel=True)
 
   print("Saving to pickle...")
   d3.to_pickle(pickle_path)
@@ -104,6 +113,7 @@ else:
         df["graph_id"] = d3["graph_id"]
         df["path"] = path
 
+    df = d3.copy()
     df.to_csv("train_energy_df.csv", index=False)
 
     # if "mpid" not in df.columns:
@@ -137,7 +147,7 @@ mae = mean_absolute_error(y_test, y_test_pred)
 print(f"MAE of whole test data: {mae}")
 
 obs_df = test_df[test_df.graph_id.isin(train_df.graph_id)]
-novel_df = test_df[test_df.graph_id.isin(train_df.graph_id) is False]
+novel_df = test_df[~test_df.graph_id.isin(train_df.graph_id)]
 
 X_obs = obs_df[featurizer.feature_labels()].values
 X_novel = novel_df[featurizer.feature_labels()].values
