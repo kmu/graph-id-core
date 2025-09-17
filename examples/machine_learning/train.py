@@ -82,6 +82,7 @@ if not os.path.exists(pickle_path):
   json_path = "mp.2019.04.01.json"
   data = loadfn(json_path)
   d1 = pd.DataFrame(data)
+  print("Calculating Graph IDs...")
   d1["graph_id"] = d1["structure"].apply(get_id_from_str)
 
   c2s = CifToStructure()
@@ -89,9 +90,6 @@ if not os.path.exists(pickle_path):
 
   d2["structure"] = d2["cif"]
   del d2["cif"]
-
-  gid_gen = graph_id_cpp.GraphIDGenerator()
-  print("Calculating Graph IDs...")
 
   d3 = featurizer.featurize_dataframe(d2, "structure", ignore_errors=None)
 #   d3["graph_id"] = gid_gen.get_many_ids(d3["structure"].values, parallel=True)
