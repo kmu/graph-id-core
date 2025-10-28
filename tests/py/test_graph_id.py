@@ -176,3 +176,13 @@ class TestGraphIDGenerator(TestCase):
         id_2 = gid.get_id(s2)
 
         self.assertNotEqual(id_1, id_2)
+        
+    def test_get_unique_structures(self):
+        alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
+        beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
+        # s3 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
+
+        gid = GraphIDGenerator()
+
+        unique_structures = gid.get_unique_structures([alpha, beta])
+        self.assertEqual(len(unique_structures), 1)
