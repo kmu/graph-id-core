@@ -9,6 +9,7 @@ from graph_id.analysis.graphs import StructureGraph
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.core import Element
+from pymatgen.core.structure import Structure
 from tqdm import tqdm
 
 __version__ = "0.1.0"
@@ -207,3 +208,15 @@ class GraphIDGenerator:
             prev_num_uniq = num_unique_nodes
 
         return sg
+
+    def get_unique_structures(self, structures: list[Structure]) -> list[Structure]:
+        unique_structures = []
+        graph_ids = set()
+
+        for strct in structures:
+            new_graph_id = self.get_id(strct)
+            if new_graph_id not in graph_ids:
+                graph_ids.add(new_graph_id)
+                unique_structures.append(strct)
+
+        return unique_structures
