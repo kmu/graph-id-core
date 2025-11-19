@@ -86,7 +86,7 @@ lint.ignore = [
   "PT009",
   "PTH118",
   "PTH120",
-
+  "PTH207"
 ]
 lint.select = ["ALL"]
 line-length = 119
@@ -100,6 +100,3 @@ max-args = 10
   "INP001", # is part of an implicit namespace package. Add an `__init__.py`.
   "T201",   # print is allowed
 ]
-
-[tool.codespell]
-ignore-words-list = "implementors,Te,Ot"

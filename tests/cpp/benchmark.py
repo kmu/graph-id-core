@@ -34,20 +34,11 @@ def small_test_structure(max_sites=30):
 
 def run_benchmark(pymatgen, our_nn):
     for name, s in small_test_structure():
-        try:
-            at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
-            bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100
-            print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
-            )
-        except Exception as e:
-            print(e)
+        at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
+        bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100
+        print(
+            f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]",
+        )
 
 
 class TestBenchmark(unittest.TestCase):
@@ -95,41 +86,35 @@ class TestBenchmark(unittest.TestCase):
                 sg.set_compositional_sequence_node_attr(hash_cs=True)
                 sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)
 
-            try:
-                at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
-                bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
-                print(
-                    "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                        s.num_sites,
-                        at,
-                        bt,
-                        at / bt,
-                        name,
-                    ),
-                )
-            except Exception as e:
-                print(e)
+            at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
+            bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
+            print(
+                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
+                    s.num_sites,
+                    at,
+                    bt,
+                    at / bt,
+                    name,
+                ),
+            )
 
     def test_graph_id(self):
         print("GraphIDGenerator.get_id:")
         a = GraphIDGenerator()
         b = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure():
-            try:
-                N = 1
-                at = timeit.timeit("a.get_id(s)", number=N, globals=locals()) * 1000 / N
-                bt = timeit.timeit("b.get_id(s)", number=N, globals=locals()) * 1000 / N
-                print(
-                    "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                        s.num_sites,
-                        at,
-                        bt,
-                        at / bt,
-                        name,
-                    ),
-                )
-            except Exception as e:
-                print(e)
+            n = 1
+            at = timeit.timeit("a.get_id(s)", number=n, globals=locals()) * 1000 / n
+            bt = timeit.timeit("b.get_id(s)", number=n, globals=locals()) * 1000 / n
+            print(
+                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
+                    s.num_sites,
+                    at,
+                    bt,
+                    at / bt,
+                    name,
+                ),
+            )
 
     def test_graph_id_cpp_only(self):
         print("GraphIDGenerator.get_id:")
@@ -137,16 +122,13 @@ class TestBenchmark(unittest.TestCase):
 
         g = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure(1000):
-            try:
-                N = 1000
-                if s.num_sites > 20:
-                    N = 10
-                t = timeit.repeat("g.get_id(s)", number=N, repeat=5, globals=locals())
-                mean = np.mean(t) * 1000 / N
-                std = np.std(t) * 1000 / N
-                print(f"{s.num_sites: 3d} site. C++: {mean: 8.3f}ms+={std / mean * 100:.1f}% [{name}]")
-            except Exception as e:
-                print(e)
+            n = 1000
+            if s.num_sites > 20:
+                n = 10
+            t = timeit.repeat("g.get_id(s)", number=n, repeat=5, globals=locals())
+            mean = np.mean(t) * 1000 / n
+            std = np.std(t) * 1000 / n
+            print(f"{s.num_sites: 3d} site. C++: {mean: 8.3f}ms+={std / mean * 100:.1f}% [{name}]")
 
 
 if __name__ == "__main__":
