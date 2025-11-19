@@ -80,7 +80,7 @@ jobs:
 
     - name: Run pytest
       run: |
-        poetry run pytest --cov --junitxml=junit.xml -o junit_family=legacy -v
+        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
@@ -88,6 +88,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: kmu/graph-id-core
+        files: ./coverage.xml
 
     - name: Upload test results to Codecov
       if: matrix.os == 'ubuntu-latest' && !cancelled()
