@@ -8,6 +8,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
