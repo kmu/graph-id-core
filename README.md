@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/kmu/graph-id-core/graph/badge.svg?token=AE2JIT3BAX)](https://codecov.io/gh/kmu/graph-id-core)
+
 # Graph ID
 
 Graph ID is a universal identifier system for atomistic structures including crystals and molecules. It generates unique, deterministic identifiers based on the topological and compositional properties of atomic structures, enabling efficient structure comparison, database indexing, and materials discovery.
