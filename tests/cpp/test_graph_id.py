@@ -63,16 +63,25 @@ class TestGraphIDGenerator(unittest.TestCase):
         sg_cpp_cn = graph_id_cpp.StructureGraph.with_local_env_strategy(
             structure, graph_id_cpp.CrystalNN()
         ).to_py()
-        sg_py_mdn = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
+        sg_py_mdn = StructureGraph.from_local_env_strategy(
+            structure, MinimumDistanceNN()
+        )
         sg_cpp_mdn = graph_id_cpp.StructureGraph.with_local_env_strategy(
             structure, graph_id_cpp.MinimumDistanceNN()
         ).to_py()
-        assert gid_gen_cpp.get_id(structure) == gid_gen_py.get_id(structure).split("-")[2]
+        assert (
+            gid_gen_cpp.get_id(structure) == gid_gen_py.get_id(structure).split("-")[2]
+        )
 
-        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_cutoff) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cutoff)
-        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_cn) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cn)
-        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_mdn) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_mdn)
-    
+        assert gid_gen_cpp.get_id_with_structure_graph(
+            sg_py_cutoff
+        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cutoff)
+        assert gid_gen_cpp.get_id_with_structure_graph(
+            sg_py_cn
+        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cn)
+        assert gid_gen_cpp.get_id_with_structure_graph(
+            sg_py_mdn
+        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_mdn)
 
 
 if __name__ == "__main__":

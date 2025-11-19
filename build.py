@@ -7,6 +7,7 @@ from pathlib import Path
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 import platform
+
 # https://github.com/pybind/cmake_example/blob/master/setup.py
 
 # Convert distutils platform specifiers to CMake -A arguments

@@ -61,8 +61,12 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 # まず原子idxが含まれる結合を削除する
                 for from_index, to_index, dct in _sg.graph.edges(keys=False, data=True):
                     if from_index == idx or to_index == idx:
-                        copied_sg.break_edge(from_index, to_index, dct["to_jimage"], allow_reverse=True)
-                sg = self.prepare_structure_graph(structure, copied_sg, idx, cluster_idx)
+                        copied_sg.break_edge(
+                            from_index, to_index, dct["to_jimage"], allow_reverse=True
+                        )
+                sg = self.prepare_structure_graph(
+                    structure, copied_sg, idx, cluster_idx
+                )
                 n = len(sg.cc_cs)
                 array = np.empty(
                     [
@@ -77,15 +81,18 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 # long_str_tmp = blake2b(":".join(np.sort(array)).encode("ascii"), digest_size=16).hexdigest()
                 long_str_list.append(long_str_tmp)
             long_str = ":".join(np.sort(long_str_list))
-            gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+            gid = blake2b(
+                long_str.encode("ascii"), digest_size=self.digest_size
+            ).hexdigest()
             gid_list.append(gid)
 
         long_gid = "".join(gid_list)
         # return self.elaborate_comp_dim(sg, blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest())
-        return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
+        return blake2b(
+            long_gid.encode("ascii"), digest_size=self.digest_size
+        ).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
-        
         sg = StructureGraph.with_indivisual_state_comp_strategy(
             structure=structure,
             strategy=self.nn,
@@ -106,7 +113,15 @@ class DistanceClusteringGraphID(GraphIDGenerator):
 
         if self.wyckoff:
             sg.set_wyckoffs(symmetry_tol=self.symmetry_tol)
-            prev_num_uniq = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
+            prev_num_uniq = len(
+                list(
+                    set(
+                        nx.get_node_attributes(
+                            sg.graph, "compositional_sequence"
+                        ).values()
+                    )
+                )
+            )
 
         elif self.loop:
             sg.set_loops_as_starting_labels(
@@ -127,7 +142,15 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 use_previous_cs=use_previous_cs or self.wyckoff,
             )
 
-            num_unique_nodes = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
+            num_unique_nodes = len(
+                list(
+                    set(
+                        nx.get_node_attributes(
+                            sg.graph, "compositional_sequence"
+                        ).values()
+                    )
+                )
+            )
             use_previous_cs = True
 
             if prev_num_uniq == num_unique_nodes:

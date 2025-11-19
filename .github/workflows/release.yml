@@ -14,7 +14,7 @@ on:
 
 permissions:
   contents: write
-  id-token: write    
+  id-token: write
 
 
 jobs:
@@ -71,7 +71,7 @@ jobs:
         run: |
           VERSION=$(sed -nE 's/^version\s*=\s*"([^"]+)".*/\1/p' pyproject.toml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
+
       - name: Create Git tag
         run: |
           git tag v${{ steps.get_version.outputs.version }}

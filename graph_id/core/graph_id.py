@@ -68,7 +68,9 @@ class GraphIDGenerator:
         for i, component in enumerate(sg.cc_cs):
             array[i] = blake("-".join(sorted(component["cs_list"])))
         long_str = ":".join(np.sort(array))
-        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+        gid = blake2b(
+            long_str.encode("ascii"), digest_size=self.digest_size
+        ).hexdigest()
 
         gid = self.elaborate_comp_dim(sg, gid)
 
@@ -179,7 +181,15 @@ class GraphIDGenerator:
             sg.set_wyckoffs(symmetry_tol=self.symmetry_tol)
 
             # TODO: remove nx
-            prev_num_uniq = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
+            prev_num_uniq = len(
+                list(
+                    set(
+                        nx.get_node_attributes(
+                            sg.graph, "compositional_sequence"
+                        ).values()
+                    )
+                )
+            )
 
         elif self.loop:
             sg.set_loops(
@@ -199,7 +209,15 @@ class GraphIDGenerator:
                 use_previous_cs=use_previous_cs or self.wyckoff,
             )
 
-            num_unique_nodes = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
+            num_unique_nodes = len(
+                list(
+                    set(
+                        nx.get_node_attributes(
+                            sg.graph, "compositional_sequence"
+                        ).values()
+                    )
+                )
+            )
             use_previous_cs = True
 
             if prev_num_uniq == num_unique_nodes:

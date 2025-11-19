@@ -18,7 +18,9 @@ from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+test_file_dir = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
+)
 
 
 def small_test_structure(max_sites=30):
@@ -34,8 +36,16 @@ def small_test_structure(max_sites=30):
 def run_benchmark(pymatgen, our_nn):
     for name, s in small_test_structure():
         try:
-            at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
-            bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100
+            at = (
+                timeit.timeit(
+                    "pymatgen.get_all_nn_info(s)", number=10, globals=locals()
+                )
+                * 100
+            )
+            bt = (
+                timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals())
+                * 100
+            )
             print(
                 "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
                     s.num_sites, at, bt, at / bt, name
@@ -64,7 +74,10 @@ class TestBenchmark(unittest.TestCase):
 
     def test_cut_off_dict(self):
         print("CutOffDictNN:")
-        run_benchmark(CutOffDictNN.from_preset("vesta_2019"), graph_id_cpp.CutOffDictNN.from_preset("vesta_2019"))
+        run_benchmark(
+            CutOffDictNN.from_preset("vesta_2019"),
+            graph_id_cpp.CutOffDictNN.from_preset("vesta_2019"),
+        )
 
     def test_brunner(self):
         print("BrunnerNN_real:")
@@ -85,7 +98,9 @@ class TestBenchmark(unittest.TestCase):
                 sg = cls.with_local_env_strategy(s, nn)  # noqa: B023
                 sg.set_elemental_labels()
                 sg.set_compositional_sequence_node_attr(hash_cs=True)
-                sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)
+                sg.set_compositional_sequence_node_attr(
+                    use_previous_cs=True, hash_cs=True
+                )
 
             try:
                 at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
@@ -128,7 +143,11 @@ class TestBenchmark(unittest.TestCase):
                 t = timeit.repeat("g.get_id(s)", number=N, repeat=5, globals=locals())
                 mean = np.mean(t) * 1000 / N
                 std = np.std(t) * 1000 / N
-                print("{: 3d} site. C++: {: 8.3f}ms+={:.1f}% [{}]".format(s.num_sites, mean, std / mean * 100, name))
+                print(
+                    "{: 3d} site. C++: {: 8.3f}ms+={:.1f}% [{}]".format(
+                        s.num_sites, mean, std / mean * 100, name
+                    )
+                )
             except Exception as e:
                 print(e)
 

@@ -7,7 +7,9 @@ from pymatgen.core import Structure
 from tabulate import tabulate
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Graph ID: graph-based ID for materails")
+    parser = argparse.ArgumentParser(
+        description="Graph ID: graph-based ID for materails"
+    )
 
     parser.add_argument(
         dest="filenames",
@@ -17,7 +19,9 @@ if __name__ == "__main__":
         default=[],
     )
 
-    parser.add_argument("-p", "--parallel", help="parallel execution", action="store_true")
+    parser.add_argument(
+        "-p", "--parallel", help="parallel execution", action="store_true"
+    )
 
     gid = GraphIDGenerator()
     args = parser.parse_args()

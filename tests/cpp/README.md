@@ -61,4 +61,3 @@ google-pprof \
   ./build/graph_id_cpp$(python -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))') \
   build/profile-large.prof --svg > build/profile-large.svg
 ```
-
