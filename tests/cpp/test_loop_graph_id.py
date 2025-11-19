@@ -7,7 +7,9 @@ from pymatgen.core import Structure
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+test_file_dir = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
+)
 
 
 def small_test_structure(max_sites=30):
@@ -30,7 +32,6 @@ class TestLoopGraphIDGenerator(unittest.TestCase):
         b = graph_id_cpp.GraphIDGenerator(loop=True)
         for name, s in small_test_structure():
             with self.subTest(name):
-
                 aid = a.get_id(s)
 
                 self.assertEqual(aid, b.get_id(s))

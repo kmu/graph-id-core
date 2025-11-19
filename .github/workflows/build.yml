@@ -38,7 +38,7 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {project}/tests/py/ -v"
           # Test on a subset of Python versions to speed up CI
           CIBW_TEST_SKIP: "cp36-* cp37-* cp38-* cp39-*"
-            
+
         with:
           package-dir: .
           output-dir: wheelhouse
@@ -74,4 +74,3 @@ jobs:
         with:
           name: sdist
           path: dist/*.tar.gz
-

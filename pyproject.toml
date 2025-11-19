@@ -37,4 +37,3 @@ norecursedirs = ["library", "build", "dist", ".git", ".venv", "__pycache__"]
 [build-system]
 requires = ["poetry-core>=1.0.0", "pybind11~=2.11.1", "setuptools"]
 build-backend = "poetry.core.masonry.api"
-

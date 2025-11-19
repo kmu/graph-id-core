@@ -22,12 +22,12 @@ std::string GraphIDGenerator::get_id_with_structure_graph(py::object py_structur
     py::object py_structure = py_structure_graph.attr("structure");
     auto s = py_structure.cast<PymatgenStructure>();
     auto s_ptr = std::make_shared<const Structure>(s);
-    
+
     const auto sg_from_py = StructureGraph::from_py(py_structure_graph);
-    
+
     // 既存のStructureGraphに対してラベル設定とcompositional sequenceの処理を適用
     auto sg = prepare_structure_graph_from_existing(s_ptr,sg_from_py);
-    
+
     std::vector<std::string> cc_labels(sg.cc_nodes.size());
     for (size_t i = 0; i < sg.cc_nodes.size(); ++i) {
         std::vector<std::string> labels = sg.cc_cs[i];

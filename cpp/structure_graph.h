@@ -94,7 +94,7 @@ public:
     void set_cc_diameter();
 
     static bool rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate);
-    
+
     static int calculate_rank(const gtl::flat_hash_set<std::array<int, 3>> &vertices);
 };
 

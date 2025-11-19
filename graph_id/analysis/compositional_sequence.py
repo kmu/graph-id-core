@@ -11,7 +11,9 @@ def blake(s):
 
 
 class CompositionalSequence:
-    def __init__(self, focused_site_i, starting_labels, hash_cs=False, use_previous_cs=False):
+    def __init__(
+        self, focused_site_i, starting_labels, hash_cs=False, use_previous_cs=False
+    ):
         self.hash_cs = hash_cs
         if hash_cs:
             self.cs_for_hashing = ""
@@ -45,12 +47,10 @@ class CompositionalSequence:
         # graph: nx.Graph,
         # labels: List[str],
     ) -> None:
-
         for neighbor in nsites:
             neighbor_info = (neighbor.index, neighbor.jimage)
 
             if neighbor_info not in self.seen_sites:
-
                 self.seen_sites.add(neighbor_info)
 
                 self.new_sites.append(neighbor_info)
@@ -69,7 +69,12 @@ class CompositionalSequence:
         else:
             self.compositional_seq.append("".join(formula))
 
-    def get_sorted_composition_list_from(self, composition_counter: Counter) -> List[str]:
+    def get_sorted_composition_list_from(
+        self, composition_counter: Counter
+    ) -> List[str]:
         sorted_symbols = sorted(composition_counter.keys())
-        formula = [s + str(formula_double_format(composition_counter[s], False)) for s in sorted_symbols]
+        formula = [
+            s + str(formula_double_format(composition_counter[s], False))
+            for s in sorted_symbols
+        ]
         return formula
