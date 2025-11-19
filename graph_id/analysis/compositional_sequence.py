@@ -72,4 +72,4 @@ class CompositionalSequence:
 
     def get_sorted_composition_list_from(self, composition_counter: Counter) -> list[str]:
         sorted_symbols = sorted(composition_counter.keys())
-        return [s + str(formula_double_format(composition_counter[s], trailing_zeros=False)) for s in sorted_symbols]
+        return [s + str(formula_double_format(composition_counter[s], ignore_ones=False)) for s in sorted_symbols]
