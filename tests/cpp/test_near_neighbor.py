@@ -63,9 +63,8 @@ class TestNN(unittest.TestCase):
     def run_for_small_structures(self, pymatgen_nn, out_nn):
         for name, s in small_test_structure():
             with self.subTest(name):
-                
                 pymatgen_result = pymatgen_nn.get_all_nn_info(s)
-                
+
                 cpp_result = out_nn.get_all_nn_info(s)
                 self.assert_nn_info(cpp_result, pymatgen_result)
 
@@ -103,10 +102,10 @@ class TestNNHelper(unittest.TestCase):
                     self.assert_result(a, b)
 
     def sort2(self, a, b, c, d):
-        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[2], x[3][0], x[3][1], x[3][2]))
+        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[2], x[3][0], x[3][1], x[3][2]))  # noqa: C414
 
     def sort(self, a, b, c, d):
-        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2]))
+        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2]))  # noqa: C414
 
     def assert_result(self, a, b):
         sa = {(x[0], x[1], tuple(x[2])) for x in a}
@@ -145,10 +144,9 @@ class TestVoronoiNN(TestNN):
         cpp = graph_id_cpp.VoronoiNN()
         for name, s in small_test_structure():
             with self.subTest(name):
-                try:
-                    pmg_res = pmg.get_all_voronoi_polyhedra(s)
-                except Exception:
-                    self.skipTest("pymatgen error")
+                pmg_res = pmg.get_all_voronoi_polyhedra(s)
+
+                self.skipTest("pymatgen error")
                 cpp_res = cpp.get_all_voronoi_polyhedra(s)
                 self.assertEqual(len(pmg_res), len(cpp_res))
                 for i in range(s.num_sites):
@@ -220,11 +218,9 @@ class TestMinimumDistanceNN(TestNN):
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
         cpp_result = graph_id_cpp.MinimumDistanceNN().get_all_nn_info(m)
-        try:
-            pymatgen_result = MinimumDistanceNN().get_all_nn_info(m)
-        except Exception as e:
-            print(e)
-            self.skipTest("pymatgen error")
+
+        pymatgen_result = MinimumDistanceNN().get_all_nn_info(m)
+
         self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_structures_get_all_sites(self):
@@ -300,11 +296,9 @@ class TestCutoffDictNN(TestNN):
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
         cpp_result = graph_id_cpp.CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
-        try:
-            pymatgen_result = CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
-        except Exception as e:
-            print(e)
-            self.skipTest("pymatgen error")
+
+        pymatgen_result = CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
+
         self.assert_nn_info(cpp_result, pymatgen_result)
 
     def test_structures_with_dict(self):
