@@ -1,7 +1,7 @@
-
 # https://github.com/hackingmaterials/matminer_examples/blob/main/matminer_examples/machine_learning-nb/voronoi-ward-prb-2017.ipynb
 import os
 
+import graph_id_cpp
 import numpy as np
 import pandas as pd
 from matminer.featurizers.base import MultipleFeaturizer
@@ -19,12 +19,11 @@ from matminer.featurizers.structure import (
     StructuralHeterogeneity,
     StructureComposition,
 )
-from pymatgen.core import Structure
-import graph_id_cpp
 
 # from graph_id.core.graph_id import GraphIDGenerator
 # read json from a file
 from monty.serialization import loadfn
+from pymatgen.core import Structure
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
