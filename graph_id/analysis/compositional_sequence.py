@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 from collections import Counter
 from hashlib import blake2b
-from typing import List
+from typing import TYPE_CHECKING
 
-from pymatgen.core.structure import Neighbor
 from pymatgen.util.string import formula_double_format
+
+if TYPE_CHECKING:
+    from pymatgen.core.structure import Neighbor
 
 
 def blake(s):
@@ -31,8 +35,7 @@ class CompositionalSequence:
         if self.hash_cs:
             return f"{self.first_element}-{self.cs_for_hashing}"  # type: ignore
 
-        else:
-            return f"{self.first_element}-{'-'.join(self.compositional_seq)}"  # type: ignore
+        return f"{self.first_element}-{'-'.join(self.compositional_seq)}"  # type: ignore
 
     def get_current_starting_sites(self):
         new_sites = self.new_sites
@@ -41,16 +44,14 @@ class CompositionalSequence:
 
     def count_composition_for_neighbors(
         self,
-        nsites: List[Neighbor],
+        nsites: list[Neighbor],
         # graph: nx.Graph,
         # labels: List[str],
     ) -> None:
-
         for neighbor in nsites:
             neighbor_info = (neighbor.index, neighbor.jimage)
 
             if neighbor_info not in self.seen_sites:
-
                 self.seen_sites.add(neighbor_info)
 
                 self.new_sites.append(neighbor_info)
@@ -69,7 +70,6 @@ class CompositionalSequence:
         else:
             self.compositional_seq.append("".join(formula))
 
-    def get_sorted_composition_list_from(self, composition_counter: Counter) -> List[str]:
+    def get_sorted_composition_list_from(self, composition_counter: Counter) -> list[str]:
         sorted_symbols = sorted(composition_counter.keys())
-        formula = [s + str(formula_double_format(composition_counter[s], False)) for s in sorted_symbols]
-        return formula
+        return [s + str(formula_double_format(composition_counter[s], ignore_ones=False)) for s in sorted_symbols]

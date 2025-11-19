@@ -94,7 +94,7 @@ crystal_id = crystal_gen.get_id(structure)
 
 ```
 
-### Search Structures from Database 
+### Search Structures from Database
 
 Use `graph-id-db` to search structures in the Materials Project using precomputed Graph ID stored in `graph-id-db`
 
@@ -136,4 +136,3 @@ Graph ID is particularly useful for:
 ## Web Service (experimental)
 
 You can search materials using Graph ID at [matfinder.net](https://matfinder.net).
-

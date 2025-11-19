@@ -5,12 +5,13 @@ from multiprocessing import Pool
 
 import networkx as nx
 import numpy as np
-from graph_id.analysis.graphs import StructureGraph
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.core import Element
 from pymatgen.core.structure import Structure
 from tqdm import tqdm
+
+from graph_id.analysis.graphs import StructureGraph
 
 __version__ = "0.1.0"
 

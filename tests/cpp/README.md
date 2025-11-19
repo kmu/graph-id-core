@@ -34,7 +34,7 @@ python -m unittest discover -s cpp -p "test/benchmark*.py"
 
 ## Profiling
 
-**Obtainig dependencies (Only works for Linux)**
+**Obtaining dependencies (Only works for Linux)**
 ```bash
 apt-get install -y google-perftools libgoogle-perftools-dev kcachegrind
 pip install yep
@@ -61,4 +61,3 @@ google-pprof \
   ./build/graph_id_cpp$(python -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))') \
   build/profile-large.prof --svg > build/profile-large.svg
 ```
-

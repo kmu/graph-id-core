@@ -1,4 +1,5 @@
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -6,7 +7,7 @@ from pathlib import Path
 
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
-import platform
+
 # https://github.com/pybind/cmake_example/blob/master/setup.py
 
 # Convert distutils platform specifiers to CMake -A arguments
@@ -127,5 +128,5 @@ def build(setup_kwargs):
             "ext_modules": ext_modules,
             "cmdclass": {"build_ext": CMakeBuild},
             "zip_safe": False,
-        }
+        },
     )

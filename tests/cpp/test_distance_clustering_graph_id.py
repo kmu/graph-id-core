@@ -2,11 +2,11 @@ import glob
 import os
 import unittest
 
-from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 from pymatgen.core import Structure
 
-from .imports import graph_id_cpp
+from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 
+from .imports import graph_id_cpp
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/test_files"))
 

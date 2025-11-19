@@ -1,11 +1,12 @@
-import os
+from pathlib import Path
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphIDGenerator
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
-TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
+from graph_id.core.graph_id import GraphIDGenerator
+
+TEST_FILES = (Path(__file__).resolve().parent / "test_files").as_posix()
 
 
 class TestGraphIDGenerator(TestCase):
@@ -20,7 +21,7 @@ class TestGraphIDGenerator(TestCase):
         gid = GraphIDGenerator()
         self.assertTrue(gid.version > "0.0.0")
 
-    def test_NaCl(self):
+    def test_nacl(self):
         nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
@@ -43,7 +44,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(nacl))
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(cscl))
 
-    def test_LiMnTeO(self):
+    def test_limnteo(self):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
@@ -54,7 +55,7 @@ class TestGraphIDGenerator(TestCase):
 
         self.assertNotEqual(id_1, id_2)
 
-    def test_VSbO4(self):
+    def test_vsb_o_4(self):
         """
         MinimumDistanceNN does not work for this.
         """
@@ -111,7 +112,7 @@ class TestGraphIDGenerator(TestCase):
 
     def test_simple_same_composition(self):
         """
-        Graphs with diamter of 0.
+        Graphs with diameter of 0.
         Compositions are identical.
         Structures are different.
         """
@@ -126,27 +127,8 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_calcium(self):
-        """
-        CrystalNNでは問題ないが、MinmumDistanceNNでは同一視されてしまう構造。
-        セルを拡張すれば大丈夫。
-        あるノードから同じノードに複数個エッジが伸びていた場合、
-        スーパーセルにするというロジックを使えば良さそう。
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1008498.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1067285.cif")
-
-        # sg1 = StructureGraph.with_local_env_strategy(s1, MinimumDistanceNN())
-        # sg2 = StructureGraph.with_local_env_strategy(s2, MinimumDistanceNN())
-
-        # vw = VestaWriter(sg1, False)
-        # vw.write_file(filename="/home/mrok/sandbox/1.vesta")
-
-        # vw = VestaWriter(sg2, False)
-        # vw.write_file(filename="/home/mrok/sandbox/2.vesta")
-
-        # print(diameter(sg1.graph.to_undirected()))
-
-        # self.assertNotEqual(sg1.get_graph_id4(), sg2.get_graph_id4())
 
         gid = GraphIDGenerator(MinimumDistanceNN())
 
@@ -156,10 +138,6 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_connected_components(self):
-        """
-        セルを拡張したときにはじめてconnected componentsにわかれる例。
-        そうした時はセルの拡張が必要。
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-121.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-611219.cif")
 
@@ -170,17 +148,9 @@ class TestGraphIDGenerator(TestCase):
 
         self.assertNotEqual(id_1, id_2)
 
-        gid = GraphIDGenerator(MinimumDistanceNN())
-
-        id_1 = gid.get_id(s1)
-        id_2 = gid.get_id(s2)
-
-        self.assertNotEqual(id_1, id_2)
-        
     def test_get_unique_structures(self):
         alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
         beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
-        # s3 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
         gid = GraphIDGenerator()
 

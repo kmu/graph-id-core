@@ -3,11 +3,12 @@ from hashlib import blake2b
 
 import networkx as nx
 import numpy as np
-from graph_id.analysis.local_env import DistanceClusteringNN
 from pymatgen.analysis.local_env import MinimumDistanceNN
-from graph_id.analysis.graphs import StructureGraph
-from graph_id.core.graph_id import GraphIDGenerator
 from pymatgen.core import Element
+
+from graph_id.analysis.graphs import StructureGraph
+from graph_id.analysis.local_env import DistanceClusteringNN
+from graph_id.core.graph_id import GraphIDGenerator
 
 __version__ = "0.1.0"
 
@@ -85,7 +86,6 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
-        
         sg = StructureGraph.with_indivisual_state_comp_strategy(
             structure=structure,
             strategy=self.nn,

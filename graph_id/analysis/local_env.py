@@ -7,6 +7,7 @@ from pymatgen.analysis.local_env import NearNeighbors
 from pymatgen.core import IStructure, Structure
 from sklearn.cluster import DBSCAN
 
+
 def _get_original_site(structure, site):
     """Private convenience method for get_nn_info,
     gives original site index from ProvidedPeriodicSite.
@@ -63,7 +64,7 @@ class DistanceClusteringNN(NearNeighbors):
         neighs_dists = structure.get_neighbors(site, cutoff_cluster_list[rank_k])
         max_weight = round(cutoff_cluster_list[rank_k], 3)
         # is_periodic = isinstance(structure, Structure | IStructure) # Python 3.10 以降でのみサポート
-        is_periodic = isinstance(structure, Structure) or isinstance(structure, IStructure)
+        is_periodic = isinstance(structure, (IStructure, Structure))
         siw = []
 
         for nn in neighs_dists:
