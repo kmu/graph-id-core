@@ -28,6 +28,11 @@ repos:
       - id: codespell
         stages: [pre-commit, commit-msg]
         exclude_types: [html]
+        exclude: |
+          (?x)^(
+            .*\.cif$|
+            CMakeLists\.txt$
+          )
         additional_dependencies: [tomli]
         args: [--ignore-words=.codespell.ignorewords]
 
