@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from unittest import TestCase
 
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
@@ -6,7 +6,7 @@ from pymatgen.core import Element, Lattice, Structure
 
 from graph_id.core.graph_id import GraphIDGenerator
 
-TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
+TEST_FILES = (Path(__file__).resolve().parent / "test_files").as_posix()
 
 
 class TestGraphIDGenerator(TestCase):
@@ -21,7 +21,7 @@ class TestGraphIDGenerator(TestCase):
         gid = GraphIDGenerator()
         self.assertTrue(gid.version > "0.0.0")
 
-    def test_NaCl(self):
+    def test_nacl(self):
         nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
@@ -44,7 +44,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(nacl))
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(cscl))
 
-    def test_LiMnTeO(self):
+    def test_limnteo(self):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
@@ -55,7 +55,7 @@ class TestGraphIDGenerator(TestCase):
 
         self.assertNotEqual(id_1, id_2)
 
-    def test_VSbO4(self):
+    def test_vsb_o_4(self):
         """
         MinimumDistanceNN does not work for this.
         """
