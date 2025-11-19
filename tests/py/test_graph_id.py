@@ -128,27 +128,8 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_calcium(self):
-        """
-        CrystalNNでは問題ないが、MinmumDistanceNNでは同一視されてしまう構造。
-        セルを拡張すれば大丈夫。
-        あるノードから同じノードに複数個エッジが伸びていた場合、
-        スーパーセルにするというロジックを使えば良さそう。
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1008498.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1067285.cif")
-
-        # sg1 = StructureGraph.with_local_env_strategy(s1, MinimumDistanceNN())
-        # sg2 = StructureGraph.with_local_env_strategy(s2, MinimumDistanceNN())
-
-        # vw = VestaWriter(sg1, False)
-        # vw.write_file(filename="/home/mrok/sandbox/1.vesta")
-
-        # vw = VestaWriter(sg2, False)
-        # vw.write_file(filename="/home/mrok/sandbox/2.vesta")
-
-        # print(diameter(sg1.graph.to_undirected()))
-
-        # self.assertNotEqual(sg1.get_graph_id4(), sg2.get_graph_id4())
 
         gid = GraphIDGenerator(MinimumDistanceNN())
 
@@ -158,19 +139,8 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_connected_components(self):
-        """
-        When the cell is extended, the structures are divided into connected components.
-        In this case, the cell extension is required.
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-121.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-611219.cif")
-
-        gid = GraphIDGenerator(MinimumDistanceNN())
-
-        id_1 = gid.get_id(s1)
-        id_2 = gid.get_id(s2)
-
-        self.assertNotEqual(id_1, id_2)
 
         gid = GraphIDGenerator(MinimumDistanceNN())
 
