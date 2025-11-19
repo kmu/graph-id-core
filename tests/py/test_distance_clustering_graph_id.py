@@ -1,9 +1,10 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
-from graph_id.analysis.local_env import DistanceClusteringNN
 from pymatgen.core import Structure
+
+from graph_id.analysis.local_env import DistanceClusteringNN
+from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
@@ -15,9 +16,7 @@ class TestDistanceClusteringGraphID(TestCase):
         """
         s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
 
-        ldgid = DistanceClusteringGraphID(
-            nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0
-        )
+        ldgid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0)
 
         id_1 = ldgid.get_id(s)
 

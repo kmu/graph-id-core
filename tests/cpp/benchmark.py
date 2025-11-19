@@ -3,8 +3,6 @@ import os.path
 import timeit
 import unittest
 
-from graph_id import GraphIDGenerator
-from graph_id.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import (
     BrunnerNN_real,
     CrystalNN,
@@ -16,11 +14,12 @@ from pymatgen.analysis.local_env import (
 )
 from pymatgen.core import Structure
 
+from graph_id import GraphIDGenerator
+from graph_id.analysis.graphs import StructureGraph
+
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
-)
+test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
 
 def small_test_structure(max_sites=30):
@@ -36,20 +35,16 @@ def small_test_structure(max_sites=30):
 def run_benchmark(pymatgen, our_nn):
     for name, s in small_test_structure():
         try:
-            at = (
-                timeit.timeit(
-                    "pymatgen.get_all_nn_info(s)", number=10, globals=locals()
-                )
-                * 100
-            )
-            bt = (
-                timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals())
-                * 100
-            )
+            at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
+            bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100
             print(
                 "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites, at, bt, at / bt, name
-                )
+                    s.num_sites,
+                    at,
+                    bt,
+                    at / bt,
+                    name,
+                ),
             )
         except Exception as e:
             print(e)
@@ -98,17 +93,19 @@ class TestBenchmark(unittest.TestCase):
                 sg = cls.with_local_env_strategy(s, nn)  # noqa: B023
                 sg.set_elemental_labels()
                 sg.set_compositional_sequence_node_attr(hash_cs=True)
-                sg.set_compositional_sequence_node_attr(
-                    use_previous_cs=True, hash_cs=True
-                )
+                sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)
 
             try:
                 at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
                 bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
                 print(
                     "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                        s.num_sites, at, bt, at / bt, name
-                    )
+                        s.num_sites,
+                        at,
+                        bt,
+                        at / bt,
+                        name,
+                    ),
                 )
             except Exception as e:
                 print(e)
@@ -124,8 +121,12 @@ class TestBenchmark(unittest.TestCase):
                 bt = timeit.timeit("b.get_id(s)", number=N, globals=locals()) * 1000 / N
                 print(
                     "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                        s.num_sites, at, bt, at / bt, name
-                    )
+                        s.num_sites,
+                        at,
+                        bt,
+                        at / bt,
+                        name,
+                    ),
                 )
             except Exception as e:
                 print(e)
@@ -143,11 +144,7 @@ class TestBenchmark(unittest.TestCase):
                 t = timeit.repeat("g.get_id(s)", number=N, repeat=5, globals=locals())
                 mean = np.mean(t) * 1000 / N
                 std = np.std(t) * 1000 / N
-                print(
-                    "{: 3d} site. C++: {: 8.3f}ms+={:.1f}% [{}]".format(
-                        s.num_sites, mean, std / mean * 100, name
-                    )
-                )
+                print(f"{s.num_sites: 3d} site. C++: {mean: 8.3f}ms+={std / mean * 100:.1f}% [{name}]")
             except Exception as e:
                 print(e)
 

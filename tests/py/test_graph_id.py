@@ -1,9 +1,10 @@
 import os
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphIDGenerator
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
+
+from graph_id.core.graph_id import GraphIDGenerator
 
 TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
 
@@ -21,9 +22,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertTrue(gid.version > "0.0.0")
 
     def test_NaCl(self):
-        nacl = Structure.from_spacegroup(
-            "Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]]
-        )
+        nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
 

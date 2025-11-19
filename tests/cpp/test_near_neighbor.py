@@ -1,9 +1,9 @@
 import glob
 import os.path
 import unittest
-import pytest
 
 import numpy as np
+import pytest
 from pymatgen.analysis.local_env import (
     BrunnerNN_real,
     BrunnerNN_reciprocal,
@@ -15,19 +15,13 @@ from pymatgen.analysis.local_env import (
     MinimumOKeeffeNN,
     VoronoiNN,
 )
-from pymatgen.core import Molecule, Structure
-from pymatgen.optimization.neighbors import find_points_in_spheres
-
-from pymatgen.analysis.local_env import CrystalNN
-
 from pymatgen.core import Lattice, Molecule, Structure
 from pymatgen.core.periodic_table import Specie
+from pymatgen.optimization.neighbors import find_points_in_spheres
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
-)
+test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
 
 def small_test_structure(max_sites=30):
@@ -43,9 +37,7 @@ def small_test_structure(max_sites=30):
 class TestNN(unittest.TestCase):
     def assert_nn_info(self, a, b):
         self.assertEqual(len(a), len(b), "mismatch array length")
-        self.assertListEqual(
-            [len(x) for x in a], [len(x) for x in b], "mismatch bonds count"
-        )
+        self.assertListEqual([len(x) for x in a], [len(x) for x in b], "mismatch bonds count")
 
         for i in range(len(a)):
             ai = self.sort(a[i])
@@ -65,19 +57,15 @@ class TestNN(unittest.TestCase):
     def sort(self, a):
         return sorted(
             a,
-            key=lambda x: (
-                (x["site_index"], *x["image"]) if x["image"] else x["site_index"]
-            ),
+            key=lambda x: ((x["site_index"], *x["image"]) if x["image"] else x["site_index"]),
         )
 
     def run_for_small_structures(self, pymatgen_nn, out_nn):
         for name, s in small_test_structure():
             with self.subTest(name):
-                try:
-                    pymatgen_result = pymatgen_nn.get_all_nn_info(s)
-                except Exception as e:
-                    print(e)
-                    self.skipTest("pymatgen error")
+                
+                pymatgen_result = pymatgen_nn.get_all_nn_info(s)
+                
                 cpp_result = out_nn.get_all_nn_info(s)
                 self.assert_nn_info(cpp_result, pymatgen_result)
 
@@ -115,14 +103,10 @@ class TestNNHelper(unittest.TestCase):
                     self.assert_result(a, b)
 
     def sort2(self, a, b, c, d):
-        return sorted(
-            list(zip(a, b, c, d)), key=lambda x: (x[2], x[3][0], x[3][1], x[3][2])
-        )
+        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[2], x[3][0], x[3][1], x[3][2]))
 
     def sort(self, a, b, c, d):
-        return sorted(
-            list(zip(a, b, c, d)), key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2])
-        )
+        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2]))
 
     def assert_result(self, a, b):
         sa = {(x[0], x[1], tuple(x[2])) for x in a}
@@ -173,18 +157,12 @@ class TestVoronoiNN(TestNN):
     def assert_voronoi_polyhedra(self, pmg_res, cpp_res):
         self.assertEqual(len(pmg_res), len(cpp_res))
         # 返り値の順番が違うので、site の座標を基準に順番を揃える
-        pmg_sites = np.array(
-            [s["site"].frac_coords for _, s in sorted(pmg_res.items())]
-        )
-        cpp_sites = np.array(
-            [s["site"].frac_coords for _, s in sorted(cpp_res.items())]
-        )
-        pmg_keys = list(sorted(pmg_res.keys()))
-        cpp_keys = list(sorted(cpp_res.keys()))
+        pmg_sites = np.array([s["site"].frac_coords for _, s in sorted(pmg_res.items())])
+        cpp_sites = np.array([s["site"].frac_coords for _, s in sorted(cpp_res.items())])
+        pmg_keys = sorted(pmg_res.keys())
+        cpp_keys = sorted(cpp_res.keys())
         a = np.argmin(
-            np.linalg.norm(
-                pmg_sites.reshape(1, -1, 3) - cpp_sites.reshape(-1, 1, 3), axis=-1
-            ),
+            np.linalg.norm(pmg_sites.reshape(1, -1, 3) - cpp_sites.reshape(-1, 1, 3), axis=-1),
             axis=-1,
         )
         cpp2pmg = {cpp_keys[i]: pmg_keys[a[i]] for i in range(len(pmg_res))}
@@ -192,10 +170,7 @@ class TestVoronoiNN(TestNN):
         for cpp_key in cpp_keys:
             pmg_key = cpp2pmg[cpp_key]
             self.assertAlmostEqual(
-                np.linalg.norm(
-                    pmg_res[pmg_key]["site"].frac_coords
-                    - cpp_res[cpp_key]["site"].frac_coords
-                ),
+                np.linalg.norm(pmg_res[pmg_key]["site"].frac_coords - cpp_res[cpp_key]["site"].frac_coords),
                 0,
                 msg="site mismatch",
             )
@@ -209,9 +184,7 @@ class TestVoronoiNN(TestNN):
                 cpp_res[cpp_key]["solid_angle"],
                 msg="solid_angle mismatch",
             )
-            self.assertAlmostEqual(
-                pmg_res[pmg_key]["area"], cpp_res[cpp_key]["area"], msg="area mismatch"
-            )
+            self.assertAlmostEqual(pmg_res[pmg_key]["area"], cpp_res[cpp_key]["area"], msg="area mismatch")
             self.assertAlmostEqual(
                 pmg_res[pmg_key]["face_dist"],
                 cpp_res[cpp_key]["face_dist"],
@@ -242,9 +215,7 @@ class TestMinimumDistanceNN(TestNN):
         self.assertTrue(graph_id_cpp.MinimumDistanceNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(
-            MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN()
-        )
+        self.run_for_small_structures(MinimumDistanceNN(), graph_id_cpp.MinimumDistanceNN())
 
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
@@ -271,9 +242,7 @@ class TestMinimumOKeeffeNN(TestNN):
         self.assertTrue(graph_id_cpp.MinimumOKeeffeNN().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(
-            MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN()
-        )
+        self.run_for_small_structures(MinimumOKeeffeNN(), graph_id_cpp.MinimumOKeeffeNN())
 
 
 class TestCrystalNN(TestNN):
@@ -310,16 +279,10 @@ class TestPmgCrystalNN(TestNN):
         if nn_data.all_nninfo:  # Check if any neighbors found
             for entry in nn_data.all_nninfo:
                 assert entry["site"].specie.symbol == "Cl"
-                assert (
-                    entry["site"].specie.oxi_state
-                    * self.nacl_structure[0].specie.oxi_state
-                    < 0
-                )
+                assert entry["site"].specie.oxi_state * self.nacl_structure[0].specie.oxi_state < 0
 
         # Test ValueError if no valid targets
-        s_no_valid_targets = Structure(
-            self.lattice, [Specie("Na", 1), Specie("K", 1)], [[0, 0, 0], [0.5, 0, 0]]
-        )
+        s_no_valid_targets = Structure(self.lattice, [Specie("Na", 1), Specie("K", 1)], [[0, 0, 0], [0.5, 0, 0]])
         with pytest.raises(
             ValueError,
             match="No valid targets for site within cation_anion constraint!",
@@ -336,9 +299,7 @@ class TestCutoffDictNN(TestNN):
 
     def test_molecules(self):
         m = Molecule(["H", "H"], [[0, 0, 0], [0, 0, 1]])
-        cpp_result = graph_id_cpp.CutOffDictNN.from_preset(
-            "vesta_2019"
-        ).get_all_nn_info(m)
+        cpp_result = graph_id_cpp.CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
         try:
             pymatgen_result = CutOffDictNN.from_preset("vesta_2019").get_all_nn_info(m)
         except Exception as e:
@@ -348,9 +309,7 @@ class TestCutoffDictNN(TestNN):
 
     def test_structures_with_dict(self):
         d = CutOffDictNN.from_preset("vesta_2019").cut_off_dict
-        self.run_for_small_structures(
-            CutOffDictNN(cut_off_dict=d), graph_id_cpp.CutOffDictNN(cut_off_dict=d)
-        )
+        self.run_for_small_structures(CutOffDictNN(cut_off_dict=d), graph_id_cpp.CutOffDictNN(cut_off_dict=d))
 
     def test_structures_with_empty_dict(self):
         self.run_for_small_structures(CutOffDictNN(), graph_id_cpp.CutOffDictNN())
@@ -364,9 +323,7 @@ class TestBrunnerNNReciprocal(TestNN):
         self.assertFalse(graph_id_cpp.BrunnerNN_reciprocal().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(
-            BrunnerNN_reciprocal(), graph_id_cpp.BrunnerNN_reciprocal()
-        )
+        self.run_for_small_structures(BrunnerNN_reciprocal(), graph_id_cpp.BrunnerNN_reciprocal())
 
 
 class TestBrunnerNNRelative(TestNN):
@@ -377,9 +334,7 @@ class TestBrunnerNNRelative(TestNN):
         self.assertFalse(graph_id_cpp.BrunnerNN_relative().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(
-            BrunnerNN_relative(), graph_id_cpp.BrunnerNN_relative()
-        )
+        self.run_for_small_structures(BrunnerNN_relative(), graph_id_cpp.BrunnerNN_relative())
 
 
 class TestBrunnerNNReal(TestNN):

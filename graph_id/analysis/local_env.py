@@ -44,9 +44,7 @@ class DistanceClusteringNN(NearNeighbors):
         """
         return True
 
-    def get_nn_info(
-        self, structure: Structure, n: int, rank_k: int, cutoff: float = 6.0
-    ) -> list[dict[str, Any]]:
+    def get_nn_info(self, structure: Structure, n: int, rank_k: int, cutoff: float = 6.0) -> list[dict[str, Any]]:
         """
         Args:
             structure (Structure): input structure.
@@ -66,24 +64,18 @@ class DistanceClusteringNN(NearNeighbors):
         neighs_dists = structure.get_neighbors(site, cutoff_cluster_list[rank_k])
         max_weight = round(cutoff_cluster_list[rank_k], 3)
         # is_periodic = isinstance(structure, Structure | IStructure) # Python 3.10 以降でのみサポート
-        is_periodic = isinstance(structure, Structure) or isinstance(
-            structure, IStructure
-        )
+        is_periodic = isinstance(structure, (IStructure, Structure))
         siw = []
 
         for nn in neighs_dists:
             weight = round(nn.nn_distance, 3)
-            if (
-                rank_k > 0
-                and weight <= max_weight
-                and weight > round(cutoff_cluster_list[rank_k - 1], 3)
-            ) or (rank_k == 0 and weight <= max_weight):
+            if (rank_k > 0 and weight <= max_weight and weight > round(cutoff_cluster_list[rank_k - 1], 3)) or (
+                rank_k == 0 and weight <= max_weight
+            ):
                 siw.append(
                     {
                         "site": nn,
-                        "image": self._get_image(structure, nn)
-                        if is_periodic
-                        else None,
+                        "image": self._get_image(structure, nn) if is_periodic else None,
                         "weight": weight,
                         "site_index": self._get_original_site(structure, nn),
                         "edge_properties": {"cluster_idx": rank_k + 1},
@@ -92,9 +84,7 @@ class DistanceClusteringNN(NearNeighbors):
 
         return siw
 
-    def get_cutoff_cluster(
-        self, structure: Structure, n: int, cutoff: float = 6.0
-    ) -> list:
+    def get_cutoff_cluster(self, structure: Structure, n: int, cutoff: float = 6.0) -> list:
         """
         DBSCANによって得られた距離のクラスターから結合判定の閾値を決定する
         """

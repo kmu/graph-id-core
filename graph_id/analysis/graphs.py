@@ -2,11 +2,12 @@ import functools
 
 import networkx as nx
 import numpy as np
-from graph_id.analysis.compositional_sequence import CompositionalSequence
 from networkx.algorithms.distance_measures import diameter
 from pymatgen.analysis.graphs import StructureGraph as PmgStructureGraph
 from pymatgen.core import Element
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+from graph_id.analysis.compositional_sequence import CompositionalSequence
 
 
 class SiteOnlySpeciesString:
@@ -54,8 +55,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         if not strategy.structures_allowed:
             raise ValueError(
-                "Chosen strategy is not designed for use with structures! "
-                "Please choose another strategy."
+                "Chosen strategy is not designed for use with structures! Please choose another strategy.",
             )
 
         sg = StructureGraph.from_empty_graph(structure, name="bonds")
@@ -78,9 +78,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         return sg
 
     @staticmethod
-    def with_indivisual_state_comp_strategy(
-        structure, strategy, _sg, n, weights=False, rank_k=1, cutoff=6.0
-    ):
+    def with_indivisual_state_comp_strategy(structure, strategy, _sg, n, weights=False, rank_k=1, cutoff=6.0):
         """
         Constructor for StructureGraph, using a StateCompNN strategy
         from :Class: `chemsys.pymatgen.analysis.local_env`.
@@ -169,7 +167,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         if sym_dataset is None:
             self.set_elemental_labels()
-            return None
+            return
 
         wyckoffs = sym_dataset["wyckoffs"]
         number = sym_dataset["number"]
@@ -178,12 +176,8 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         self.starting_labels = []
         for site_i, w in enumerate(wyckoffs):
-            attribute_values[
-                site_i
-            ] = f"{self.structure[site_i].species_string}_{w}_{number}"
-            self.starting_labels.append(
-                f"{self.structure[site_i].species_string}_{w}_{number}"
-            )
+            attribute_values[site_i] = f"{self.structure[site_i].species_string}_{w}_{number}"
+            self.starting_labels.append(f"{self.structure[site_i].species_string}_{w}_{number}")
 
     def set_compositional_sequence_node_attr(
         self,
@@ -195,9 +189,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
     ) -> None:
         node_attributes = {}
         self.cc_cs = []
-        get_connected_sites_light = functools.lru_cache(maxsize=None)(
-            self.get_connected_sites_light
-        )
+        get_connected_sites_light = functools.lru_cache(maxsize=None)(self.get_connected_sites_light)
 
         ug = self.graph.to_undirected()
 
@@ -225,16 +217,12 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
                 this_cs = str(cs)
 
-                node_attributes[focused_site_i] = (
-                    self.starting_labels[focused_site_i] + "_" + this_cs
-                )
+                node_attributes[focused_site_i] = self.starting_labels[focused_site_i] + "_" + this_cs
                 cs_list.append(this_cs)
 
             self.cc_cs.append({"site_i": cc, "cs_list": cs_list})
 
-        nx.set_node_attributes(
-            self.graph, values=node_attributes, name="compositional_sequence"
-        )
+        nx.set_node_attributes(self.graph, values=node_attributes, name="compositional_sequence")
 
     def set_indivisual_compositional_sequence_node_attr(
         self,
@@ -247,9 +235,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
     ) -> None:
         node_attributes = {}
         self.cc_cs = []
-        get_connected_sites_light = functools.lru_cache(maxsize=None)(
-            self.get_connected_sites_light
-        )
+        get_connected_sites_light = functools.lru_cache(maxsize=None)(self.get_connected_sites_light)
 
         ug = self.graph.to_undirected()
 
@@ -282,6 +268,4 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
                 self.cc_cs.append({"site_i": cc, "cs_list": cs_list})
 
-        nx.set_node_attributes(
-            self.graph, values=node_attributes, name="compositional_sequence"
-        )
+        nx.set_node_attributes(self.graph, values=node_attributes, name="compositional_sequence")

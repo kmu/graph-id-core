@@ -2,15 +2,15 @@ import glob
 import os
 import unittest
 
-import graph_id
-from pymatgen.core import Structure
 from pymatgen.analysis.graphs import StructureGraph
-from pymatgen.analysis.local_env import CutOffDictNN, CrystalNN, MinimumDistanceNN
+from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN
+from pymatgen.core import Structure
+
+import graph_id
+
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files")
-)
+test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
 
 
 def small_test_structure(max_sites=30):
@@ -53,35 +53,27 @@ class TestGraphIDGenerator(unittest.TestCase):
         structure = Structure.from_file(os.path.join("tests/py/test_files/ABW.cif"))
         gid_gen_cpp = graph_id_cpp.GraphIDGenerator()  # default: digest_size=8
         gid_gen_py = graph_id.GraphIDGenerator()
-        sg_py_cutoff = StructureGraph.from_local_env_strategy(
-            structure, CutOffDictNN({("Si", "O"): 2})
-        )
+        sg_py_cutoff = StructureGraph.from_local_env_strategy(structure, CutOffDictNN({("Si", "O"): 2}))
         sg_cpp_cutoff = graph_id_cpp.StructureGraph.with_local_env_strategy(
-            structure, graph_id_cpp.CutOffDictNN({("Si", "O"): 2})
+            structure,
+            graph_id_cpp.CutOffDictNN({("Si", "O"): 2}),
         ).to_py()
         sg_py_cn = StructureGraph.from_local_env_strategy(structure, CrystalNN())
-        sg_cpp_cn = graph_id_cpp.StructureGraph.with_local_env_strategy(
-            structure, graph_id_cpp.CrystalNN()
-        ).to_py()
-        sg_py_mdn = StructureGraph.from_local_env_strategy(
-            structure, MinimumDistanceNN()
-        )
+        sg_cpp_cn = graph_id_cpp.StructureGraph.with_local_env_strategy(structure, graph_id_cpp.CrystalNN()).to_py()
+        sg_py_mdn = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
         sg_cpp_mdn = graph_id_cpp.StructureGraph.with_local_env_strategy(
-            structure, graph_id_cpp.MinimumDistanceNN()
+            structure,
+            graph_id_cpp.MinimumDistanceNN(),
         ).to_py()
-        assert (
-            gid_gen_cpp.get_id(structure) == gid_gen_py.get_id(structure).split("-")[2]
-        )
+        assert gid_gen_cpp.get_id(structure) == gid_gen_py.get_id(structure).split("-")[2]
 
-        assert gid_gen_cpp.get_id_with_structure_graph(
-            sg_py_cutoff
-        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cutoff)
-        assert gid_gen_cpp.get_id_with_structure_graph(
-            sg_py_cn
-        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cn)
-        assert gid_gen_cpp.get_id_with_structure_graph(
-            sg_py_mdn
-        ) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_mdn)
+        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_cutoff) == gid_gen_cpp.get_id_with_structure_graph(
+            sg_cpp_cutoff,
+        )
+        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_cn) == gid_gen_cpp.get_id_with_structure_graph(sg_cpp_cn)
+        assert gid_gen_cpp.get_id_with_structure_graph(sg_py_mdn) == gid_gen_cpp.get_id_with_structure_graph(
+            sg_cpp_mdn,
+        )
 
 
 if __name__ == "__main__":

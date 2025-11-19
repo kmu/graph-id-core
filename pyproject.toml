@@ -83,6 +83,10 @@ lint.ignore = [
   "ANN204",
   "S604", # Function call with `shell=True` parameter identified, security issue
   "S603", # command and args are constant literals; no untrusted input
+  "PT009",
+  "PTH118",
+  "PTH120",
+
 ]
 lint.select = ["ALL"]
 line-length = 119
@@ -98,4 +102,4 @@ max-args = 10
 ]
 
 [tool.codespell]
-ignore-words-list = "implementors"
+ignore-words-list = "implementors,Te,Ot"

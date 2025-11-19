@@ -34,7 +34,7 @@ python -m unittest discover -s cpp -p "test/benchmark*.py"
 
 ## Profiling
 
-**Obtainig dependencies (Only works for Linux)**
+**Obtaining dependencies (Only works for Linux)**
 ```bash
 apt-get install -y google-perftools libgoogle-perftools-dev kcachegrind
 pip install yep
