@@ -74,5 +74,7 @@ jobs:
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
-      run: poetry run pytest -v
+      run: |
+        poetry run pip install pytest pytest-cov
+        poetry run pytest --cov --cov-branch --cov-report=xml -v
     
