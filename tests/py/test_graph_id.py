@@ -21,7 +21,9 @@ class TestGraphIDGenerator(TestCase):
         self.assertTrue(gid.version > "0.0.0")
 
     def test_NaCl(self):
-        nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
+        nacl = Structure.from_spacegroup(
+            "Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]]
+        )
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
 
@@ -111,7 +113,7 @@ class TestGraphIDGenerator(TestCase):
 
     def test_simple_same_composition(self):
         """
-        Graphs with diamter of 0.
+        Graphs with diameter of 0.
         Compositions are identical.
         Structures are different.
         """
@@ -157,8 +159,8 @@ class TestGraphIDGenerator(TestCase):
 
     def test_connected_components(self):
         """
-        セルを拡張したときにはじめてconnected componentsにわかれる例。
-        そうした時はセルの拡張が必要。
+        When the cell is extended, the structures are divided into connected components.
+        In this case, the cell extension is required.
         """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-121.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-611219.cif")
@@ -176,11 +178,10 @@ class TestGraphIDGenerator(TestCase):
         id_2 = gid.get_id(s2)
 
         self.assertNotEqual(id_1, id_2)
-        
+
     def test_get_unique_structures(self):
         alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
         beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
-        # s3 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
         gid = GraphIDGenerator()
 
