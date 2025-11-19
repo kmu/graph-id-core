@@ -75,7 +75,6 @@ jobs:
 
     - name: Run pytest
       run: |
-        poetry run pip install pytest pytest-cov
         poetry run pytest --cov --cov-branch --cov-report=xml -v
     
     - name: Upload coverage reports to Codecov
