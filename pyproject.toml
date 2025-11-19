@@ -86,7 +86,7 @@ lint.ignore = [
   "PT009",
   "PTH118",
   "PTH120",
-  "PTH207"
+  "PTH207",
 ]
 lint.select = ["ALL"]
 line-length = 119
