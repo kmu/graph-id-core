@@ -136,3 +136,20 @@ Graph ID is particularly useful for:
 ## Web Service (experimental)
 
 You can search materials using Graph ID at [matfinder.net](https://matfinder.net).
+
+## Developer's notes
+
+### Installation
+
+
+```
+poetry install .
+```
+
+### Testing
+
+```
+poetry run pytest
+```
+
+If you changed C++ codes, `poetry install` again to reflect the changes.
