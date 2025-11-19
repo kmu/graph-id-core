@@ -121,7 +121,7 @@ finder.find(graph_id)
 
 ## Examples
 
-More comprehensive examples can be found in the [`tests/`](tests/) and [`examples`](examples/) directories.
+More comprehensive examples can be found in the [`tests/`](tests/) and [`examples/`](examples/) directories.
 
 ## Applications
 
