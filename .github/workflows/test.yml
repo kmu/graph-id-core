@@ -74,5 +74,13 @@ jobs:
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
-      run: poetry run pytest -v
+      run: |
+        poetry run pytest --cov --cov-branch --cov-report=xml -v
     
+    - name: Upload coverage reports to Codecov
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: kmu/graph-id-core
+        
