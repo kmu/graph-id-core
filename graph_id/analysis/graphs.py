@@ -54,9 +54,8 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         """
 
         if not strategy.structures_allowed:
-            raise ValueError(
-                "Chosen strategy is not designed for use with structures! Please choose another strategy.",
-            )
+            msg = "Chosen strategy is not designed for use with structures! Please choose another strategy."
+            raise ValueError(msg)
 
         sg = StructureGraph.from_empty_graph(structure, name="bonds")
 
@@ -135,7 +134,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             to_jimage = d["to_jimage"]
 
             if direction == "in":
-                u, v = v, u # noqa: PLW2901
+                u, v = v, u  # noqa: PLW2901
                 to_jimage = np.multiply(-1, to_jimage)
 
             to_jimage = tuple(map(int, np.add(to_jimage, jimage)))
@@ -154,14 +153,13 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         return list(connected_sites)
 
-
     def set_wyckoffs(self, symmetry_tol: float = 0.1) -> None:
         siteless_strc = self.structure.copy()
 
         for site_i in range(len(self.structure)):
             siteless_strc.replace(site_i, Element("H"))
 
-        sga = SpacegroupAnalyzer(siteless_strc)
+        sga = SpacegroupAnalyzer(siteless_strc, symprec=symmetry_tol)
         sym_dataset = sga.get_symmetry_dataset()
 
         if sym_dataset is None:
