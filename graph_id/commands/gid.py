@@ -1,6 +1,6 @@
 import argparse
 import csv
-from datetime import datetime
+from pathlib import Path
 
 from pymatgen.core import Structure
 from tabulate import tabulate
@@ -37,9 +37,6 @@ if __name__ == "__main__":
 
     print(tabulate(table, headers=t_headers))
 
-    now = datetime.now()
-    now_str = now.strftime("%Y%m%d-%H%M%S")
-
-    with open(f"graph_id_{now_str}.csv", "w") as f:
+    with Path("graph_id.csv").open("w") as f:
         writer = csv.writer(f)
         writer.writerows(table)
