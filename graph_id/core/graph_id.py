@@ -30,7 +30,7 @@ class GraphIDGenerator:
         self,
         nn=None,
         wyckoff=False,
-        depth_factor=2,
+        diameter_factor=2,
         additional_depth=1,
         symmetry_tol=0.1,
         topology_only=False,
@@ -52,7 +52,7 @@ class GraphIDGenerator:
 
         self.wyckoff = wyckoff
         self.additional_depth = additional_depth
-        self.depth_factor = depth_factor
+        self.diameter_factor = diameter_factor
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
         self.loop = loop
@@ -145,7 +145,7 @@ class GraphIDGenerator:
 
         elif self.loop:
             sg.set_loops(
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 additional_depth=self.additional_depth,
             )
 
@@ -157,7 +157,7 @@ class GraphIDGenerator:
                 hash_cs=True,
                 wyckoff=self.wyckoff,
                 additional_depth=self.additional_depth,
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 use_previous_cs=use_previous_cs or self.wyckoff,
             )
 

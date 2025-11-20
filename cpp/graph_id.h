@@ -8,7 +8,7 @@ class GraphIDGenerator {
 public:
     std::shared_ptr<const NearNeighbor> nn;
     bool wyckoff = false;
-    int depth_factor = 2;
+    int diameter_factor = 2;
     int additional_depth = 1;
     double symmetry_tol = 0.1;
     bool topology_only = false;
@@ -20,7 +20,7 @@ public:
     GraphIDGenerator(
             const std::shared_ptr<const NearNeighbor> &nn,
             bool wyckoff,
-            int depth_factor,
+            int diameter_factor,
             int additional_depth,
             double symmetry_tol,
             bool topology_only,
@@ -28,7 +28,7 @@ public:
             int rank_k,
             double cutoff,
             int digest_size
-    ) : wyckoff(wyckoff), depth_factor(depth_factor), additional_depth(additional_depth),
+    ) : wyckoff(wyckoff), diameter_factor(diameter_factor), additional_depth(additional_depth),
         symmetry_tol(symmetry_tol), topology_only(topology_only), loop(loop),
         rank_k(rank_k), cutoff(cutoff), digest_size(digest_size) {
         if (nn) {

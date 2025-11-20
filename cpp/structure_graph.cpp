@@ -259,7 +259,7 @@ void StructureGraph::set_elemental_labels() {
     this->labels = this->structure->species_strings;
 }
 
-void StructureGraph::set_loops(int depth_factor, int additional_depth) {
+void StructureGraph::set_loops(int diameter_factor, int additional_depth) {
     // Import the required Python module
     py::module GraphAnalysisModule = py::module::import("graph_id.analysis.graphs");
 
@@ -272,7 +272,7 @@ void StructureGraph::set_loops(int depth_factor, int additional_depth) {
             py_structure_graph);
 
     // Call the set_loops method on this Python object
-    desired_structure_graph.attr("set_loops")(depth_factor, additional_depth);
+    desired_structure_graph.attr("set_loops")(diameter_factor, additional_depth);
 
     // Retrieve the labels
     py::list labels = desired_structure_graph.attr("starting_labels").cast<py::list>();
@@ -331,7 +331,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
         int additional_depth,
-        int depth_factor,
+        int diameter_factor,
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
@@ -340,7 +340,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
         std::vector<std::string> cs_list;
         cs_list.reserve(cc_nodes[cc_i].size());
 
-        const int depth = cc_diameter[cc_i] * depth_factor + additional_depth;
+        const int depth = cc_diameter[cc_i] * diameter_factor + additional_depth;
 
         for (const int focused_site_i: cc_nodes[cc_i]) {
             if (PyErr_CheckSignals()) throw py::error_already_set();
@@ -376,7 +376,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
         int additional_depth,
-        int depth_factor,
+        int diameter_factor,
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
@@ -403,7 +403,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         // int d = cc_diameter[cc_i];
         // int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
         int d = diameter(ug.attr("subgraph")(cc_vector)).cast<int>();
-        const int depth = d * depth_factor + additional_depth;
+        const int depth = d * diameter_factor + additional_depth;
         // if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
         if (std::count(cc_vector.begin(), cc_vector.end(), n)) {
             // for (const int focused_site_i: cc_nodes[cc_i]) {
@@ -620,7 +620,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("hash_cs") = false,
                  py::arg("wyckoff") = false,
                  py::arg("additional_depth") = 0,
-                 py::arg("depth_factor") = 2,
+                 py::arg("diameter_factor") = 2,
                  py::arg("use_previous_cs") = false)
             .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)

@@ -49,7 +49,7 @@ class TestGraphIDGenerator(TestCase):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
-        gid = GraphIDGenerator(depth_factor=1)
+        gid = GraphIDGenerator(diameter_factor=1)
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
@@ -62,7 +62,7 @@ class TestGraphIDGenerator(TestCase):
         """
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
-        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
         id_1 = gid.get_id(s1)
 
         self.assertEqual(id_1, "VSbO4-0D-e50201525efe4cd5")
@@ -92,7 +92,7 @@ class TestGraphIDGenerator(TestCase):
         layer = Structure.from_file(f"{TEST_FILES}/mp-48.cif")
         bulk = Structure.from_file(f"{TEST_FILES}/mp-1018088.cif")
 
-        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
 
         id_1 = gid.get_id(layer)
         id_2 = gid.get_id(bulk)
