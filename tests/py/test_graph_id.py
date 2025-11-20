@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest import TestCase
 
+import pytest
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
@@ -156,3 +157,15 @@ class TestGraphIDGenerator(TestCase):
 
         unique_structures = gid.get_unique_structures([alpha, beta])
         self.assertEqual(len(unique_structures), 1)
+
+    def test_get_id_catch_error(self):
+        s = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
+        gid = GraphIDGenerator()
+        self.assertEqual(gid.get_id_catch_error(None), "")
+        self.assertEqual(gid.get_id_catch_error(s), "NaCl-3D-88c8e156db1b0fd9")
+
+    def test_inappropriate_combinations(self):
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(wyckoff=True, loop=True)
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(topology_only=True, loop=True)

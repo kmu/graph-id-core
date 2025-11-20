@@ -54,9 +54,8 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         """
 
         if not strategy.structures_allowed:
-            raise ValueError(
-                "Chosen strategy is not designed for use with structures! Please choose another strategy.",
-            )
+            msg = "Chosen strategy is not designed for use with structures! Please choose another strategy."
+            raise ValueError(msg)
 
         sg = StructureGraph.from_empty_graph(structure, name="bonds")
 
@@ -131,11 +130,11 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         out_edges = [(u, v, d, "out") for u, v, d in self.graph.out_edges(n, data=True)]
         in_edges = [(u, v, d, "in") for u, v, d in self.graph.in_edges(n, data=True)]
 
-        for u, v, d, dir in out_edges + in_edges:
+        for u, v, d, direction in out_edges + in_edges:
             to_jimage = d["to_jimage"]
 
-            if dir == "in":
-                u, v = v, u
+            if direction == "in":
+                u, v = v, u  # noqa: PLW2901
                 to_jimage = np.multiply(-1, to_jimage)
 
             to_jimage = tuple(map(int, np.add(to_jimage, jimage)))
@@ -152,25 +151,23 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 connected_sites.add(connected_site)
                 connected_site_images.add((v, to_jimage))
 
-        _connected_sites = list(connected_sites)
+        return list(connected_sites)
 
-        return _connected_sites
-
-    def set_wyckoffs(self, symmetry_tol: float = 0.1) -> None:
+    def set_wyckoffs(self, symmetry_tol: float = 0.01) -> None:
         siteless_strc = self.structure.copy()
 
         for site_i in range(len(self.structure)):
             siteless_strc.replace(site_i, Element("H"))
 
-        sga = SpacegroupAnalyzer(siteless_strc)
+        sga = SpacegroupAnalyzer(siteless_strc, symprec=symmetry_tol)
         sym_dataset = sga.get_symmetry_dataset()
 
         if sym_dataset is None:
             self.set_elemental_labels()
             return
 
-        wyckoffs = sym_dataset["wyckoffs"]
-        number = sym_dataset["number"]
+        wyckoffs = sym_dataset.wyckoffs
+        number = sym_dataset.number
 
         attribute_values = {}
 

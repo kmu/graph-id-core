@@ -1,1 +1,1 @@
-from graph_id.core.graph_id import GraphIDGenerator  # noqa
+from graph_id.core.graph_id import GraphIDGenerator

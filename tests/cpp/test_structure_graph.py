@@ -3,7 +3,7 @@ from pathlib import Path
 
 import networkx as nx
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
-from pymatgen.core import Lattice, Structure
+from pymatgen.core import Structure
 
 from graph_id.analysis.graphs import StructureGraph
 
@@ -49,11 +49,11 @@ class TestStructureGraph(unittest.TestCase):
     def test_graph_diameter_not_strongly_connected(self):
         for name, s in small_test_structure(1000):
             with self.subTest(name):
-                s = Structure(
-                    Lattice([[10, 0, 0], [0, 10, 0], [0, 0, 10]]),
-                    ["H"] * 4,
-                    [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]],
-                )
+                # s = Structure(
+                #     Lattice([[10, 0, 0], [0, 10, 0], [0, 0, 10]]),
+                #     ["H"] * 4,
+                #     [[0, 0, 0], [0, 0.001, 0], [0.5, 0, 0], [0.5, 0.001, 0]],
+                # )
                 sg_py = StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
                 sg_cpp = graph_id_cpp.StructureGraph.with_local_env_strategy(s, graph_id_cpp.MinimumDistanceNN())
                 ug = sg_py.graph.to_undirected()

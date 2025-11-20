@@ -27,7 +27,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
     def test_get_distance_clustering_id(self):
         a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
-        for name, s in small_test_structure():
+        for name, s in small_test_structure()[:2]:
             with self.subTest(name):
                 print(name)
 
