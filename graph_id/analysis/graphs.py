@@ -131,11 +131,11 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         out_edges = [(u, v, d, "out") for u, v, d in self.graph.out_edges(n, data=True)]
         in_edges = [(u, v, d, "in") for u, v, d in self.graph.in_edges(n, data=True)]
 
-        for u, v, d, dir in out_edges + in_edges:
+        for u, v, d, direction in out_edges + in_edges:
             to_jimage = d["to_jimage"]
 
-            if dir == "in":
-                u, v = v, u
+            if direction == "in":
+                u, v = v, u # noqa: PLW2901
                 to_jimage = np.multiply(-1, to_jimage)
 
             to_jimage = tuple(map(int, np.add(to_jimage, jimage)))
@@ -152,9 +152,8 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 connected_sites.add(connected_site)
                 connected_site_images.add((v, to_jimage))
 
-        _connected_sites = list(connected_sites)
+        return list(connected_sites)
 
-        return _connected_sites
 
     def set_wyckoffs(self, symmetry_tol: float = 0.1) -> None:
         siteless_strc = self.structure.copy()
