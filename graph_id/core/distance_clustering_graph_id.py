@@ -61,7 +61,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 copied_sg = deepcopy(_sg)
                 # まず原子idxが含まれる結合を削除する
                 for from_index, to_index, dct in _sg.graph.edges(keys=False, data=True):
-                    if from_index == idx or to_index == idx:
+                    if idx in (from_index, to_index):
                         copied_sg.break_edge(from_index, to_index, dct["to_jimage"], allow_reverse=True)
                 sg = self.prepare_structure_graph(structure, copied_sg, idx, cluster_idx)
                 n = len(sg.cc_cs)
@@ -73,16 +73,16 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 )
                 for i, component in enumerate(sg.cc_cs):
                     array[i] = blake("-".join(sorted(component["cs_list"])))
-                    # array[i] = blake2b("-".join(sorted(component["cs_list"])).encode("ascii"), digest_size=16).hexdigest()
+
                 long_str_tmp = ":".join(np.sort(array))
-                # long_str_tmp = blake2b(":".join(np.sort(array)).encode("ascii"), digest_size=16).hexdigest()
+
                 long_str_list.append(long_str_tmp)
             long_str = ":".join(np.sort(long_str_list))
             gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
             gid_list.append(gid)
 
         long_gid = "".join(gid_list)
-        # return self.elaborate_comp_dim(sg, blake2b(long_gid.encode("ascii"), digest_size=16).hexdigest())
+
         return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
