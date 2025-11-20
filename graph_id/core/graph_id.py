@@ -165,11 +165,9 @@ class GraphIDGenerator:
             use_previous_cs = True
 
             if prev_num_uniq == num_unique_nodes:
-                break
+                return sg
 
             prev_num_uniq = num_unique_nodes
-
-        return sg
 
     def get_unique_structures(self, structures: list[Structure]) -> list[Structure]:
         unique_structures = []
