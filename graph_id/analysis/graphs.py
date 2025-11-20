@@ -153,7 +153,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         return list(connected_sites)
 
-    def set_wyckoffs(self, symmetry_tol: float = 0.1) -> None:
+    def set_wyckoffs(self, symmetry_tol: float = 0.01) -> None:
         siteless_strc = self.structure.copy()
 
         for site_i in range(len(self.structure)):
