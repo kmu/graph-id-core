@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest import TestCase
 
+import pytest
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
@@ -162,3 +163,9 @@ class TestGraphIDGenerator(TestCase):
         gid = GraphIDGenerator()
         self.assertEqual(gid.get_id_catch_error(None), "")
         self.assertEqual(gid.get_id_catch_error(s), "NaCl-3D-88c8e156db1b0fd9")
+
+    def test_inappropriate_combinations(self):
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(wyckoff=True, loop=True)
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(topology_only=True, loop=True)
