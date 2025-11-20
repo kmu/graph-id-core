@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import multiprocessing as multi
-from copy import deepcopy
 from hashlib import blake2b
 from multiprocessing import Pool
+from typing import TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.core import Element
-from pymatgen.core.structure import Structure
 from tqdm import tqdm
 
 from graph_id.analysis.graphs import StructureGraph
+
+if TYPE_CHECKING:
+    from pymatgen.core.structure import Structure
+
 
 __version__ = "0.1.0"
 
@@ -37,10 +42,12 @@ class GraphIDGenerator:
         """
 
         if wyckoff and loop:
-            raise ValueError("wyckoff and loop cannot be True at the same time")
+            msg = "wyckoff and loop cannot be True at the same time"
+            raise ValueError(msg)
 
         if loop and topology_only:
-            raise ValueError("loop and topology_only cannot be True at the same time")
+            msg = "loop and topology_only cannot be True at the same time"
+            raise ValueError(msg)
 
         if nn is None:
             self.nn = MinimumDistanceNN()
@@ -71,9 +78,7 @@ class GraphIDGenerator:
         long_str = ":".join(np.sort(array))
         gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
-        gid = self.elaborate_comp_dim(sg, gid)
-
-        return gid
+        return self.elaborate_comp_dim(sg, gid)
 
     def elaborate_comp_dim(self, sg, gid):
         dim = get_dimensionality_larsen(sg)
@@ -91,7 +96,7 @@ class GraphIDGenerator:
     def get_id_catch_error(self, structure):
         try:
             return self.get_id(structure)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return ""
 
     def get_many_ids(self, structures, parallel=False):
@@ -102,8 +107,7 @@ class GraphIDGenerator:
             p = Pool(n_cores)
             imap = p.imap(self.get_id_catch_error, structures)
             # ids = p.map(self.get_id, structures)
-            ids = list(tqdm(imap, total=len(structures)))
-            return ids
+            return list(tqdm(imap, total=len(structures)))
 
         return [self.get_id(s) for s in structures]
 
@@ -126,45 +130,6 @@ class GraphIDGenerator:
     def are_same(self, structure1, structure2):
         return self.get_id(structure1) == self.get_id(structure2)
 
-    def expand_for_low_dimensionality(self, sg):
-        dimensionality = get_dimensionality_larsen(sg)
-
-        if dimensionality < 3:
-            if len(list(nx.weakly_connected_components(sg.graph))) == 1:
-                supercell = sg.structure.copy()
-                supercell.make_supercell([[2, 2, 2]])
-                sg = StructureGraph.with_local_env_strategy(supercell, self.nn)
-
-        return sg
-
-    def expand_for_multi_bonds(self, sg):
-        _sg = deepcopy(sg)
-        factor = 2
-
-        while self.has_multi_bonds(_sg):
-            _strc = sg.structure.copy()
-            _strc.make_supercell([factor, factor, factor])
-
-            _sg = StructureGraph.with_local_env_strategy(_strc, self.nn)
-            factor += 1
-            # sg.expand
-        # for site_i in range(len(sg.structure)):
-        #     sites = sg.get_connected_sites_light(site_i)
-        #     for site in sites:
-        #         print(site.index)
-        #     # print(sites )
-
-        return _sg
-
-    def has_multi_bonds(self, sg):
-        # g = sg.graph.to_undirected()
-        for edge in sg.graph.edges:
-            if edge[2] != 0:
-                return True
-            # print(edge)
-
-        return False
-
     def prepare_structure_graph(self, structure):
         sg = StructureGraph.with_local_env_strategy(structure, self.nn)
         use_previous_cs = False
@@ -179,7 +144,7 @@ class GraphIDGenerator:
         if self.wyckoff:
             sg.set_wyckoffs(symmetry_tol=self.symmetry_tol)
 
-            # TODO: remove nx
+            # remove nx?
             prev_num_uniq = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
 
         elif self.loop:
