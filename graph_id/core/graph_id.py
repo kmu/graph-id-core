@@ -37,10 +37,6 @@ class GraphIDGenerator:
         loop=False,
         digest_size=8,
     ):
-        """
-        comp_dim: include composition and dimensionality as the prefix
-        """
-
         if wyckoff and loop:
             msg = "wyckoff and loop cannot be True at the same time"
             raise ValueError(msg)
