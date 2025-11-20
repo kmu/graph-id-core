@@ -135,7 +135,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             to_jimage = d["to_jimage"]
 
             if direction == "in":
-                u, v = v, u # noqa: PLW2901
+                u, v = v, u  # noqa: PLW2901
                 to_jimage = np.multiply(-1, to_jimage)
 
             to_jimage = tuple(map(int, np.add(to_jimage, jimage)))
@@ -153,7 +153,6 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                 connected_site_images.add((v, to_jimage))
 
         return list(connected_sites)
-
 
     def set_wyckoffs(self, symmetry_tol: float = 0.1) -> None:
         siteless_strc = self.structure.copy()
