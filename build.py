@@ -35,7 +35,7 @@ class CMakeExtension(Extension):
 
 
 class CMakeBuild(build_ext):
-    def build_extension(self, ext: CMakeExtension) -> None:
+    def build_extension(self, ext: CMakeExtension) -> None:  # noqa: C901,PLR0912
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
@@ -91,7 +91,7 @@ class CMakeBuild(build_ext):
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
-        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:  # noqa: SIM102
             # self.parallel is a Python 3 only way to set parallel jobs by hand
             # using -j in the build_ext call, not supported by pip or PyPA-build.
             if hasattr(self, "parallel") and self.parallel:
@@ -106,13 +106,13 @@ class CMakeBuild(build_ext):
             # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
             del env["PYTHONPATH"]
         subprocess.run(
-            ["cmake", ext.sourcedir, *cmake_args],
+            ["cmake", ext.sourcedir, *cmake_args],  # noqa: S607
             cwd=build_temp,
             check=True,
             env=env,
         )
         subprocess.run(
-            ["cmake", "--build", ".", *build_args],
+            ["cmake", "--build", ".", *build_args],  # noqa: S607
             cwd=build_temp,
             check=True,
             env=env,
