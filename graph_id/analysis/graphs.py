@@ -166,8 +166,8 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             self.set_elemental_labels()
             return
 
-        wyckoffs = sym_dataset["wyckoffs"]
-        number = sym_dataset["number"]
+        wyckoffs = sym_dataset.wyckoffs
+        number = sym_dataset.number
 
         attribute_values = {}
 

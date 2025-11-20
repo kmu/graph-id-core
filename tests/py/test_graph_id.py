@@ -156,3 +156,9 @@ class TestGraphIDGenerator(TestCase):
 
         unique_structures = gid.get_unique_structures([alpha, beta])
         self.assertEqual(len(unique_structures), 1)
+
+    def test_get_id_catch_error(self):
+        s = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
+        gid = GraphIDGenerator()
+        self.assertEqual(gid.get_id_catch_error(None), "")
+        self.assertEqual(gid.get_id_catch_error(s), "NaCl-3D-88c8e156db1b0fd9")
