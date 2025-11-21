@@ -21,7 +21,7 @@ from pymatgen.optimization.neighbors import find_points_in_spheres
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/test_files"))
 
 
 def small_test_structure(max_sites=30):
