@@ -25,7 +25,7 @@ def small_test_structure(max_sites=30):
 
 class TestGraphIDGenerator(unittest.TestCase):
     def test_get_id(self):
-        a = graph_id.GraphIDGenerator()
+        a = graph_id.GraphIDGenerator(prepend_composition=False, prepend_dimensionality=False)
         b = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure():
             with self.subTest(name):

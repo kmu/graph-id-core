@@ -27,7 +27,7 @@ def blake(s):
 
 
 class GraphIDGenerator:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         nn=None,
         wyckoff=False,
@@ -37,6 +37,8 @@ class GraphIDGenerator:
         topology_only=False,
         loop=False,
         digest_size=8,
+        prepend_composition=True,
+        prepend_dimensionality=True,
     ):
         """
         A generator for Graph ID.
@@ -82,6 +84,8 @@ class GraphIDGenerator:
         self.topology_only = topology_only
         self.loop = loop
         self.digest_size = digest_size
+        self.prepend_composition = prepend_composition
+        self.prepend_dimensionality = prepend_dimensionality
 
     def _join_cs_list(self, cs_list):
         return blake("-".join(sorted(cs_list)))
@@ -106,10 +110,11 @@ class GraphIDGenerator:
         return self.elaborate_comp_dim(sg, gid)
 
     def elaborate_comp_dim(self, sg, gid):
-        dim = get_dimensionality_larsen(sg)
-        gid = f"{dim}D-{gid}"
+        if self.prepend_dimensionality:
+            dim = get_dimensionality_larsen(sg)
+            gid = f"{dim}D-{gid}"
 
-        if not self.topology_only:
+        if self.prepend_composition and not self.topology_only:
             gid = f"{sg.structure.composition.reduced_formula}-{gid}"
 
         return gid
