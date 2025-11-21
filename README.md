@@ -141,7 +141,6 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 
 ### Installation
 
-
 ```
 poetry install .
 ```
@@ -152,4 +151,4 @@ poetry install .
 poetry run pytest
 ```
 
-If you changed C++ codes, `poetry install` again to reflect the changes.
+If you changed C++ codes, run `poetry run pip install -e --force-reinstall` to reflect the changes before executing the tests.
