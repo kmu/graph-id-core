@@ -5,7 +5,7 @@ import pytest
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
-from graph_id.core.graph_id import GraphIDGenerator
+from graph_id.core.graph_id import FixedDepthGraphIDGenerator, GraphIDGenerator
 
 TEST_FILES = (Path(__file__).resolve().parent / "test_files").as_posix()
 
@@ -169,3 +169,37 @@ class TestGraphIDGenerator(TestCase):
             GraphIDGenerator(wyckoff=True, loop=True)
         with pytest.raises(ValueError):  # noqa: PT011
             GraphIDGenerator(topology_only=True, loop=True)
+
+    def test_reduce_symmetry(self):
+        nacl_conventional = Structure.from_spacegroup(
+            "Fm-3m",
+            Lattice.cubic(5.692),
+            ["Na", "Cl"],
+            [[0, 0, 0], [0.5, 0.5, 0.5]],
+        )
+
+        nacl_primitive = nacl_conventional.get_primitive_structure()
+
+        generator = GraphIDGenerator()
+        conventional_id = generator.get_id(nacl_conventional)
+        primitive_id = generator.get_id(nacl_primitive)
+        assert conventional_id != primitive_id
+
+        generator = GraphIDGenerator(diameter_factor=0, additional_depth=3)
+        generator_fixed = FixedDepthGraphIDGenerator(depth=3)
+        assert generator.get_id(nacl_primitive) == generator_fixed.get_id(nacl_primitive)
+
+        generator_fixed = FixedDepthGraphIDGenerator(depth=6)
+        assert generator_fixed.get_id(nacl_conventional) != generator_fixed.get_id(nacl_primitive)
+
+        generator_fixed = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        assert generator_fixed.get_id(nacl_conventional) == generator_fixed.get_id(nacl_primitive)
+
+    def test_one_site_reduction(self):
+        """
+        Graph ID should be compatible for reduce_symmetry =True/False
+        """
+        one_site_structure = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
+        generator = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=False)
+        generator_reduce = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        assert generator.get_id(one_site_structure) == generator_reduce.get_id(one_site_structure)
