@@ -59,6 +59,13 @@ class GraphIDGenerator:
         self.loop = loop
         self.digest_size = digest_size
 
+    def _join_cs_list(self, cs_list):
+        return blake("-".join(sorted(cs_list)))
+
+    def _component_strings_to_whole_id(self, component_strings):
+        long_str = ":".join(np.sort(component_strings))
+        return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+
     def get_id(self, structure):
         sg = self.prepare_structure_graph(structure)
         n = len(sg.cc_cs)
@@ -69,9 +76,8 @@ class GraphIDGenerator:
             dtype=object,
         )
         for i, component in enumerate(sg.cc_cs):
-            array[i] = blake("-".join(sorted(component["cs_list"])))
-        long_str = ":".join(np.sort(array))
-        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+            array[i] = self._join_cs_list(component["cs_list"])
+        gid = self._component_strings_to_whole_id(array)
 
         return self.elaborate_comp_dim(sg, gid)
 
@@ -209,6 +215,7 @@ class FixedDepthGraphIDGenerator(GraphIDGenerator):
         )
 
         self.reduce_symmetry = reduce_symmetry
+        self.digest_size = digest_size
 
     def prepare_structure_graph(self, structure):
         return self.generator.prepare_structure_graph(structure)
@@ -228,9 +235,14 @@ class FixedDepthGraphIDGenerator(GraphIDGenerator):
 
             divider = min(gcd_list)
 
+            labels_list = []
             for counter in components_counters:
                 labels = []
                 for label, count in counter.items():
                     labels += [label] * int(count / divider)
+
+                labels_list.append(self._join_cs_list(labels))
+            gid = self._component_strings_to_whole_id(labels_list)
+            return self.generator.elaborate_comp_dim(sg, gid)
 
         return self.generator.get_id(structure)
