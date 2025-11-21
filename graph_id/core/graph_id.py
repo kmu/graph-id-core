@@ -38,6 +38,30 @@ class GraphIDGenerator:
         loop=False,
         digest_size=8,
     ):
+        """
+        A generator for Graph ID.
+        By default, the depth to traverse the graph network is dynamically determined
+        by the graph diameter of the graph.
+
+        Parameters
+        ----------
+        nn: NearNeighbor
+            A NearNeighbor object to use for neighbor finding.
+        wyckoff: bool
+            Whether to use Wyckoff positions.
+        diameter_factor: int
+            The factor to multiply the diameter of the graph to determine the depth to traverse the graph network.
+        additional_depth: int
+            The additional depth to traverse the graph network.
+        symmetry_tol: float
+            The tolerance for symmetry operations.
+        topology_only: bool
+            Whether to only use topology information.
+        loop: bool
+            Whether to use loop information.
+        digest_size: int
+            The size of the digest to use for the hash function.
+        """
         if wyckoff and loop:
             msg = "wyckoff and loop cannot be True at the same time"
             raise ValueError(msg)
