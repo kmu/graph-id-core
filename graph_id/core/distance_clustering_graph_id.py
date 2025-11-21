@@ -22,7 +22,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         self,
         nn=None,
         wyckoff=False,
-        depth_factor=2,
+        diameter_factor=2,
         additional_depth=1,
         symmetry_tol=0.1,
         topology_only=False,
@@ -34,7 +34,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         super().__init__(
             nn,
             wyckoff,
-            depth_factor,
+            diameter_factor,
             additional_depth,
             symmetry_tol,
             topology_only,
@@ -110,7 +110,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
 
         elif self.loop:
             sg.set_loops_as_starting_labels(
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 additional_depth=self.additional_depth,
             )
 
@@ -123,7 +123,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 hash_cs=False,
                 wyckoff=self.wyckoff,
                 additional_depth=self.additional_depth,
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 use_previous_cs=use_previous_cs or self.wyckoff,
             )
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import multiprocessing as multi
+from collections import Counter
 from hashlib import blake2b
 from multiprocessing import Pool
 from typing import TYPE_CHECKING
@@ -30,7 +31,7 @@ class GraphIDGenerator:
         self,
         nn=None,
         wyckoff=False,
-        depth_factor=2,
+        diameter_factor=2,
         additional_depth=1,
         symmetry_tol=0.1,
         topology_only=False,
@@ -38,9 +39,29 @@ class GraphIDGenerator:
         digest_size=8,
     ):
         """
-        comp_dim: include composition and dimensionality as the prefix
-        """
+        A generator for Graph ID.
+        By default, the depth to traverse the graph network is dynamically determined
+        by the graph diameter of the graph.
 
+        Parameters
+        ----------
+        nn: NearNeighbor
+            A NearNeighbor object to use for neighbor finding.
+        wyckoff: bool
+            Whether to use Wyckoff positions.
+        diameter_factor: int
+            The factor to multiply the diameter of the graph to determine the depth to traverse the graph network.
+        additional_depth: int
+            The additional depth to traverse the graph network.
+        symmetry_tol: float
+            The tolerance for symmetry operations.
+        topology_only: bool
+            Whether to only use topology information.
+        loop: bool
+            Whether to use loop information.
+        digest_size: int
+            The size of the digest to use for the hash function.
+        """
         if wyckoff and loop:
             msg = "wyckoff and loop cannot be True at the same time"
             raise ValueError(msg)
@@ -56,13 +77,18 @@ class GraphIDGenerator:
 
         self.wyckoff = wyckoff
         self.additional_depth = additional_depth
-        self.depth_factor = depth_factor
+        self.diameter_factor = diameter_factor
         self.symmetry_tol = symmetry_tol
         self.topology_only = topology_only
         self.loop = loop
         self.digest_size = digest_size
 
-    # def get_graph_I#
+    def _join_cs_list(self, cs_list):
+        return blake("-".join(sorted(cs_list)))
+
+    def _component_strings_to_whole_id(self, component_strings):
+        long_str = ":".join(np.sort(component_strings))
+        return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def get_id(self, structure):
         sg = self.prepare_structure_graph(structure)
@@ -74,9 +100,8 @@ class GraphIDGenerator:
             dtype=object,
         )
         for i, component in enumerate(sg.cc_cs):
-            array[i] = blake("-".join(sorted(component["cs_list"])))
-        long_str = ":".join(np.sort(array))
-        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+            array[i] = self._join_cs_list(component["cs_list"])
+        gid = self._component_strings_to_whole_id(array)
 
         return self.elaborate_comp_dim(sg, gid)
 
@@ -149,7 +174,7 @@ class GraphIDGenerator:
 
         elif self.loop:
             sg.set_loops(
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 additional_depth=self.additional_depth,
             )
 
@@ -161,7 +186,7 @@ class GraphIDGenerator:
                 hash_cs=True,
                 wyckoff=self.wyckoff,
                 additional_depth=self.additional_depth,
-                depth_factor=self.depth_factor,
+                diameter_factor=self.diameter_factor,
                 use_previous_cs=use_previous_cs or self.wyckoff,
             )
 
@@ -169,11 +194,9 @@ class GraphIDGenerator:
             use_previous_cs = True
 
             if prev_num_uniq == num_unique_nodes:
-                break
+                return sg
 
             prev_num_uniq = num_unique_nodes
-
-        return sg
 
     def get_unique_structures(self, structures: list[Structure]) -> list[Structure]:
         unique_structures = []
@@ -186,3 +209,64 @@ class GraphIDGenerator:
                 unique_structures.append(strct)
 
         return unique_structures
+
+
+class FixedDepthGraphIDGenerator(GraphIDGenerator):
+    def __init__(
+        self,
+        depth,
+        nn=None,
+        wyckoff=False,
+        symmetry_tol=0.1,
+        topology_only=False,
+        loop=False,
+        digest_size=8,
+        reduce_symmetry=False,
+    ):
+        """
+        reduce_symmtery: merge sites with the same compositional
+        sequences to cope with structures with different number of atoms
+        """
+        self.generator = GraphIDGenerator(
+            nn=nn,
+            wyckoff=wyckoff,
+            diameter_factor=0,
+            additional_depth=depth,
+            symmetry_tol=symmetry_tol,
+            topology_only=topology_only,
+            loop=loop,
+            digest_size=digest_size,
+        )
+
+        self.reduce_symmetry = reduce_symmetry
+        self.digest_size = digest_size
+
+    def prepare_structure_graph(self, structure):
+        return self.generator.prepare_structure_graph(structure)
+
+    def get_id(self, structure):
+        if self.reduce_symmetry:
+            sg = self.prepare_structure_graph(structure)
+
+            gcd_list = []
+            components_counters = []
+
+            for component in sg.cc_cs:
+                _counter = Counter(component["cs_list"])
+                _gcd = np.gcd.reduce(list(_counter.values()))
+                gcd_list.append(_gcd)
+                components_counters.append(_counter)
+
+            divider = min(gcd_list)
+
+            labels_list = []
+            for counter in components_counters:
+                labels = []
+                for label, count in counter.items():
+                    labels += [label] * int(count / divider)
+
+                labels_list.append(self._join_cs_list(labels))
+            gid = self._component_strings_to_whole_id(labels_list)
+            return self.generator.elaborate_comp_dim(sg, gid)
+
+        return self.generator.get_id(structure)

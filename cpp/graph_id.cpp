@@ -136,7 +136,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -146,7 +146,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -176,7 +176,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -186,7 +186,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -217,7 +217,7 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -227,7 +227,7 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -259,7 +259,7 @@ StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(in
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -270,7 +270,7 @@ StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(in
                 false, // hash_cs
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -294,7 +294,7 @@ void init_graph_id(pybind11::module &m) {
             .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool, int, double, int>(),
                  py::arg("nn") = nullptr,
                  py::arg("wyckoff") = false,
-                 py::arg("depth_factor") = 2,
+                 py::arg("diameter_factor") = 2,
                  py::arg("additional_depth") = 1,
                  py::arg("symmetry_tol") = 0.1,
                  py::arg("topology_only") = false,

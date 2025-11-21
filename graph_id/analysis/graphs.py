@@ -181,7 +181,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         hash_cs: bool = False,
         wyckoff: bool = False,
         additional_depth: int = 0,
-        depth_factor: int = 2,
+        diameter_factor: int = 2,
         use_previous_cs: bool = False,
     ) -> None:
         node_attributes = {}
@@ -196,7 +196,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             d = diameter(ug.subgraph(cc))
 
             for focused_site_i in cc:
-                depth = depth_factor * d + additional_depth
+                depth = diameter_factor * d + additional_depth
 
                 cs = CompositionalSequence(
                     focused_site_i=focused_site_i,
@@ -227,7 +227,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         hash_cs: bool = False,
         wyckoff: bool = False,
         additional_depth: int = 0,
-        depth_factor: int = 2,
+        diameter_factor: int = 2,
         use_previous_cs: bool = False,
     ) -> None:
         node_attributes = {}
@@ -242,7 +242,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             d = diameter(ug.subgraph(cc))
 
             if n in cc:
-                depth = depth_factor * d + additional_depth
+                depth = diameter_factor * d + additional_depth
 
                 cs = CompositionalSequence(
                     focused_site_i=n,
