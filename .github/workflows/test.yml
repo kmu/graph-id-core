@@ -1,4 +1,4 @@
-name: Python application test with Poetry and pytest
+name: Test
 
 on:
   push:
@@ -8,12 +8,19 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@v4
@@ -21,34 +28,71 @@ jobs:
         submodules: recursive
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake
 
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      shell: bash
 
     - name: Cache Poetry dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+        key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
         restore-keys: |
+          ${{ runner.os }}-poetry-${{ matrix.python-version }}-
           ${{ runner.os }}-poetry-
 
     - name: Install dependencies
       run: poetry install
 
+    - name: Build C++ extension with CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(python3 -m pybind11 --cmakedir)
+        cmake --build . --config Release
+
+    - name: Copy built extension to package
+      run: |
+        find build -name "graph_id_cpp*.so" -exec cp {} graph_id/ \;
+
+    - name: Check built files
+      run: |
+        find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
+        ls -la src/graph_id/ || echo "src/graph_id directory not found"
+        poetry run python -c "import sys; print('Python path:', sys.path)"
+
     - name: Run pytest
-      run: poetry run pytest -s
-
-    - if: matrix.python-version == '3.9'
-      name: Format
       run: |
-         poetry run pysen run format
+        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v
 
-    - if: matrix.python-version == '3.9'
-      name: Pysen lint
-      run: |
-        poetry run pysen run lint
+    - name: Upload coverage reports to Codecov
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: kmu/graph-id-core
+        files: ./coverage.xml
+
+    - name: Upload test results to Codecov
+      if: matrix.os == 'ubuntu-latest' && !cancelled()
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./junit.xml
