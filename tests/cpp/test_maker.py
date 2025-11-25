@@ -14,8 +14,34 @@ def test_maker():
     pymaker = GraphIDMaker(engine="py")
     assert pymaker.get_id(nacl) == "NaCl-88c8e156db1b0fd9"
 
-    maker = GraphIDMaker(engine="c++", depth=2)
-    assert maker.get_id(nacl) == "NaCl-b54d6c6b1662ccdb"
+    maker2 = GraphIDMaker(engine="c++", depth=2)
+    assert maker2.get_id(nacl) == "NaCl-b54d6c6b1662ccdb"
+
+    site_ids = maker.get_site_ids(nacl)
+    assert len(site_ids) == len(nacl)
+    na_site_id = "Na_Na-8ac4127fe153fffb8164eef4dcb4b522d48e2b3c4e89ad8e257f3bf9bec2448d5d8831a3c432a741cf1c77ac3b0ce1bcfa33682aadb3ec4e5f7425857fa86ff0"  # noqa: E501
+    cl_site_id = "Cl_Cl-0d9c88475b88c4eedf874aa1caab521d72e324459b530292299e66452a4c1732c7039268e190c887d2ad06fd8720eaccfd5ae981b43d05fc329c1866c2160d57"  # noqa: E501
+    assert site_ids[0] == na_site_id
+    assert site_ids[1] == na_site_id
+    assert site_ids[2] == na_site_id
+    assert site_ids[3] == na_site_id
+    assert site_ids[4] == cl_site_id
+    assert site_ids[5] == cl_site_id
+    assert site_ids[6] == cl_site_id
+    assert site_ids[7] == cl_site_id
+
+    site_ids = maker.get_site_ids(nacl)
+    assert len(site_ids) == len(nacl)
+    na_site_id = "Na_Na-8ac4127fe153fffb8164eef4dcb4b522d48e2b3c4e89ad8e257f3bf9bec2448d5d8831a3c432a741cf1c77ac3b0ce1bcfa33682aadb3ec4e5f7425857fa86ff0"  # noqa: E501
+    cl_site_id = "Cl_Cl-0d9c88475b88c4eedf874aa1caab521d72e324459b530292299e66452a4c1732c7039268e190c887d2ad06fd8720eaccfd5ae981b43d05fc329c1866c2160d57"  # noqa: E501
+    assert site_ids[0] == na_site_id
+    assert site_ids[1] == na_site_id
+    assert site_ids[2] == na_site_id
+    assert site_ids[3] == na_site_id
+    assert site_ids[4] == cl_site_id
+    assert site_ids[5] == cl_site_id
+    assert site_ids[6] == cl_site_id
+    assert site_ids[7] == cl_site_id
 
 
 def test_reduce_symmetry():
