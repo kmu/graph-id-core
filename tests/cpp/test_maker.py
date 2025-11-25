@@ -22,8 +22,8 @@ def test_reduce_symmetry():
     ase_structure_primitive = bulk("NaCl", "rocksalt", a=5.692)
     ase_structure_conventional = bulk("NaCl", "rocksalt", a=5.692, cubic=True)
 
-    structure_primitive = AseAtomsAdaptor().get_structure(ase_structure_primitive)
-    structure_conventional = AseAtomsAdaptor().get_structure(ase_structure_conventional)
+    structure_primitive = AseAtomsAdaptor.get_structure(ase_structure_primitive)
+    structure_conventional = AseAtomsAdaptor.get_structure(ase_structure_conventional)
 
     maker = GraphIDMaker()
     assert maker.get_id(structure_primitive) != maker.get_id(structure_conventional)
