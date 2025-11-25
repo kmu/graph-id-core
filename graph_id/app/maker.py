@@ -35,6 +35,8 @@ class GraphIDMaker:
                 nn=nn,
                 diameter_factor=diameter_factor,
                 additional_depth=additional_depth,
+                prepend_composition=False,
+                prepend_dimensionality=False,
             )
 
         elif engine == "c++":
@@ -47,7 +49,4 @@ class GraphIDMaker:
     def get_id(self, structure) -> str:
         graph_id = self.generator.get_id(structure)
 
-        if self.engine == "c++":
-            return f"{structure.composition.reduced_formula}-{graph_id}"
-
-        return graph_id
+        return f"{structure.composition.reduced_formula}-{graph_id}"

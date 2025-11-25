@@ -10,4 +10,7 @@ def test_maker():
     assert maker.get_id(nacl) == "NaCl-88c8e156db1b0fd9"
 
     pymaker = GraphIDMaker(engine="py")
-    assert pymaker.get_id(nacl) == "NaCl-3D-88c8e156db1b0fd9"
+    assert pymaker.get_id(nacl) == "NaCl-88c8e156db1b0fd9"
+
+    maker = GraphIDMaker(engine="c++", depth=2)
+    assert maker.get_id(nacl) == "NaCl-b54d6c6b1662ccdb"
