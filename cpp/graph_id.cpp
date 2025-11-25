@@ -18,16 +18,16 @@ std::string GraphIDGenerator::get_id(const Structure &structure) const {
 }
 
 std::string GraphIDGenerator::get_id_with_structure_graph(py::object py_structure_graph) const {
-    // PythonのStructureGraphから構造体を取得
+    // Get structure object from StructureGraph (python)
     py::object py_structure = py_structure_graph.attr("structure");
     auto s = py_structure.cast<PymatgenStructure>();
     auto s_ptr = std::make_shared<const Structure>(s);
-    
+
     const auto sg_from_py = StructureGraph::from_py(py_structure_graph);
-    
+
     // 既存のStructureGraphに対してラベル設定とcompositional sequenceの処理を適用
     auto sg = prepare_structure_graph_from_existing(s_ptr,sg_from_py);
-    
+
     std::vector<std::string> cc_labels(sg.cc_nodes.size());
     for (size_t i = 0; i < sg.cc_nodes.size(); ++i) {
         std::vector<std::string> labels = sg.cc_cs[i];
@@ -49,7 +49,7 @@ std::string GraphIDGenerator::get_id_catch_error(const Structure &structure) con
 }
 
 std::vector<std::string> GraphIDGenerator::get_many_ids(const std::vector<Structure> &structures) const {
-    // マルチスレッド化するときはここを変更する
+    // If you want to multi-thread, change here
     std::vector<std::string> ids;
     ids.reserve(structures.size());
     for (const auto &structure: structures) {
@@ -63,12 +63,12 @@ std::string GraphIDGenerator::get_distance_clustering_id(const Structure &struct
     std::vector<std::string> gids(this->rank_k);
     const auto _sg = prepare_minimum_distance_structure_graph(s_ptr);
     for (int idx = 0; idx < this->rank_k; idx++){
-        // MinimumDistanceNNでStructureGraphを作成する
+        // Create StructureGraph with MinimumDistanceNN
         std::vector<std::string> j_strs(structure.count);
         for (int j = 0; j < structure.count; j++){
             auto sg = _sg;
             // py::object py_structure_graph = _sg.to_py();
-            // 原子jを含むedgeを削除する処理
+            // Remove edges containing atom j
             for (const auto& [key, value] : _sg.graph_map){
                 if (std::get<0>(key) == j || std::get<1>(key) == j){
                     sg.break_edge(std::get<0>(key), std::get<1>(key), std::get<2>(key), true);
@@ -136,7 +136,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -146,7 +146,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -165,7 +165,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const S
 }
 
 StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shared_ptr<const Structure> &structure, const StructureGraph &sg_from_py) const {
-    auto sg = sg_from_py;  // コピーを作成
+    auto sg = sg_from_py;  // Create a copy
     bool use_previous_cs = false;
 
     auto labels = structure->species_strings;
@@ -176,7 +176,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -186,7 +186,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -204,7 +204,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
     return sg;
 }
 
-// TODO 一つのクラスにまとめる。もしくは継承を使う。
+// TODO Merge into one class or use inheritance
 StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const {
     auto sg = StructureGraph::with_local_env_strategy(structure, MinimumDistanceNN());
     bool use_previous_cs = false;
@@ -217,7 +217,7 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -227,7 +227,7 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
                 true,
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -246,7 +246,7 @@ StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::s
 }
 
 StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const {
-    // DistanceClusteringNNのインスタンスを渡す
+    // Pass the instance of DistanceClusteringNN
     // auto sg = StructureGraph::with_individual_state_comp_strategy(structure, sg, DistanceClusteringNN, n, rank_k, cutoff);
     auto sg = StructureGraph::with_individual_state_comp_strategy(structure, *_sg, n, rank_k, cutoff);
     bool use_previous_cs = false;
@@ -259,7 +259,7 @@ StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(in
     } else if (topology_only) {
         sg.labels = std::vector<std::string>(structure->count, "X");
     } else if (loop) {
-        sg.set_loops(depth_factor, additional_depth);
+        sg.set_loops(diameter_factor, additional_depth);
     } else {
         sg.set_elemental_labels();
     }
@@ -270,7 +270,7 @@ StructureGraph GraphIDGenerator::prepare_disctance_clustering_structure_graph(in
                 false, // hash_cs
                 wyckoff,
                 additional_depth,
-                depth_factor,
+                diameter_factor,
                 use_previous_cs
         );
 
@@ -294,7 +294,7 @@ void init_graph_id(pybind11::module &m) {
             .def(py::init<std::shared_ptr<NearNeighbor>, bool, int, int, double, bool, bool, int, double, int>(),
                  py::arg("nn") = nullptr,
                  py::arg("wyckoff") = false,
-                 py::arg("depth_factor") = 2,
+                 py::arg("diameter_factor") = 2,
                  py::arg("additional_depth") = 1,
                  py::arg("symmetry_tol") = 0.1,
                  py::arg("topology_only") = false,

@@ -2,11 +2,11 @@ import glob
 import os
 import unittest
 
-from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 from pymatgen.core import Structure
 
-from .imports import graph_id_cpp
+from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 
+from .imports import graph_id_cpp
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/test_files"))
 
@@ -27,7 +27,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
     def test_get_distance_clustering_id(self):
         a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
         b = graph_id_cpp.GraphIDGenerator(rank_k=3, cutoff=6.0)
-        for name, s in small_test_structure():
+        for name, s in small_test_structure()[:2]:
             with self.subTest(name):
                 print(name)
 

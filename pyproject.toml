@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.9"
+version = "0.1.11"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
@@ -28,7 +28,7 @@ scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
+pytest-cov = "^7.0.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "graph_id"]
@@ -38,3 +38,69 @@ norecursedirs = ["library", "build", "dist", ".git", ".venv", "__pycache__"]
 requires = ["poetry-core>=1.0.0", "pybind11~=2.11.1", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+warn_return_any = false
+
+[tool.isort]
+profile = "black"
+line_length = 119
+
+[tool.black]
+line-length = 119
+
+[tool.ruff]
+lint.ignore = [
+  "D100",
+  "RUF003", # Comment contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
+  "ANN201", #  Missing return type annotation for public function
+  "ANN101", # Missing type annotation for self in method
+  "D101",   # Missing docstring in public class
+  "D102",   # Missing docstring in public method
+  "SLF001", # Private member accessed
+  "ERA001", # commentouted code is allowed
+  "D211",
+  "D213",
+  "PGH003",
+  "ANN202",
+  "T201",   # print is allowed
+  "S101", # assert is allowed
+  "ANN001", # Missing type annotation for function
+  "ANN205",
+  "D",
+  "PLR2004", # magic value
+  "FBT002",  # Boolean default value in function definition
+  "FBT001", # Boolean positional arg in function definition
+  "INP001", # is part of an implicit namespace package. Add an `__init__.py`.
+  "ANN206", #  Missing return type annotation for classmethod
+  "ANN102", # Missing type annotation for `cls` in classmethod
+  "RUF002", # Docstring contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
+  "S311", #  Standard pseudo-random generators are not suitable for cryptographic purposes
+  "ANN204",
+  "S604", # Function call with `shell=True` parameter identified, security issue
+  "S603", # command and args are constant literals; no untrusted input
+  "PT009",
+  "PTH118",
+  "PTH120",
+  "PTH207",
+]
+lint.select = ["ALL"]
+line-length = 119
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*" = [
+  "D103",
+  "INP001", # is part of an implicit namespace package. Add an `__init__.py`.
+  "T201",   # print is allowed
+]
+"**/__init__.py" = [
+  "F401", # unused import (for re-exports)
+  "PGH004", # allow generic noqa comments
+]

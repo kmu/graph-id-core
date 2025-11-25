@@ -1,8 +1,8 @@
-# テスト方法
+# Tests for C++ version
 
-## テストの実行
+## Executing tests
 
-**C++ コードのビルド**
+**Building C++ version**
 ```bash
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
@@ -10,15 +10,15 @@ cmake --build . -j
 cd ..
 ```
 
-**テストの実行**
+**Testing C++ version**
 ```bash
 poetry run pytest
 ```
 
 
-## ベンチマークの実行
+## Benchmark
 
-**C++ コードのビルド**
+**Building C++ code**
 ```bash
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -26,21 +26,21 @@ cmake --build . -j
 cd ..
 ```
 
-**ベンチマークのの実行**
+**Executing benchmark**
 ```bash
 python -m unittest discover -s cpp -p "test/benchmark*.py"
 ```
 
 
-## プロファイルの取得
+## Profiling
 
-**必要なライブラリの取得 (Linux のみ対応)**
+**Obtaining dependencies (Only works for Linux)**
 ```bash
 apt-get install -y google-perftools libgoogle-perftools-dev kcachegrind
 pip install yep
 ```
 
-**C++ コードのビルド**
+**Building C++ code**
 ```bash
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -48,7 +48,7 @@ cmake --build . -j
 cd ..
 ```
 
-**プロファイルの取得**
+**Obtaining profiles**
 ```bash
 python cpp/test/profile.py
 google-pprof \
@@ -61,4 +61,3 @@ google-pprof \
   ./build/graph_id_cpp$(python -c 'import sysconfig; print(sysconfig.get_config_var("EXT_SUFFIX"))') \
   build/profile-large.prof --svg > build/profile-large.svg
 ```
-

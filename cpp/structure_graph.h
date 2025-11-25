@@ -52,13 +52,13 @@ public:
 
     void set_wyckoffs_label(double symmetry_tol = 0.1);
 
-    void set_loops(int depth_factor, int additional_depth);
+    void set_loops(int diameter_factor, int additional_depth);
 
     void set_compositional_sequence_node_attr(
             bool hash_cs,
             bool wyckoff,
             int additional_depth,
-            int depth_factor,
+            int diameter_factor,
             bool use_previous_cs
     );
 
@@ -67,7 +67,7 @@ public:
             bool hash_cs,
             bool wyckoff,
             int additional_depth,
-            int depth_factor,
+            int diameter_factor,
             bool use_previous_cs
     );
 
@@ -94,7 +94,7 @@ public:
     void set_cc_diameter();
 
     static bool rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen, const std::array<int, 3> &candidate);
-    
+
     static int calculate_rank(const gtl::flat_hash_set<std::array<int, 3>> &vertices);
 };
 

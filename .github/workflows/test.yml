@@ -8,6 +8,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -74,5 +79,20 @@ jobs:
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
-      run: poetry run pytest -v
-    
+      run: |
+        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v
+
+    - name: Upload coverage reports to Codecov
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: kmu/graph-id-core
+        files: ./coverage.xml
+
+    - name: Upload test results to Codecov
+      if: matrix.os == 'ubuntu-latest' && !cancelled()
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./junit.xml

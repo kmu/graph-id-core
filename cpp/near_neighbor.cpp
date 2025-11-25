@@ -435,10 +435,10 @@ std::vector<std::vector<NearNeighborInfo>> DistanceClusteringNN::get_all_nn_info
     const double min_distance = d.minCoeff();
     for (int j = 0; j < int(nn[this->n].size()); ++j) {
         if (
-            (this->rank_k > 0 
+            (this->rank_k > 0
             && round(1000*d(j))/1000 <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000
             && round(1000*d(j))/1000 > round(1000*cutoff_cluster_list.at(this->rank_k-1))/1000)
-            || (this->rank_k == 0 
+            || (this->rank_k == 0
             && round(1000*d(j))/1000 <= round(1000*cutoff_cluster_list.at(this->rank_k))/1000)
         ) {
             result[this->n].emplace_back(NearNeighborInfo{
@@ -460,7 +460,7 @@ std::vector<double> DistanceClusteringNN::get_cutoff_cluster(const Structure &st
 
     int nn_size = int(nn[n].size());
     std::vector<std::vector<double>> distance_vec(nn_size, std::vector<double>(2));
-    
+
     int count = 0;
     for (const auto &neighbor: nn[n]) {
         // const auto nn = neighs_dists
@@ -471,7 +471,7 @@ std::vector<double> DistanceClusteringNN::get_cutoff_cluster(const Structure &st
     }
 
     std::vector<int> clustering_labels;
-    
+
     //  py::scoped_interpreter guard{}; // Pythonインタープリタを開始
 
     py::object sklearn = py::module::import("sklearn.cluster");
@@ -1445,7 +1445,7 @@ void init_near_neighbor(pybind11::module &m) {
             .def(py::init<double, double>(),
                  py::arg("tol") = 0.1,
                  py::arg("cutoff") = 10.0);
-    
+
     py::class_<DistanceClusteringNN, std::shared_ptr<DistanceClusteringNN>, NearNeighbor>(m, "DistanceClusteringNN")
             .def(py::init<double, int, int, double>(),
                  py::arg("tol") = 0.1,
@@ -1527,4 +1527,3 @@ void init_near_neighbor(pybind11::module &m) {
         return py::make_tuple(res1, res2, res_offset, distances);
     });
 }
-

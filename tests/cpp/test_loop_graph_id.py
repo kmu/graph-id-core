@@ -2,8 +2,9 @@ import glob
 import os
 import unittest
 
-import graph_id
 from pymatgen.core import Structure
+
+import graph_id
 
 from .imports import graph_id_cpp
 
@@ -30,7 +31,6 @@ class TestLoopGraphIDGenerator(unittest.TestCase):
         b = graph_id_cpp.GraphIDGenerator(loop=True)
         for name, s in small_test_structure():
             with self.subTest(name):
-
                 aid = a.get_id(s)
 
                 self.assertEqual(aid, b.get_id(s))

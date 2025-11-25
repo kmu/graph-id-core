@@ -1,11 +1,13 @@
-import os
+from pathlib import Path
 from unittest import TestCase
 
-from graph_id.core.graph_id import GraphIDGenerator
+import pytest
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
 from pymatgen.core import Element, Lattice, Structure
 
-TEST_FILES = os.path.dirname(os.path.abspath(__file__)) + "/test_files"
+from graph_id.core.graph_id import FixedDepthGraphIDGenerator, GraphIDGenerator
+
+TEST_FILES = (Path(__file__).resolve().parent / "test_files").as_posix()
 
 
 class TestGraphIDGenerator(TestCase):
@@ -20,7 +22,7 @@ class TestGraphIDGenerator(TestCase):
         gid = GraphIDGenerator()
         self.assertTrue(gid.version > "0.0.0")
 
-    def test_NaCl(self):
+    def test_nacl(self):
         nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
         cscl = nacl.copy()
         cscl.replace(0, Element("Cs"))
@@ -43,24 +45,24 @@ class TestGraphIDGenerator(TestCase):
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(nacl))
         self.assertEqual("3D-e40be9333fa6f8ae", gid_topo_wyckoff.get_id(cscl))
 
-    def test_LiMnTeO(self):
+    def test_limnteo(self):
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1299593.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1307172.cif")
 
-        gid = GraphIDGenerator(depth_factor=1)
+        gid = GraphIDGenerator(diameter_factor=1)
 
         id_1 = gid.get_id(s1)
         id_2 = gid.get_id(s2)
 
         self.assertNotEqual(id_1, id_2)
 
-    def test_VSbO4(self):
+    def test_vsb_o_4(self):
         """
         MinimumDistanceNN does not work for this.
         """
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
-        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
         id_1 = gid.get_id(s1)
 
         self.assertEqual(id_1, "VSbO4-0D-e50201525efe4cd5")
@@ -90,7 +92,7 @@ class TestGraphIDGenerator(TestCase):
         layer = Structure.from_file(f"{TEST_FILES}/mp-48.cif")
         bulk = Structure.from_file(f"{TEST_FILES}/mp-1018088.cif")
 
-        gid = GraphIDGenerator(nn=CrystalNN(), depth_factor=1)
+        gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
 
         id_1 = gid.get_id(layer)
         id_2 = gid.get_id(bulk)
@@ -111,7 +113,7 @@ class TestGraphIDGenerator(TestCase):
 
     def test_simple_same_composition(self):
         """
-        Graphs with diamter of 0.
+        Graphs with diameter of 0.
         Compositions are identical.
         Structures are different.
         """
@@ -126,27 +128,8 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_calcium(self):
-        """
-        CrystalNNでは問題ないが、MinmumDistanceNNでは同一視されてしまう構造。
-        セルを拡張すれば大丈夫。
-        あるノードから同じノードに複数個エッジが伸びていた場合、
-        スーパーセルにするというロジックを使えば良さそう。
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-1008498.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1067285.cif")
-
-        # sg1 = StructureGraph.with_local_env_strategy(s1, MinimumDistanceNN())
-        # sg2 = StructureGraph.with_local_env_strategy(s2, MinimumDistanceNN())
-
-        # vw = VestaWriter(sg1, False)
-        # vw.write_file(filename="/home/mrok/sandbox/1.vesta")
-
-        # vw = VestaWriter(sg2, False)
-        # vw.write_file(filename="/home/mrok/sandbox/2.vesta")
-
-        # print(diameter(sg1.graph.to_undirected()))
-
-        # self.assertNotEqual(sg1.get_graph_id4(), sg2.get_graph_id4())
 
         gid = GraphIDGenerator(MinimumDistanceNN())
 
@@ -156,10 +139,6 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_connected_components(self):
-        """
-        セルを拡張したときにはじめてconnected componentsにわかれる例。
-        そうした時はセルの拡張が必要。
-        """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-121.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-611219.cif")
 
@@ -170,9 +149,57 @@ class TestGraphIDGenerator(TestCase):
 
         self.assertNotEqual(id_1, id_2)
 
-        gid = GraphIDGenerator(MinimumDistanceNN())
+    def test_get_unique_structures(self):
+        alpha = Structure.from_file(f"{TEST_FILES}/298 K.cif")
+        beta = Structure.from_file(f"{TEST_FILES}/1078 K.cif")
 
-        id_1 = gid.get_id(s1)
-        id_2 = gid.get_id(s2)
+        gid = GraphIDGenerator()
 
-        self.assertNotEqual(id_1, id_2)
+        unique_structures = gid.get_unique_structures([alpha, beta])
+        self.assertEqual(len(unique_structures), 1)
+
+    def test_get_id_catch_error(self):
+        s = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
+        gid = GraphIDGenerator()
+        self.assertEqual(gid.get_id_catch_error(None), "")
+        self.assertEqual(gid.get_id_catch_error(s), "NaCl-3D-88c8e156db1b0fd9")
+
+    def test_inappropriate_combinations(self):
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(wyckoff=True, loop=True)
+        with pytest.raises(ValueError):  # noqa: PT011
+            GraphIDGenerator(topology_only=True, loop=True)
+
+    def test_reduce_symmetry(self):
+        nacl_conventional = Structure.from_spacegroup(
+            "Fm-3m",
+            Lattice.cubic(5.692),
+            ["Na", "Cl"],
+            [[0, 0, 0], [0.5, 0.5, 0.5]],
+        )
+
+        nacl_primitive = nacl_conventional.get_primitive_structure()
+
+        generator = GraphIDGenerator()
+        conventional_id = generator.get_id(nacl_conventional)
+        primitive_id = generator.get_id(nacl_primitive)
+        assert conventional_id != primitive_id
+
+        generator = GraphIDGenerator(diameter_factor=0, additional_depth=3)
+        generator_fixed = FixedDepthGraphIDGenerator(depth=3)
+        assert generator.get_id(nacl_primitive) == generator_fixed.get_id(nacl_primitive)
+
+        generator_fixed = FixedDepthGraphIDGenerator(depth=6)
+        assert generator_fixed.get_id(nacl_conventional) != generator_fixed.get_id(nacl_primitive)
+
+        generator_fixed = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        assert generator_fixed.get_id(nacl_conventional) == generator_fixed.get_id(nacl_primitive)
+
+    def test_one_site_reduction(self):
+        """
+        Graph ID should be compatible for reduce_symmetry =True/False
+        """
+        one_site_structure = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
+        generator = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=False)
+        generator_reduce = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        assert generator.get_id(one_site_structure) == generator_reduce.get_id(one_site_structure)

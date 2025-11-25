@@ -92,20 +92,20 @@ StructureGraph StructureGraph::from_py(py::object py_sg) {
         for (size_t i = 0; i < to_jimage_array.size(); ++i) {
             to_jimage_array[i] = to_jimage[i].cast<int>();
         }
-        
+
         // 双方向のエッジを追加（with_local_env_strategyと同じ方法）
         sg.add_edge(std::get<0>(e), {0, 0, 0}, std::get<1>(e), to_jimage_array, std::get<2>(e));
-        
+
         // 逆向きのimageを計算
         std::array<int, 3> from_jimage_array;
         for (size_t i = 0; i < from_jimage_array.size(); ++i) {
             from_jimage_array[i] = -to_jimage_array[i];
         }
-        
+
         sg.add_edge(std::get<1>(e), to_jimage_array, std::get<0>(e), {0, 0, 0}, std::get<2>(e));
     }
     sg.set_cc_diameter();
-    
+
     return sg;
 }
 
@@ -259,7 +259,7 @@ void StructureGraph::set_elemental_labels() {
     this->labels = this->structure->species_strings;
 }
 
-void StructureGraph::set_loops(int depth_factor, int additional_depth) {
+void StructureGraph::set_loops(int diameter_factor, int additional_depth) {
     // Import the required Python module
     py::module GraphAnalysisModule = py::module::import("graph_id.analysis.graphs");
 
@@ -272,7 +272,7 @@ void StructureGraph::set_loops(int depth_factor, int additional_depth) {
             py_structure_graph);
 
     // Call the set_loops method on this Python object
-    desired_structure_graph.attr("set_loops")(depth_factor, additional_depth);
+    desired_structure_graph.attr("set_loops")(diameter_factor, additional_depth);
 
     // Retrieve the labels
     py::list labels = desired_structure_graph.attr("starting_labels").cast<py::list>();
@@ -331,7 +331,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
         int additional_depth,
-        int depth_factor,
+        int diameter_factor,
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
@@ -340,7 +340,7 @@ void StructureGraph::set_compositional_sequence_node_attr(
         std::vector<std::string> cs_list;
         cs_list.reserve(cc_nodes[cc_i].size());
 
-        const int depth = cc_diameter[cc_i] * depth_factor + additional_depth;
+        const int depth = cc_diameter[cc_i] * diameter_factor + additional_depth;
 
         for (const int focused_site_i: cc_nodes[cc_i]) {
             if (PyErr_CheckSignals()) throw py::error_already_set();
@@ -376,7 +376,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         bool hash_cs,
         bool wyckoff,
         int additional_depth,
-        int depth_factor,
+        int diameter_factor,
         bool use_previous_cs
 ) {
     cc_cs.resize(0);
@@ -386,7 +386,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
     py::object networkx = py::module::import("networkx");
     py::object py_structure_graph = this->to_py();
     py::object ug = py_structure_graph.attr("graph").attr("to_undirected")();
-    
+
     // for (size_t cc_i = 0; cc_i < cc_nodes.size(); cc_i++) {
     py::object cc = networkx.attr("connected_components")(ug);
     std::vector<std::set<int>> cpp_vec;
@@ -403,7 +403,7 @@ void StructureGraph::set_individual_compositional_sequence_node_attr(
         // int d = cc_diameter[cc_i];
         // int d = diameter(ug.attr("subgraph")(cc_nodes[cc_i])).cast<int>();
         int d = diameter(ug.attr("subgraph")(cc_vector)).cast<int>();
-        const int depth = d * depth_factor + additional_depth;
+        const int depth = d * diameter_factor + additional_depth;
         // if (std::count(cc_nodes[cc_i].begin(), cc_nodes[cc_i].end(), n)) {
         if (std::count(cc_vector.begin(), cc_vector.end(), n)) {
             // for (const int focused_site_i: cc_nodes[cc_i]) {
@@ -443,19 +443,19 @@ int StructureGraph::calculate_rank(const gtl::flat_hash_set<std::array<int, 3>> 
     size_t n = vertices.size();
     if (n == 0) return -1;
     if (n == 1) return 0;
-    
+
     // 最初の頂点を基準点として、他の頂点との相対位置を計算
     std::vector<std::array<int, 3>> vertices_vec(vertices.begin(), vertices.end());
     const auto& base_vertex = vertices_vec[0];
     Eigen::Matrix3Xd relative_positions(3, n - 1);
-    
+
     for (size_t i = 1; i < vertices_vec.size(); ++i) {
-        relative_positions.col(i - 1) << 
+        relative_positions.col(i - 1) <<
             vertices_vec[i][0] - base_vertex[0],
-            vertices_vec[i][1] - base_vertex[1], 
+            vertices_vec[i][1] - base_vertex[1],
             vertices_vec[i][2] - base_vertex[2];
     }
-    
+
     return int(relative_positions.fullPivLu().rank());
 }
 
@@ -467,11 +467,11 @@ StructureGraph::rank_increase(const gtl::flat_hash_set<std::array<int, 3>> &seen
     // 既存の頂点セットに新しい頂点を追加
     gtl::flat_hash_set<std::array<int, 3>> extended_vertices = seen;
     extended_vertices.insert(candidate);
-    
+
     // 拡張された頂点セットのランクを計算
     int rank1 = calculate_rank(extended_vertices);
     int rank0 = n - 1;  // 既存の頂点セットのランク
-    
+
     return rank1 > rank0;
 }
 
@@ -559,7 +559,7 @@ std::string CompositionalSequence::string() const {
         else {
             return (*labels)[focused_site_i] + "-" + join_string("-", compositional_seq);
         }
-        
+
     }
 }
 
@@ -620,7 +620,7 @@ void init_structure_graph(pybind11::module &m) {
                  py::arg("hash_cs") = false,
                  py::arg("wyckoff") = false,
                  py::arg("additional_depth") = 0,
-                 py::arg("depth_factor") = 2,
+                 py::arg("diameter_factor") = 2,
                  py::arg("use_previous_cs") = false)
             .def("get_dimensionality_larsen", &StructureGraph::get_dimensionality_larsen)
             .def("to_py", &StructureGraph::to_py)

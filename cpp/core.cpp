@@ -42,4 +42,3 @@ void init_core(py::module_ &m) {
             .def(py::init<py::object>());
     py::implicitly_convertible<py::object, PymatgenStructure>();
 }
-
