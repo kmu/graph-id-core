@@ -39,3 +39,5 @@ jobs:
           gh pr edit staging --title "${PR_TITLE} ${today}"
           gh pr edit staging --body-file $tmpfile
           rm -f $tmpfile
+
+          # Borrowed from https://qiita.com/sh-miyoshi/items/855cd33bd74622d5a32c
