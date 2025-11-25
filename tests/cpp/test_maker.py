@@ -28,5 +28,15 @@ def test_reduce_symmetry():
     maker = GraphIDMaker()
     assert maker.get_id(structure_primitive) != maker.get_id(structure_conventional)
 
+    maker_cpp = GraphIDMaker(engine="c++", depth=4, reduce_symmetry=True)
+    cpp_id_primitive = maker_cpp.get_id(structure_primitive)
+    cpp_id_conventional = maker_cpp.get_id(structure_conventional)
+
+    assert cpp_id_primitive == cpp_id_conventional
+
     maker = GraphIDMaker(engine="py", depth=4, reduce_symmetry=True)
-    assert maker.get_id(structure_primitive) == maker.get_id(structure_conventional)
+    py_id_primitive = maker.get_id(structure_primitive)
+    py_id_conventional = maker.get_id(structure_conventional)
+    assert py_id_primitive == py_id_conventional
+
+    assert py_id_primitive == cpp_id_primitive
