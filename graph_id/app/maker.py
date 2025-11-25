@@ -22,13 +22,16 @@ class GraphIDMaker:
     ) -> None:
         """
         A simple interface to make GraphID.
+
+        nn: NearNeighbor object to use for neighbor finding.
+            You must supply C++ implementation if you use `c++` engine.
         """
         self.engine = engine
         self.reduce_symmetry = reduce_symmetry
         if nn is None:
-            if engine == "py":
+            if "py" in engine.lower():
                 nn = MinimumDistanceNN()
-            elif engine == "c++":
+            elif "c" in engine.lower():
                 nn = CppMinimumDistanceNN()
 
         diameter_factor = 2
