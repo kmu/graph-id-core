@@ -66,3 +66,10 @@ def test_reduce_symmetry():
     assert py_id_primitive == py_id_conventional
 
     assert py_id_primitive == cpp_id_primitive
+
+    site_ids = maker_cpp.get_site_ids(structure_primitive)
+    assert len(site_ids) == len(structure_primitive)
+    na_site_id = "Na-ee0d78f1"
+    cl_site_id = "Cl-77752e7a"
+    assert na_site_id in site_ids[0]
+    assert cl_site_id in site_ids[1]
