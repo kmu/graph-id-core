@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from collections import Counter
+
+import numpy as np
 from graph_id_cpp import GraphIDGenerator as CppGraphIDGenerator
-from graph_id_cpp import MinimumDistanceNN
+from graph_id_cpp import MinimumDistanceNN as CppMinimumDistanceNN
+from pymatgen.analysis.local_env import MinimumDistanceNN
 
 from graph_id.core.graph_id import GraphIDGenerator as PyGraphIDGenerator
 
@@ -22,7 +26,10 @@ class GraphIDMaker:
         self.engine = engine
         self.reduce_symmetry = reduce_symmetry
         if nn is None:
-            nn = MinimumDistanceNN()
+            if engine == "py":
+                nn = MinimumDistanceNN()
+            elif engine == "c++":
+                nn = CppMinimumDistanceNN()
 
         diameter_factor = 2
         additional_depth = 1
@@ -47,6 +54,33 @@ class GraphIDMaker:
             )
 
     def get_id(self, structure) -> str:
-        graph_id = self.generator.get_id(structure)
+        if self.reduce_symmetry:
+            graph_id = self.get_id_reducing_site_sequneces(structure)
+
+        else:
+            graph_id = self.generator.get_id(structure)
 
         return f"{structure.composition.reduced_formula}-{graph_id}"
+
+    def get_id_reducing_site_sequneces(self, structure):
+        sg = self.generator.prepare_structure_graph(structure)
+
+        gcd_list = []
+        components_counters = []
+
+        for component in sg.cc_cs:
+            _counter = Counter(component["cs_list"])
+            _gcd = np.gcd.reduce(list(_counter.values()))
+            gcd_list.append(_gcd)
+            components_counters.append(_counter)
+
+        divider = min(gcd_list)
+
+        labels_list = []
+        for counter in components_counters:
+            labels = []
+            for label, count in counter.items():
+                labels += [label] * int(count / divider)
+
+            labels_list.append(self.generator._join_cs_list(labels))
+        return self.generator._component_strings_to_whole_id(labels_list)
