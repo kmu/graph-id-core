@@ -46,7 +46,7 @@ pip install -e .
 
 ```python
 from pymatgen.core import Structure, Lattice
-from graph_id_cpp import GraphIDGenerator
+from graph_id import GraphIDMaker
 
 # Create a structure (NaCl)
 structure = Structure.from_spacegroup(
@@ -57,9 +57,9 @@ structure = Structure.from_spacegroup(
 )
 
 # Generate Graph ID
-generator = GraphIDGenerator()
-graph_id = generator.get_id(structure)
-print(graph_id)  # Output: 88c8e156db1b0fd9
+maker = GraphIDMaker()
+graph_id = maker.get_id(structure)
+print(graph_id)  # Output: NaCl-88c8e156db1b0fd9
 ```
 
 ### Loading from Files
