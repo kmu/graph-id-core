@@ -77,11 +77,13 @@ jobs:
           git tag v${{ steps.get_version.outputs.version }}
           git push origin v${{ steps.get_version.outputs.version }}
 
-      - name: Install uv
-        run: pip install uv
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Build sdist via uv
-        run: uv build --sdist
+      - name: Build sdist
+        run: poetry build --format=sdist
 
       - uses: actions/upload-artifact@v4
         with:
