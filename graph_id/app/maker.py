@@ -18,7 +18,7 @@ class GraphIDMaker:
         self,
         nn=None,
         depth: int | None = None,
-        reduce_symmetry: bool = False,
+        reduce: bool = False,
         engine: str = "c++",
     ) -> None:
         """
@@ -28,7 +28,7 @@ class GraphIDMaker:
             You must supply C++ implementation if you use `c++` engine.
         """
 
-        self.reduce_symmetry = reduce_symmetry
+        self.reduce = reduce
 
         if "py" in engine.lower():
             self.engine = "python"
@@ -62,11 +62,7 @@ class GraphIDMaker:
             )
 
     def get_id(self, structure) -> str:
-        if self.reduce_symmetry:
-            graph_id = self.get_id_reducing_site_sequneces(structure)
-
-        else:
-            graph_id = self.generator.get_id(structure)
+        graph_id = self.get_id_reducing_site_sequneces(structure) if self.reduce else self.generator.get_id(structure)
 
         return f"{structure.composition.reduced_formula}-{graph_id}"
 

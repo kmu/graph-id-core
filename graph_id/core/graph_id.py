@@ -226,7 +226,7 @@ class FixedDepthGraphIDGenerator(GraphIDGenerator):
         topology_only=False,
         loop=False,
         digest_size=8,
-        reduce_symmetry=False,
+        reduce=False,
     ):
         """
         reduce_symmtery: merge sites with the same compositional
@@ -243,14 +243,14 @@ class FixedDepthGraphIDGenerator(GraphIDGenerator):
             digest_size=digest_size,
         )
 
-        self.reduce_symmetry = reduce_symmetry
+        self.reduce = reduce
         self.digest_size = digest_size
 
     def prepare_structure_graph(self, structure):
         return self.generator.prepare_structure_graph(structure)
 
     def get_id(self, structure):
-        if self.reduce_symmetry:
+        if self.reduce:
             sg = self.prepare_structure_graph(structure)
 
             gcd_list = []

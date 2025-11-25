@@ -44,7 +44,7 @@ def test_maker():
     assert site_ids[7] == cl_site_id
 
 
-def test_reduce_symmetry():
+def test_reduce():
     ase_structure_primitive = bulk("NaCl", "rocksalt", a=5.692)
     ase_structure_conventional = bulk("NaCl", "rocksalt", a=5.692, cubic=True)
 
@@ -54,13 +54,13 @@ def test_reduce_symmetry():
     maker = GraphIDMaker()
     assert maker.get_id(structure_primitive) != maker.get_id(structure_conventional)
 
-    maker_cpp = GraphIDMaker(engine="c++", depth=4, reduce_symmetry=True)
+    maker_cpp = GraphIDMaker(engine="c++", depth=4, reduce=True)
     cpp_id_primitive = maker_cpp.get_id(structure_primitive)
     cpp_id_conventional = maker_cpp.get_id(structure_conventional)
 
     assert cpp_id_primitive == cpp_id_conventional
 
-    maker = GraphIDMaker(engine="py", depth=4, reduce_symmetry=True)
+    maker = GraphIDMaker(engine="py", depth=4, reduce=True)
     py_id_primitive = maker.get_id(structure_primitive)
     py_id_conventional = maker.get_id(structure_conventional)
     assert py_id_primitive == py_id_conventional

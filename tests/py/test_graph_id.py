@@ -170,7 +170,7 @@ class TestGraphIDGenerator(TestCase):
         with pytest.raises(ValueError):  # noqa: PT011
             GraphIDGenerator(topology_only=True, loop=True)
 
-    def test_reduce_symmetry(self):
+    def test_reduce(self):
         nacl_conventional = Structure.from_spacegroup(
             "Fm-3m",
             Lattice.cubic(5.692),
@@ -192,14 +192,14 @@ class TestGraphIDGenerator(TestCase):
         generator_fixed = FixedDepthGraphIDGenerator(depth=6)
         assert generator_fixed.get_id(nacl_conventional) != generator_fixed.get_id(nacl_primitive)
 
-        generator_fixed = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        generator_fixed = FixedDepthGraphIDGenerator(depth=6, reduce=True)
         assert generator_fixed.get_id(nacl_conventional) == generator_fixed.get_id(nacl_primitive)
 
     def test_one_site_reduction(self):
         """
-        Graph ID should be compatible for reduce_symmetry =True/False
+        Graph ID should be compatible for reduce =True/False
         """
         one_site_structure = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
-        generator = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=False)
-        generator_reduce = FixedDepthGraphIDGenerator(depth=6, reduce_symmetry=True)
+        generator = FixedDepthGraphIDGenerator(depth=6, reduce=False)
+        generator_reduce = FixedDepthGraphIDGenerator(depth=6, reduce=True)
         assert generator.get_id(one_site_structure) == generator_reduce.get_id(one_site_structure)
