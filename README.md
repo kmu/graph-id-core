@@ -139,8 +139,9 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 
 ## Developer's notes
 
-### Installation
+This repo is managed by `poetry`.
 
+### Installation
 
 ```
 poetry install .
@@ -152,4 +153,6 @@ poetry install .
 poetry run pytest
 ```
 
-If you changed C++ codes, `poetry install` again to reflect the changes.
+If you have made changes to the C++ code, run `poetry run pip install -e --force-reinstall` to apply the changes before running the tests.
+
+### Releasing
