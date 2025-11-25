@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+import networkx as nx
 import numpy as np
 from graph_id_cpp import GraphIDGenerator as CppGraphIDGenerator
 from graph_id_cpp import MinimumDistanceNN as CppMinimumDistanceNN
@@ -17,7 +18,7 @@ class GraphIDMaker:
         self,
         nn=None,
         depth: int | None = None,
-        reduce_symmetry: bool = False,
+        reduce: bool = False,
         engine: str = "c++",
     ) -> None:
         """
@@ -26,12 +27,16 @@ class GraphIDMaker:
         nn: NearNeighbor object to use for neighbor finding.
             You must supply C++ implementation if you use `c++` engine.
         """
-        self.engine = engine
-        self.reduce_symmetry = reduce_symmetry
-        if nn is None:
-            if "py" in engine.lower():
+
+        self.reduce = reduce
+
+        if "py" in engine.lower():
+            self.engine = "python"
+            if nn is None:
                 nn = MinimumDistanceNN()
-            elif "c" in engine.lower():
+        elif "c" in engine.lower():
+            self.engine = "c++"
+            if nn is None:
                 nn = CppMinimumDistanceNN()
 
         diameter_factor = 2
@@ -57,11 +62,7 @@ class GraphIDMaker:
             )
 
     def get_id(self, structure) -> str:
-        if self.reduce_symmetry:
-            graph_id = self.get_id_reducing_site_sequneces(structure)
-
-        else:
-            graph_id = self.generator.get_id(structure)
+        graph_id = self.get_id_reducing_site_sequneces(structure) if self.reduce else self.generator.get_id(structure)
 
         return f"{structure.composition.reduced_formula}-{graph_id}"
 
@@ -87,3 +88,28 @@ class GraphIDMaker:
 
             labels_list.append(self.generator._join_cs_list(labels))
         return self.generator._component_strings_to_whole_id(labels_list)
+
+    def get_site_ids(self, structure):
+        """
+        Get site IDs for a structure.
+        """
+        sg = self.generator.prepare_structure_graph(structure)
+
+        if self.engine == "c++":
+            # For C++ engine, construct site IDs from cc_nodes and cc_cs
+            site_ids = {}
+            labels = sg.labels
+            cc_nodes = sg.cc_nodes
+            # cc_cs_labels is the list of lists of compositional sequences
+            cc_cs = sg.cc_cs_labels
+
+            for cc_idx, nodes in enumerate(cc_nodes):
+                cs_list = cc_cs[cc_idx]
+                for node_idx, cs_string in zip(nodes, cs_list):
+                    # Format: label + "_" + compositional_sequence
+                    site_ids[node_idx] = f"{labels[node_idx]}_{cs_string}"
+
+            return site_ids
+
+        # For Python engine, use NetworkX node attributes
+        return nx.get_node_attributes(sg.graph, "compositional_sequence")
