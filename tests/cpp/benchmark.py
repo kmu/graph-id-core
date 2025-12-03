@@ -89,13 +89,7 @@ class TestBenchmark(unittest.TestCase):
             at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
             bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
             print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
+                f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]",
             )
 
     def test_graph_id(self):
@@ -107,13 +101,7 @@ class TestBenchmark(unittest.TestCase):
             at = timeit.timeit("a.get_id(s)", number=n, globals=locals()) * 1000 / n
             bt = timeit.timeit("b.get_id(s)", number=n, globals=locals()) * 1000 / n
             print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
+                f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]",
             )
 
     def test_graph_id_cpp_only(self):
