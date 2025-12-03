@@ -27,7 +27,7 @@ pymatgen = "^2025.4.20"
 scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
+pytest = "^9.0.1"
 pytest-cov = "^7.0.0"
 ase = "^3.25.0"
 
