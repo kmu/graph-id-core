@@ -142,10 +142,28 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 This repo is managed by `poetry`.
 
 ### Installation
+1. Clone the repository:
+```bash
+git clone https://github.com/kmu/graph-id-core.git
+cd graph-id-core
+```
 
+2. Initialize git submodules (required for the C++ build):
+```bash
+git submodule update --init --recursive
 ```
-poetry install .
+
+3. Install the package and dependencies using Poetry:
+```bash
+poetry install
 ```
+
+4. Install `pre-commit`
+```bash
+pre-commit install
+```
+
+**Note:** The git submodules (`library/pybind11`, `library/eigen`, `library/gtl`) are required for building the C++ extension. Without them, the installation will fail during the CMake build step.
 
 ### Testing
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import multiprocessing as multi
-from collections import Counter
 from hashlib import blake2b
 from multiprocessing import Pool
 from typing import TYPE_CHECKING
@@ -213,64 +212,3 @@ class GraphIDGenerator:
                 unique_structures.append(strct)
 
         return unique_structures
-
-
-class FixedDepthGraphIDGenerator(GraphIDGenerator):
-    def __init__(
-        self,
-        depth,
-        nn=None,
-        wyckoff=False,
-        symmetry_tol=0.1,
-        topology_only=False,
-        loop=False,
-        digest_size=8,
-        reduce_symmetry=False,
-    ):
-        """
-        reduce_symmtery: merge sites with the same compositional
-        sequences to cope with structures with different number of atoms
-        """
-        self.generator = GraphIDGenerator(
-            nn=nn,
-            wyckoff=wyckoff,
-            diameter_factor=0,
-            additional_depth=depth,
-            symmetry_tol=symmetry_tol,
-            topology_only=topology_only,
-            loop=loop,
-            digest_size=digest_size,
-        )
-
-        self.reduce_symmetry = reduce_symmetry
-        self.digest_size = digest_size
-
-    def prepare_structure_graph(self, structure):
-        return self.generator.prepare_structure_graph(structure)
-
-    def get_id(self, structure):
-        if self.reduce_symmetry:
-            sg = self.prepare_structure_graph(structure)
-
-            gcd_list = []
-            components_counters = []
-
-            for component in sg.cc_cs:
-                _counter = Counter(component["cs_list"])
-                _gcd = np.gcd.reduce(list(_counter.values()))
-                gcd_list.append(_gcd)
-                components_counters.append(_counter)
-
-            divider = min(gcd_list)
-
-            labels_list = []
-            for counter in components_counters:
-                labels = []
-                for label, count in counter.items():
-                    labels += [label] * int(count / divider)
-
-                labels_list.append(self._join_cs_list(labels))
-            gid = self._component_strings_to_whole_id(labels_list)
-            return self.generator.elaborate_comp_dim(sg, gid)
-
-        return self.generator.get_id(structure)
