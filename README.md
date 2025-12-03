@@ -1,3 +1,5 @@
+[![PyPI version](https://img.shields.io/pypi/v/myproject.svg)](https://pypi.org/project/myproject/)
+[![Python versions](https://img.shields.io/pypi/pyversions/myproject.svg)](https://pypi.org/project/myproject/)
 [![codecov](https://codecov.io/gh/kmu/graph-id-core/graph/badge.svg?token=AE2JIT3BAX)](https://codecov.io/gh/kmu/graph-id-core)
 
 # Graph ID
