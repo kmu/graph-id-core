@@ -131,11 +131,10 @@ class GraphIDGenerator:
     def get_many_ids(self, structures, parallel=False):
         if parallel:
             n_cores = multi.cpu_count()
-            # ctx = multi.get_context("spawn")
-            # p = ctx.Pool(n_cores)
+
             p = Pool(n_cores)
             imap = p.imap(self.get_id_catch_error, structures)
-            # ids = p.map(self.get_id, structures)
+
             return list(tqdm(imap, total=len(structures)))
 
         return [self.get_id(s) for s in structures]

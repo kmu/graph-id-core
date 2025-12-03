@@ -141,8 +141,9 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 
 ## Developer's notes
 
-### Installation
+This repo is managed by `poetry`.
 
+### Installation
 1. Clone the repository:
 ```bash
 git clone https://github.com/kmu/graph-id-core.git
@@ -172,4 +173,6 @@ pre-commit install
 poetry run pytest
 ```
 
-If you changed C++ codes, `poetry install` again to reflect the changes.
+If you have made changes to the C++ code, run `poetry run pip install -e --force-reinstall` to apply the changes before running the tests.
+
+### Releasing
