@@ -97,6 +97,7 @@ class TestNNHelper(unittest.TestCase):
                         np.ascontiguousarray(s.lattice.pbc, dtype=int),
                         s.lattice.matrix,
                         1e-8,
+                        1.0,  # min_r
                     )
                     b = self.sort(indices_a2, indices_b2, images2, distances2)
 
