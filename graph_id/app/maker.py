@@ -62,11 +62,11 @@ class GraphIDMaker:
             )
 
     def get_id(self, structure) -> str:
-        graph_id = self.get_id_reducing_site_sequneces(structure) if self.reduce else self.generator.get_id(structure)
+        graph_id = self.get_id_reducing_site_sequences(structure) if self.reduce else self.generator.get_id(structure)
 
         return f"{structure.composition.reduced_formula}-{graph_id}"
 
-    def get_id_reducing_site_sequneces(self, structure):
+    def get_id_reducing_site_sequences(self, structure):
         sg = self.generator.prepare_structure_graph(structure)
 
         gcd_list = []
