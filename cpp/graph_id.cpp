@@ -124,6 +124,19 @@ bool GraphIDGenerator::are_same(const Structure &structure1, const Structure &st
     return this->get_id(structure1) == this->get_id(structure2);
 }
 
+std::string GraphIDGenerator::_join_cs_list(const std::vector<std::string> &cs_list) const {
+    std::vector<std::string> sorted_list = cs_list;
+    std::sort(sorted_list.begin(), sorted_list.end());
+    return blake2b(join_string("-", sorted_list));
+}
+
+std::string GraphIDGenerator::_component_strings_to_whole_id(const std::vector<std::string> &component_strings) const {
+    std::vector<std::string> sorted_strings = component_strings;
+    std::sort(sorted_strings.begin(), sorted_strings.end());
+    std::string long_str = join_string(":", sorted_strings);
+    return blake2b(long_str, digest_size);
+}
+
 StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const Structure> &structure) const {
     auto sg = StructureGraph::with_local_env_strategy(structure, *this->nn);
     bool use_previous_cs = false;
@@ -333,5 +346,12 @@ void init_graph_id(pybind11::module &m) {
                 auto s1 = structure1.cast<PymatgenStructure>();
                 auto s2 = structure2.cast<PymatgenStructure>();
                 return gig.are_same(Structure(s1), Structure(s2));
-            });
+            })
+            .def("prepare_structure_graph", [](const GraphIDGenerator &gig, py::object &structure) {
+                auto s = structure.cast<PymatgenStructure>();
+                auto s_ptr = std::make_shared<const Structure>(s);
+                return gig.prepare_structure_graph(s_ptr);
+            })
+            .def("_join_cs_list", &GraphIDGenerator::_join_cs_list)
+            .def("_component_strings_to_whole_id", &GraphIDGenerator::_component_strings_to_whole_id);
 }

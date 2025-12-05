@@ -1,3 +1,5 @@
+[![PyPI version](https://img.shields.io/pypi/v/graph-id-core.svg)](https://pypi.org/project/graph-id-core/)
+[![Python versions](https://img.shields.io/pypi/pyversions/graph-id-core.svg)](https://pypi.org/project/graph-id-core/)
 [![codecov](https://codecov.io/gh/kmu/graph-id-core/graph/badge.svg?token=AE2JIT3BAX)](https://codecov.io/gh/kmu/graph-id-core)
 
 # Graph ID
@@ -141,10 +143,28 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 
 ### Installation
 
+1. Clone the repository:
+```bash
+git clone https://github.com/kmu/graph-id-core.git
+cd graph-id-core
+```
 
+2. Initialize git submodules (required for the C++ build):
+```bash
+git submodule update --init --recursive
 ```
-poetry install .
+
+3. Install the package and dependencies using Poetry:
+```bash
+poetry install
 ```
+
+4. Install `pre-commit`
+```bash
+pre-commit install
+```
+
+**Note:** The git submodules (`library/pybind11`, `library/eigen`, `library/gtl`) are required for building the C++ extension. Without them, the installation will fail during the CMake build step.
 
 ### Testing
 
