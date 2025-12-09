@@ -1490,40 +1490,91 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("cation_anion") = false,
                  py::arg("use_fictive_radius") = false);
 
-    m.def("find_near_neighbors", [](
-            const Eigen::MatrixX3d &all_coords,
-            const Eigen::MatrixX3d &center_coords,
-            const double r,
-            const Eigen::Vector3i &pbc,
-            const Eigen::Matrix3d &lattice,
-            const double tol = 1e-8,
-            const double min_r = 1.0) {
-        const Eigen::Matrix3Xd A = all_coords.transpose();
-        const Eigen::Matrix3Xd C = center_coords.transpose();
-        const Eigen::Matrix3d L = lattice.transpose();
-        const Eigen::Matrix3d L_inv = L.inverse();
+    m.def("find_near_neighbors",
+        [](py::array_t<double, py::array::c_style | py::array::forcecast> all_coords_np,
+           py::array_t<double, py::array::c_style | py::array::forcecast> center_coords_np,
+           double r,
+           py::array_t<int, py::array::c_style | py::array::forcecast> pbc_np,
+           py::array_t<double, py::array::c_style | py::array::forcecast> lattice_np,
+           double tol = 1e-8,
+           double min_r = 1.0) -> py::tuple
+    {
+        if (all_coords_np.ndim() != 2 || center_coords_np.ndim() != 2)
+            throw std::runtime_error("all_coords and center_coords must be 2-D arrays (N,3)");
+
+        if (lattice_np.ndim() != 2)
+            throw std::runtime_error("lattice must be 2-D array (3,3)");
+
+        if (pbc_np.ndim() != 1)
+            throw std::runtime_error("pbc must be 1-D array of length 3");
+
+        ssize_t all_n = all_coords_np.shape(0);
+        ssize_t all_m = all_coords_np.shape(1);
+        ssize_t cen_n = center_coords_np.shape(0);
+        ssize_t cen_m = center_coords_np.shape(1);
+
+        if (all_m != 3 || cen_m != 3)
+            throw std::runtime_error("coordinate arrays must have shape (N, 3)");
+
+        if (lattice_np.shape(0) != 3 || lattice_np.shape(1) != 3)
+            throw std::runtime_error("lattice must have shape (3, 3)");
+
+        if (pbc_np.shape(0) != 3)
+            throw std::runtime_error("pbc must have length 3");
+
+        auto all_ptr = static_cast<const double*>(all_coords_np.data());
+        auto cen_ptr = static_cast<const double*>(center_coords_np.data());
+        auto lat_ptr = static_cast<const double*>(lattice_np.data());
+        auto pbc_ptr = static_cast<const int*>(pbc_np.data());
+
+        MatrixNx3RowMajor all_map(all_n, 3);
+        MatrixNx3RowMajor cen_map(cen_n, 3);
+
+        Eigen::Map<const MatrixNx3RowMajor> all_view(all_ptr, static_cast<Eigen::Index>(all_n), 3);
+        Eigen::Map<const MatrixNx3RowMajor> cen_view(cen_ptr, static_cast<Eigen::Index>(cen_n), 3);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> lattice_view(lat_ptr);
+
+        Matrix3Xd A = all_view.transpose();
+        Matrix3Xd C = cen_view.transpose();
+
+        Eigen::Matrix3d L = lattice_view.transpose();
+        Eigen::Matrix3d L_inv = L.inverse();
+
         Lattice l;
         l.matrix = L;
         l.inv_matrix = L_inv;
-        l.pbc = {pbc.x() != 0, pbc.y() != 0, pbc.z() != 0};
-        const auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
+        l.pbc = { pbc_ptr[0] != 0, pbc_ptr[1] != 0, pbc_ptr[2] != 0 };
+
+        auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
 
         size_t total = 0;
-        for (const auto &vec: res) total += vec.size();
-        Eigen::VectorXi res1(total), res2(total);
-        Eigen::MatrixX3d res_offset(total, 3);
-        Eigen::VectorXd distances(total);
-        int i = 0;
-        for (int res_i = 0; res_i < int(res.size()); ++res_i) {
-            for (const auto &x: res[res_i]) {
-                res1(i) = res_i;
-                res2(i) = x.all_coords_idx;
-                res_offset.row(i) = Eigen::Vector3d(x.image[0], x.image[1], x.image[2]);
-                distances(i) = x.distance;
-                i++;
+        for (const auto &vec : res) total += vec.size();
+
+        py::array_t<int> py_res1(total);
+        py::array_t<int> py_res2(total);
+        std::vector<py::ssize_t> shape = {static_cast<py::ssize_t>(total), 3};
+        py::array_t<double> py_res_offset(shape);
+        py::array_t<double> py_distances(total);
+
+        auto res1_ptr = static_cast<int*>(py_res1.mutable_data());
+        auto res2_ptr = static_cast<int*>(py_res2.mutable_data());
+        auto offset_ptr = static_cast<double*>(py_res_offset.mutable_data());
+        auto dist_ptr = static_cast<double*>(py_distances.mutable_data());
+
+        size_t idx = 0;
+        for (int res_i = 0; res_i < static_cast<int>(res.size()); ++res_i) {
+            for (const auto &x : res[res_i]) {
+                res1_ptr[idx] = res_i;
+                res2_ptr[idx] = x.all_coords_idx;
+
+                offset_ptr[idx * 3 + 0] = static_cast<double>(x.image[0]);
+                offset_ptr[idx * 3 + 1] = static_cast<double>(x.image[1]);
+                offset_ptr[idx * 3 + 2] = static_cast<double>(x.image[2]);
+                dist_ptr[idx] = x.distance;
+                ++idx;
             }
         }
 
-        return py::make_tuple(res1, res2, res_offset, distances);
+        return py::make_tuple(py_res1, py_res2, py_res_offset, py_distances);
     });
 }
