@@ -10,6 +10,8 @@
 
 namespace py = pybind11;
 
+using Matrix3Xd = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+using MatrixNx3RowMajor = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
 
 struct FindNearNeighborsResult {
     int all_coords_idx;
