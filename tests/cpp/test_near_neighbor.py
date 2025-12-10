@@ -80,7 +80,7 @@ class TestNNHelper(unittest.TestCase):
                         all_coords=s.cart_coords,
                         center_coords=s.cart_coords,
                         r=r,
-                        pbc=np.ascontiguousarray(s.lattice.pbc, dtype=int),
+                        pbc=np.ascontiguousarray(s.lattice.pbc, dtype=np.int64),
                         lattice=s.lattice.matrix,
                         tol=1e-8,
                     )
@@ -94,9 +94,10 @@ class TestNNHelper(unittest.TestCase):
                         s.cart_coords,
                         s.cart_coords,
                         r,
-                        np.ascontiguousarray(s.lattice.pbc, dtype=int),
+                        s.lattice.pbc,
                         s.lattice.matrix,
                         1e-8,
+                        0.1,
                     )
                     b = self.sort(indices_a2, indices_b2, images2, distances2)
 
