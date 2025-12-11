@@ -23,7 +23,7 @@ generate-setup-file = true
 [tool.poetry.dependencies]
 pybind11 = "2.11.1"
 python = ">=3.10,<3.14"
-pymatgen = "^2025.4.20"
+pymatgen = "^2025.10.7"
 scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
