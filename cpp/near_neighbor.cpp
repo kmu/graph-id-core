@@ -1548,33 +1548,21 @@ void init_near_neighbor(pybind11::module &m) {
         auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
 
         size_t total = 0;
-        for (const auto &vec : res) total += vec.size();
-
-        py::array_t<int> py_res1(total);
-        py::array_t<int> py_res2(total);
-        std::vector<py::ssize_t> shape = {static_cast<py::ssize_t>(total), 3};
-        py::array_t<double> py_res_offset(shape);
-        py::array_t<double> py_distances(total);
-
-        auto res1_ptr = static_cast<int*>(py_res1.mutable_data());
-        auto res2_ptr = static_cast<int*>(py_res2.mutable_data());
-        auto offset_ptr = static_cast<double*>(py_res_offset.mutable_data());
-        auto dist_ptr = static_cast<double*>(py_distances.mutable_data());
-
-        size_t idx = 0;
-        for (int res_i = 0; res_i < static_cast<int>(res.size()); ++res_i) {
-            for (const auto &x : res[res_i]) {
-                res1_ptr[idx] = res_i;
-                res2_ptr[idx] = x.all_coords_idx;
-
-                offset_ptr[idx * 3 + 0] = static_cast<double>(x.image[0]);
-                offset_ptr[idx * 3 + 1] = static_cast<double>(x.image[1]);
-                offset_ptr[idx * 3 + 2] = static_cast<double>(x.image[2]);
-                dist_ptr[idx] = x.distance;
-                ++idx;
+        for (const auto &vec: res) total += vec.size();
+        Eigen::VectorXi res1(total), res2(total);
+        Eigen::MatrixX3d res_offset(total, 3);
+        Eigen::VectorXd distances(total);
+        int i = 0;
+        for (int res_i = 0; res_i < int(res.size()); ++res_i) {
+            for (const auto &x: res[res_i]) {
+                res1(i) = res_i;
+                res2(i) = x.all_coords_idx;
+                res_offset.row(i) = Eigen::Vector3d(x.image[0], x.image[1], x.image[2]);
+                distances(i) = x.distance;
+                i++;
             }
         }
 
-        return py::make_tuple(py_res1, py_res2, py_res_offset, py_distances);
+        return py::make_tuple(res1, res2, res_offset, distances);
     });
 }

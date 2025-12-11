@@ -97,7 +97,7 @@ class TestNNHelper(unittest.TestCase):
                         s.lattice.pbc,
                         s.lattice.matrix,
                         1e-8,
-                        0.1,
+                        1.0,
                     )
                     b = self.sort(indices_a2, indices_b2, images2, distances2)
 
