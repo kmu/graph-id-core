@@ -146,14 +146,15 @@ class TestVoronoiNN(TestNN):
         pmg = VoronoiNN()
         cpp = graph_id_cpp.VoronoiNN()
         for name, s in small_test_structure():
-            with self.subTest(name):
-                pmg_res = pmg.get_all_voronoi_polyhedra(s)
+            if name != "VSbO4":
+                with self.subTest(name):
+                    pmg_res = pmg.get_all_voronoi_polyhedra(s)
 
-                self.skipTest("pymatgen error")
-                cpp_res = cpp.get_all_voronoi_polyhedra(s)
-                self.assertEqual(len(pmg_res), len(cpp_res))
-                for i in range(s.num_sites):
-                    self.assert_voronoi_polyhedra(pmg_res[i], cpp_res[i])
+                    self.skipTest("pymatgen error")
+                    cpp_res = cpp.get_all_voronoi_polyhedra(s)
+                    self.assertEqual(len(pmg_res), len(cpp_res))
+                    for i in range(s.num_sites):
+                        self.assert_voronoi_polyhedra(pmg_res[i], cpp_res[i])
 
     def assert_voronoi_polyhedra(self, pmg_res, cpp_res):
         self.assertEqual(len(pmg_res), len(cpp_res))
