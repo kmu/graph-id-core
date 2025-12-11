@@ -11,19 +11,19 @@ ci:
 
 repos:
 
-  - repo: https://github.com/psf/black
-    rev: 23.10.1
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.11.0
     hooks:
       - id: black
 
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.1.1"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.14.7"
     hooks:
       - id: ruff
         args: [--fix]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.4.1
     hooks:
       - id: codespell
         stages: [pre-commit, commit-msg]
@@ -37,14 +37,14 @@ repos:
         args: [--ignore-words=.codespell.ignorewords]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.5.1"
+    rev: "v1.19.0"
     hooks:
       - id: mypy
         args: [--ignore-missing-imports]
         additional_dependencies: [types-PyYAML,types-pytz]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-case-conflict
       - id: check-symlinks
