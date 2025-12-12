@@ -177,3 +177,6 @@ poetry run pytest
 If you have made changes to the C++ code, run `poetry run pip install -e --force-reinstall` to apply the changes before running the tests.
 
 ### Releasing
+
+- Bump version in `pyproject.toml`.
+- Create a new PR from `main` branch to `release` branch.
