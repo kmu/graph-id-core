@@ -1,3 +1,5 @@
+[![PyPI version](https://img.shields.io/pypi/v/graph-id-core.svg)](https://pypi.org/project/graph-id-core/)
+[![Python versions](https://img.shields.io/pypi/pyversions/graph-id-core.svg)](https://pypi.org/project/graph-id-core/)
 [![codecov](https://codecov.io/gh/kmu/graph-id-core/graph/badge.svg?token=AE2JIT3BAX)](https://codecov.io/gh/kmu/graph-id-core)
 
 # Graph ID
@@ -139,6 +141,8 @@ You can search materials using Graph ID at [matfinder.net](https://matfinder.net
 
 ## Developer's notes
 
+This repo is managed by `poetry`.
+
 ### Installation
 
 1. Clone the repository:
@@ -170,4 +174,6 @@ pre-commit install
 poetry run pytest
 ```
 
-If you changed C++ codes, `poetry install` again to reflect the changes.
+If you have made changes to the C++ code, run `poetry run pip install -e --force-reinstall` to apply the changes before running the tests.
+
+### Releasing

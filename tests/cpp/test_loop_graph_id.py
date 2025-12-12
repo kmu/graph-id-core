@@ -8,7 +8,7 @@ import graph_id
 
 from .imports import graph_id_cpp
 
-test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/test_files"))
 
 
 def small_test_structure(max_sites=30):
@@ -27,7 +27,7 @@ def small_test_structure(max_sites=30):
 
 class TestLoopGraphIDGenerator(unittest.TestCase):
     def test_get_id(self):
-        a = graph_id.GraphIDGenerator(loop=True)
+        a = graph_id.GraphIDGenerator(loop=True, prepend_composition=False, prepend_dimensionality=False)
         b = graph_id_cpp.GraphIDGenerator(loop=True)
         for name, s in small_test_structure():
             with self.subTest(name):

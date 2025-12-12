@@ -1490,23 +1490,62 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("cation_anion") = false,
                  py::arg("use_fictive_radius") = false);
 
-    m.def("find_near_neighbors", [](
-            const Eigen::MatrixX3d &all_coords,
-            const Eigen::MatrixX3d &center_coords,
-            const double r,
-            const Eigen::Vector3i &pbc,
-            const Eigen::Matrix3d &lattice,
-            const double tol = 1e-8,
-            const double min_r = 1.0) {
-        const Eigen::Matrix3Xd A = all_coords.transpose();
-        const Eigen::Matrix3Xd C = center_coords.transpose();
-        const Eigen::Matrix3d L = lattice.transpose();
-        const Eigen::Matrix3d L_inv = L.inverse();
+    m.def("find_near_neighbors",
+        [](py::array_t<double, py::array::c_style | py::array::forcecast> all_coords_np,
+           py::array_t<double, py::array::c_style | py::array::forcecast> center_coords_np,
+           double r,
+           py::array_t<int, py::array::c_style | py::array::forcecast> pbc_np,
+           py::array_t<double, py::array::c_style | py::array::forcecast> lattice_np,
+           double tol = 1e-8,
+           double min_r = 1.0) -> py::tuple
+    {
+        if (all_coords_np.ndim() != 2 || center_coords_np.ndim() != 2)
+            throw std::runtime_error("all_coords and center_coords must be 2-D arrays (N,3)");
+
+        if (lattice_np.ndim() != 2)
+            throw std::runtime_error("lattice must be 2-D array (3,3)");
+
+        if (pbc_np.ndim() != 1)
+            throw std::runtime_error("pbc must be 1-D array of length 3");
+
+        ssize_t all_n = all_coords_np.shape(0);
+        ssize_t all_m = all_coords_np.shape(1);
+        ssize_t cen_n = center_coords_np.shape(0);
+        ssize_t cen_m = center_coords_np.shape(1);
+
+        if (all_m != 3 || cen_m != 3)
+            throw std::runtime_error("coordinate arrays must have shape (N, 3)");
+
+        if (lattice_np.shape(0) != 3 || lattice_np.shape(1) != 3)
+            throw std::runtime_error("lattice must have shape (3, 3)");
+
+        if (pbc_np.shape(0) != 3)
+            throw std::runtime_error("pbc must have length 3");
+
+        auto all_ptr = static_cast<const double*>(all_coords_np.data());
+        auto cen_ptr = static_cast<const double*>(center_coords_np.data());
+        auto lat_ptr = static_cast<const double*>(lattice_np.data());
+        auto pbc_ptr = static_cast<const int*>(pbc_np.data());
+
+        MatrixNx3RowMajor all_map(all_n, 3);
+        MatrixNx3RowMajor cen_map(cen_n, 3);
+
+        Eigen::Map<const MatrixNx3RowMajor> all_view(all_ptr, static_cast<Eigen::Index>(all_n), 3);
+        Eigen::Map<const MatrixNx3RowMajor> cen_view(cen_ptr, static_cast<Eigen::Index>(cen_n), 3);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> lattice_view(lat_ptr);
+
+        Matrix3Xd A = all_view.transpose();
+        Matrix3Xd C = cen_view.transpose();
+
+        Eigen::Matrix3d L = lattice_view.transpose();
+        Eigen::Matrix3d L_inv = L.inverse();
+
         Lattice l;
         l.matrix = L;
         l.inv_matrix = L_inv;
-        l.pbc = {pbc.x() != 0, pbc.y() != 0, pbc.z() != 0};
-        const auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
+        l.pbc = { pbc_ptr[0] != 0, pbc_ptr[1] != 0, pbc_ptr[2] != 0 };
+
+        auto res = find_near_neighbors(A, L_inv * A, C, L_inv * C, r, l, min_r, tol);
 
         size_t total = 0;
         for (const auto &vec: res) total += vec.size();
