@@ -328,8 +328,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         max_diameter = 0
         for cc in nx.connected_components(undirected_graph):
             d = diameter(undirected_graph.subgraph(cc))
-            if d > max_diameter:
-                max_diameter = d
+            max_diameter = max(max_diameter, d)
 
         depth = max_diameter * diameter_factor + additional_depth
 
