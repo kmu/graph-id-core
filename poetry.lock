@@ -2,26 +2,26 @@
 
 [[package]]
 name = "ase"
-version = "3.26.0"
+version = "3.27.0"
 description = "Atomic Simulation Environment"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "ase-3.26.0-py3-none-any.whl", hash = "sha256:77fd0e609bd3868006d4bb3bb95cdc4081d9e292ac84f6c9fb564b5751d2689e"},
-    {file = "ase-3.26.0.tar.gz", hash = "sha256:a071a355775b0a8062d23e9266e9d811b19d9f6d9ec5215e8032f7d93dc65075"},
+    {file = "ase-3.27.0-py3-none-any.whl", hash = "sha256:058c48ea504fe7fbbe7c932f778415243ef2df45b1ab869866f24efcc17f0538"},
+    {file = "ase-3.27.0.tar.gz", hash = "sha256:92ada752d6866a61d2d27e0e6a4fd5b8cd86f59ca79a58f1d2fe29d7099153dc"},
 ]
 
 [package.dependencies]
-matplotlib = ">=3.3.4"
-numpy = ">=1.19.5"
-scipy = ">=1.6.0"
+matplotlib = ">=3.5.2"
+numpy = ">=1.21.6"
+scipy = ">=1.8.1"
 
 [package.extras]
-docs = ["pillow", "sphinx", "sphinx_book_theme"]
-lint = ["coverage", "flake8", "mypy", "ruff", "types-PyMySQL", "types-docutils"]
+docs = ["pillow", "sphinx", "sphinx-gallery", "sphinx_book_theme"]
+lint = ["mypy", "ruff", "types-PyMySQL", "types-docutils"]
 spglib = ["spglib (>=1.9)"]
-test = ["pytest (>=7.0.0)", "pytest-xdist (>=2.1.0)"]
+test = ["pytest (>=7.4.0)", "pytest-xdist (>=3.2.0)"]
 
 [[package]]
 name = "bibtexparser"
@@ -1778,4 +1778,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "7c77cf7c46e8eda26036f627beb5d6d549cc139ed78e4bce3ca84a11fa8ccd90"
+content-hash = "9fbfdc97df5214b5c3da8cf5a77e6052f51caac23d8658eaf2f815f0201a8e1c"
