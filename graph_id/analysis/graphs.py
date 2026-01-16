@@ -154,7 +154,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
                     site=self.structure[v],
                     jimage=to_jimage,
                     index=v,
-                    weight=None,
+                    weight=d["weight"],
                     dist=None,
                 )
 

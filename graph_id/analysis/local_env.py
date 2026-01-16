@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from pymatgen.analysis.local_env import NearNeighbors
+from pymatgen.analysis.local_env import NearNeighbors, VoronoiNN, CrystalNN
 from pymatgen.core import IStructure, Structure
 from sklearn.cluster import DBSCAN
 
@@ -121,3 +121,92 @@ class DistanceClusteringNN(NearNeighbors):
             max_dist_list[label_number] = max_dist
 
         return sorted(max_dist_list)
+
+
+class BondClusteringNN(CrystalNN):
+
+    def __init__(
+        self,
+        weighted_cn=False,
+        cation_anion=False,
+        distance_cutoffs=(0.5, 1),
+        x_diff_weight=3.0,
+        porous_adjustment=True,
+        search_cutoff=10,
+        fingerprint_length=None,
+    ) -> None:
+        """
+        Initialize CrystalNN with desired parameters. Default parameters assume
+        "chemical bond" type behavior is desired. For geometric neighbor
+        finding (e.g., structural framework), set (i) distance_cutoffs=None,
+        (ii) x_diff_weight=0 and (optionally) (iii) porous_adjustment=False
+        which will disregard the atomic identities and perform best for a purely
+        geometric match.
+
+        Args:
+            weighted_cn (bool): if set to True, will return fractional weights
+                for each potential near neighbor.
+            cation_anion (bool): if set True, will restrict bonding targets to
+                sites with opposite or zero charge. Requires an oxidation states
+                on all sites in the structure.
+            distance_cutoffs ([float, float]): - if not None, penalizes neighbor
+                distances greater than sum of covalent radii plus
+                distance_cutoffs[0]. Distances greater than covalent radii sum
+                plus distance_cutoffs[1] are enforced to have zero weight.
+            x_diff_weight (float): - if multiple types of neighbor elements are
+                possible, this sets preferences for targets with higher
+                electronegativity difference.
+            porous_adjustment (bool): - if True, readjusts Voronoi weights to
+                better describe layered / porous structures
+            search_cutoff (float): cutoff in Angstroms for initial neighbor
+                search; this will be adjusted if needed internally
+            fingerprint_length (int): if a fixed_length CN "fingerprint" is
+                desired from get_nn_data(), set this parameter
+        """
+        super().__init__(
+            weighted_cn,
+            cation_anion,
+            distance_cutoffs,
+            x_diff_weight,
+            porous_adjustment,
+            search_cutoff,
+            fingerprint_length
+        )
+
+    def get_nn_info(self, structure: Structure, n: int, cutoff: float = 10.0) -> list[dict[str, Any]]:
+        """
+        Args:
+            structure (Structure): input structure.
+            n (int): index of site for which to determine near
+                neighbors.
+            cutoff (float): distance cutoff parameter.
+        Returns:
+            siw (list[dict]): dicts with (Site, array, float) each one of which represents a
+                neighbor site, its image location, and its weight.
+        """
+
+        site = structure[n]
+        nn_data = self.get_nn_data(structure, n)
+
+        max_key = max(nn_data.cn_weights, key=lambda k: nn_data.cn_weights[k])
+        nn = nn_data.cn_nninfo[max_key]
+
+        weight_list = []
+        for entry in nn_data.all_nninfo:
+            weight = 0
+            for cn in nn_data.cn_nninfo:
+                for cn_entry in nn_data.cn_nninfo[cn]:
+                    if entry["site"] == cn_entry["site"]:
+                        weight += nn_data.cn_weights[cn]
+
+            # entry["weight"] = weight
+            weight_list.append([weight, 0])
+
+        dbscan = DBSCAN(eps=0.5, min_samples=2)
+        dbscan.fit(weight_list)
+        labels = dbscan.labels_
+
+        for entry, label in zip(nn_data.all_nninfo, labels):
+            entry["weight"] = label + 1 # weightが0だとStructureGraphのedgeにweightを持たせてくれない
+        
+        return nn_data.all_nninfo
