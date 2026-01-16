@@ -1,18 +1,13 @@
-from copy import deepcopy
 from hashlib import blake2b
 
 import networkx as nx
 import numpy as np
-from tqdm import tqdm
-from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.core import Element
 
 from graph_id.analysis.graphs import StructureGraph
 from graph_id.analysis.local_env import BondClusteringNN
 from graph_id.core.graph_id import GraphIDGenerator
-
-
 
 __version__ = "0.1.0"
 
@@ -22,7 +17,7 @@ def blake(s):
 
 
 class BondClusteringGraphID(GraphIDGenerator):
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         nn=None,
         wyckoff=False,
@@ -52,7 +47,7 @@ class BondClusteringGraphID(GraphIDGenerator):
             self.nn = nn
 
     def _join_cs_list(self, cs_list):
-            return blake("-".join(sorted(cs_list)))
+        return blake("-".join(sorted(cs_list)))
 
     def _component_strings_to_whole_id(self, component_strings):
         long_str = ":".join(np.sort(component_strings))

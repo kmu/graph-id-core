@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from pymatgen.analysis.local_env import NearNeighbors, VoronoiNN, CrystalNN
+from pymatgen.analysis.local_env import CrystalNN, NearNeighbors
 from pymatgen.core import IStructure, Structure
 from sklearn.cluster import DBSCAN
 
@@ -124,7 +124,6 @@ class DistanceClusteringNN(NearNeighbors):
 
 
 class BondClusteringNN(CrystalNN):
-
     def __init__(
         self,
         weighted_cn=False,
@@ -170,7 +169,7 @@ class BondClusteringNN(CrystalNN):
             x_diff_weight,
             porous_adjustment,
             search_cutoff,
-            fingerprint_length
+            fingerprint_length,
         )
 
     def get_nn_info(self, structure: Structure, n: int, cutoff: float = 10.0) -> list[dict[str, Any]]:
@@ -207,6 +206,6 @@ class BondClusteringNN(CrystalNN):
         labels = dbscan.labels_
 
         for entry, label in zip(nn_data.all_nninfo, labels):
-            entry["weight"] = label + 1 # weightが0だとStructureGraphのedgeにweightを持たせてくれない
-        
+            entry["weight"] = label + 1  # weightが0だとStructureGraphのedgeにweightを持たせてくれない
+
         return nn_data.all_nninfo

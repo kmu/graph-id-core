@@ -63,7 +63,9 @@ class CompositionalSequence:
                     self.composition_counter[cs] += 1
                 else:
                     if neighbor.weight > 0:
-                        self.composition_counter[self.labels[neighbor.index] + f"({chr(int(neighbor.weight)+96)})"] += 1
+                        self.composition_counter[
+                            self.labels[neighbor.index] + f"({chr(int(neighbor.weight)+96)})"
+                        ] += 1
                     else:
                         self.composition_counter[self.labels[neighbor.index]] += 1
 
