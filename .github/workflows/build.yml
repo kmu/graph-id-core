@@ -38,6 +38,8 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {project}/tests/py/ -v"
           # Test on a subset of Python versions to speed up CI
           CIBW_TEST_SKIP: "cp36-* cp37-* cp38-* cp39-*"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
 
         with:
           package-dir: .
