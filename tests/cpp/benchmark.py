@@ -1,8 +1,12 @@
+# ruff: noqa: D101, D102
+"""Benchmark tests comparing Python and C++ implementations."""
+
 import glob
 import os.path
 import timeit
 import unittest
 
+import numpy as np
 from pymatgen.analysis.local_env import (
     BrunnerNN_real,
     CrystalNN,
@@ -23,6 +27,7 @@ test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../
 
 
 def small_test_structure(max_sites=30):
+    """Load test structures with at most max_sites atoms."""
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
@@ -33,6 +38,7 @@ def small_test_structure(max_sites=30):
 
 
 def run_benchmark(pymatgen, our_nn):
+    """Run benchmark comparing pymatgen and C++ implementations."""
     for name, s in small_test_structure():
         at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
         bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100
@@ -88,15 +94,9 @@ class TestBenchmark(unittest.TestCase):
 
             at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
             bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
-            print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
-            )
+            msg = f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, "
+            msg += f"C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]"
+            print(msg)
 
     def test_graph_id(self):
         print("GraphIDGenerator.get_id:")
@@ -106,20 +106,12 @@ class TestBenchmark(unittest.TestCase):
             n = 1
             at = timeit.timeit("a.get_id(s)", number=n, globals=locals()) * 1000 / n
             bt = timeit.timeit("b.get_id(s)", number=n, globals=locals()) * 1000 / n
-            print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
-            )
+            msg = f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, "
+            msg += f"C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]"
+            print(msg)
 
     def test_graph_id_cpp_only(self):
         print("GraphIDGenerator.get_id:")
-        import numpy as np
-
         g = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure(1000):
             n = 1000

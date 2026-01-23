@@ -31,6 +31,14 @@ pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 ase = "^3.27.0"
 
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+mkdocstrings = {extras = ["python"], version = "^0.26.0"}
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "graph_id"]
 norecursedirs = ["library", "build", "dist", ".git", ".venv", "__pycache__"]
@@ -58,10 +66,9 @@ line-length = 119
 lint.ignore = [
   "D100",
   "RUF003", # Comment contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
+  "ANN101", # Missing type annotation for self in method (removed in newer ruff)
+  "ANN102", # Missing type annotation for cls in classmethod (removed in newer ruff)
   "ANN201", #  Missing return type annotation for public function
-  "ANN101", # Missing type annotation for self in method
-  "D101",   # Missing docstring in public class
-  "D102",   # Missing docstring in public method
   "SLF001", # Private member accessed
   "ERA001", # commentouted code is allowed
   "D211",
@@ -72,13 +79,11 @@ lint.ignore = [
   "S101", # assert is allowed
   "ANN001", # Missing type annotation for function
   "ANN205",
-  "D",
   "PLR2004", # magic value
   "FBT002",  # Boolean default value in function definition
   "FBT001", # Boolean positional arg in function definition
   "INP001", # is part of an implicit namespace package. Add an `__init__.py`.
   "ANN206", #  Missing return type annotation for classmethod
-  "ANN102", # Missing type annotation for `cls` in classmethod
   "RUF002", # Docstring contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
   "S311", #  Standard pseudo-random generators are not suitable for cryptographic purposes
   "ANN204",

@@ -29,13 +29,29 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
+
+    """A CMake extension for building C++ code with setuptools."""
+
     def __init__(self, name: str, sourcedir: str = "") -> None:
+        """Initialize the CMake extension.
+
+        Parameters
+        ----------
+        name : str
+            The name of the extension module.
+        sourcedir : str, optional
+            The source directory containing CMakeLists.txt.
+        """
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
 class CMakeBuild(build_ext):
+
+    """Custom build_ext command that uses CMake to build C++ extensions."""
+
     def build_extension(self, ext: CMakeExtension) -> None:  # noqa: C901,PLR0912
+        """Build a CMake extension."""
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
@@ -43,7 +59,7 @@ class CMakeBuild(build_ext):
         # Using this requires trailing slash for auto-detection & inclusion of
         # auxiliary "native" libs
 
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        debug = int(os.environ.get("DEBUG", "0")) if self.debug is None else self.debug
         cfg = "Debug" if debug else "Release"
 
         # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
@@ -102,9 +118,8 @@ class CMakeBuild(build_ext):
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         env = {**os.environ}
-        if "PYTHONPATH" in env:
-            # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
-            del env["PYTHONPATH"]
+        # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
+        env.pop("PYTHONPATH", None)
         subprocess.run(
             ["cmake", ext.sourcedir, *cmake_args],  # noqa: S607
             cwd=build_temp,
@@ -120,6 +135,13 @@ class CMakeBuild(build_ext):
 
 
 def build(setup_kwargs):
+    """Configure the build for the C++ extension module.
+
+    Parameters
+    ----------
+    setup_kwargs : dict
+        The keyword arguments dictionary passed to setup().
+    """
     ext_modules = [
         CMakeExtension("graph_id_cpp", sourcedir="."),
     ]
