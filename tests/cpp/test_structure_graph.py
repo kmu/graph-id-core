@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Tests for structure graph implementation."""
+
 import unittest
 from pathlib import Path
 

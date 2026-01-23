@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Benchmark tests comparing Python and C++ implementations."""
+
 import glob
 import os.path
 import timeit

@@ -67,13 +67,16 @@ class CifToStructure(ConversionFeaturizer):  # type: ignore
         super().__init__(target_col_id, overwrite_data)
 
     def citations(self):
+        """Return citations for this featurizer."""
         return []
 
     def featurize(self, string: str) -> list[Structure]:
+        """Convert a CIF string to a pymatgen Structure."""
         s = Structure.from_str(input_string=string, fmt="cif")
         return [s]
 
     def implementors(self) -> list[str]:
+        """Return the list of implementors."""
         return ["Koki Muraoka"]
 
 

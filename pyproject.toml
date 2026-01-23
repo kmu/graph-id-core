@@ -69,8 +69,6 @@ lint.ignore = [
   "ANN101", # Missing type annotation for self in method
   "ANN102", # Missing type annotation for `cls` in classmethod
   "ANN201", #  Missing return type annotation for public function
-  "D101",   # Missing docstring in public class
-  "D102",   # Missing docstring in public method
   "SLF001", # Private member accessed
   "ERA001", # commentouted code is allowed
   "D211",

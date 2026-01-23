@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Tests for loop-based Graph ID generator."""
+
 import glob
 import os
 import unittest

@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Tests for Graph ID generator (Python implementation)."""
+
 from pathlib import Path
 from unittest import TestCase
 

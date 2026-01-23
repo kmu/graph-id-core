@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Tests for near neighbor implementations."""
+
 import glob
 import os.path
 import unittest

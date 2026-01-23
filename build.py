@@ -47,7 +47,11 @@ class CMakeExtension(Extension):
 
 
 class CMakeBuild(build_ext):
+
+    """Custom build_ext command that uses CMake to build C++ extensions."""
+
     def build_extension(self, ext: CMakeExtension) -> None:  # noqa: C901,PLR0912
+        """Build a CMake extension."""
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
