@@ -16,6 +16,7 @@
 
 **Graph ID** generates unique, deterministic identifiers for atomistic structures including crystals and molecules. It works by converting atomic structures into graph representations and computing hash-based identifiers that capture both topology and composition.
 
+<!--
 <div class="grid cards" markdown>
 
 - :material-fingerprint:{ .lg .middle } **Unique Identification**
@@ -43,6 +44,7 @@
     Efficient indexing and deduplication of structure databases
 
 </div>
+-->
 
 ## Quick Example
 
