@@ -67,7 +67,6 @@ lint.ignore = [
   "D100",
   "RUF003", # Comment contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
   "ANN201", #  Missing return type annotation for public function
-  "ANN101", # Missing type annotation for self in method
   "D101",   # Missing docstring in public class
   "D102",   # Missing docstring in public method
   "SLF001", # Private member accessed
@@ -86,7 +85,6 @@ lint.ignore = [
   "FBT001", # Boolean positional arg in function definition
   "INP001", # is part of an implicit namespace package. Add an `__init__.py`.
   "ANN206", #  Missing return type annotation for classmethod
-  "ANN102", # Missing type annotation for `cls` in classmethod
   "RUF002", # Docstring contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
   "S311", #  Standard pseudo-random generators are not suitable for cryptographic purposes
   "ANN204",
