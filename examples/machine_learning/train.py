@@ -33,6 +33,7 @@ from sklearn.pipeline import Pipeline
 
 
 def mean_absolute_error(y_true, y_pred):
+    """Calculate mean absolute error between true and predicted values."""
     return np.mean(np.abs(np.array(y_true) - np.array(y_pred)))
 
 
@@ -56,7 +57,11 @@ feat_names = featurizer.feature_labels()
 
 
 class CifToStructure(ConversionFeaturizer):  # type: ignore
+
+    """Convert CIF strings to pymatgen Structure objects."""
+
     def __init__(self, target_col_id="cif", overwrite_data=False) -> None:
+        """Initialize the CIF to Structure converter."""
         self._target_col_id = target_col_id
         self._overwrite_data = overwrite_data
         super().__init__(target_col_id, overwrite_data)
@@ -76,6 +81,7 @@ pickle_path = "mp.2019.04.01.pickle"
 
 
 def get_id_from_str(structure_str):
+    """Generate a Graph ID from a CIF structure string."""
     structure = Structure.from_str(input_string=structure_str, fmt="cif")
     gid_gen = graph_id_cpp.GraphIDGenerator()
     return gid_gen.get_id(structure)

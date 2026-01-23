@@ -23,6 +23,7 @@ test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../
 
 
 def small_test_structure(max_sites=30):
+    """Load test structures with at most max_sites atoms."""
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
@@ -33,6 +34,7 @@ def small_test_structure(max_sites=30):
 
 
 def run_benchmark(pymatgen, our_nn):
+    """Run benchmark comparing pymatgen and C++ implementations."""
     for name, s in small_test_structure():
         at = timeit.timeit("pymatgen.get_all_nn_info(s)", number=10, globals=locals()) * 100
         bt = timeit.timeit("our_nn.get_all_nn_info(s)", number=10, globals=locals()) * 100

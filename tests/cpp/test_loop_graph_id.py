@@ -12,6 +12,7 @@ test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/
 
 
 def small_test_structure(max_sites=30):
+    """Load test structures with at most max_sites atoms."""
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
         name = p.split("/")[-1].replace(".cif", "").replace("-", "_")

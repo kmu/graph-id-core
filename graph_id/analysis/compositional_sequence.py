@@ -63,6 +63,7 @@ class CompositionalSequence:
     """
 
     def __init__(self, focused_site_i, starting_labels, hash_cs=False, use_previous_cs=False):
+        """Initialize the compositional sequence computation."""
         self.hash_cs = hash_cs
         if hash_cs:
             self.cs_for_hashing = ""

@@ -110,9 +110,9 @@ class TestGraphIDGenerator(TestCase):
         self.assertListEqual(ids, ids2)
 
     def test_simple_same_composition(self):
-        """Graphs with diameter of 0.
-        Compositions are identical.
-        Structures are different.
+        """Test graphs with diameter of 0.
+
+        Compositions are identical. Structures are different.
         """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1008681.cif")

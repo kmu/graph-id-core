@@ -13,6 +13,7 @@ test_file_dir = Path(__file__).parent.parent.parent / "tests" / "py" / "test_fil
 
 
 def small_test_structure(max_sites=30):
+    """Load test structures with at most max_sites atoms."""
     res = []
     for p in test_file_dir.glob("*.cif"):
         name = p.stem.replace("-", "_")

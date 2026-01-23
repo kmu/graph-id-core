@@ -22,6 +22,7 @@ __version__ = "0.1.0"
 
 
 def blake(s):
+    """Hash a string using BLAKE2b."""
     return blake2b(s.encode()).hexdigest()
 
 

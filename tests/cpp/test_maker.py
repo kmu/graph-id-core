@@ -6,6 +6,7 @@ from graph_id.app.maker import GraphIDMaker
 
 
 def test_maker():
+    """Test the GraphIDMaker class."""
     nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
 
     maker = GraphIDMaker()
@@ -45,6 +46,7 @@ def test_maker():
 
 
 def test_reduce():
+    """Test the reduce functionality of GraphIDMaker."""
     ase_structure_primitive = bulk("NaCl", "rocksalt", a=5.692)
     ase_structure_conventional = bulk("NaCl", "rocksalt", a=5.692, cubic=True)
 

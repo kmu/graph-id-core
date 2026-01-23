@@ -48,6 +48,7 @@ class SiteOnlySpeciesString:
     """
 
     def __init__(self, species_string):
+        """Initialize with the species string."""
         self.species_string = species_string
 
 
@@ -93,6 +94,7 @@ class ConnectedSiteLight:
         weight,
         dist,
     ):
+        """Initialize a connected site with lightweight data."""
         self.site = SiteOnlySpeciesString(site.species_string)
         self.jimage = jimage
         self.index = index
