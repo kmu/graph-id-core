@@ -31,6 +31,14 @@ pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 ase = "^3.27.0"
 
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+mkdocstrings = {extras = ["python"], version = "^0.26.0"}
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "graph_id"]
 norecursedirs = ["library", "build", "dist", ".git", ".venv", "__pycache__"]
