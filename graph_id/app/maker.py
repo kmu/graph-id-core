@@ -14,8 +14,8 @@ from graph_id.core.graph_id import GraphIDGenerator as PyGraphIDGenerator
 
 
 class GraphIDMaker:
-    """
-    A simple, high-level interface for generating Graph IDs.
+
+    """A simple, high-level interface for generating Graph IDs.
 
     GraphIDMaker provides an easy-to-use API for generating unique identifiers
     for crystal and molecular structures. It automatically selects the appropriate
@@ -41,8 +41,7 @@ class GraphIDMaker:
         reduce: bool = False,
         engine: str = "c++",
     ) -> None:
-        """
-        Initialize the GraphIDMaker.
+        """Initialize the GraphIDMaker.
 
         Parameters
         ----------
@@ -69,7 +68,6 @@ class GraphIDMaker:
         >>> maker = GraphIDMaker(depth=5)  # Fixed depth
         >>> maker = GraphIDMaker(reduce=True)  # Enable reduction
         """
-
         self.reduce = reduce
 
         if "py" in engine.lower():
@@ -104,8 +102,7 @@ class GraphIDMaker:
             )
 
     def get_id(self, structure) -> str:
-        """
-        Generate a Graph ID for the given structure.
+        """Generate a Graph ID for the given structure.
 
         Parameters
         ----------
@@ -133,8 +130,7 @@ class GraphIDMaker:
         return f"{structure.composition.reduced_formula}-{graph_id}"
 
     def get_id_reducing_site_sequences(self, structure):
-        """
-        Generate a Graph ID with reduced site sequences.
+        """Generate a Graph ID with reduced site sequences.
 
         This method divides repeated compositional sequences by their GCD,
         which allows primitive and conventional cells of the same structure
@@ -153,7 +149,6 @@ class GraphIDMaker:
         Notes
         -----
         This is an internal method called when ``reduce=True``.
-        Use :meth:`get_id` for the complete Graph ID with formula.
         """
         sg = self.generator.prepare_structure_graph(structure)
 
@@ -178,8 +173,7 @@ class GraphIDMaker:
         return self.generator._component_strings_to_whole_id(labels_list)
 
     def get_site_ids(self, structure):
-        """
-        Get unique compositional sequence identifiers for each atomic site.
+        """Get unique compositional sequence identifiers for each atomic site.
 
         Each site in the structure receives a unique identifier based on its
         local chemical environment (compositional sequence). Sites with identical

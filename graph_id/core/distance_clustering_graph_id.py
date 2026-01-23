@@ -18,8 +18,8 @@ def blake(s):
 
 
 class DistanceClusteringGraphID(GraphIDGenerator):
-    """
-    Graph ID generator using DBSCAN distance clustering for neighbor detection.
+
+    """Graph ID generator using DBSCAN distance clustering for neighbor detection.
 
     This variant uses DBSCAN clustering on interatomic distances to identify
     distinct bond length populations. This is useful for structures where
@@ -58,8 +58,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         cutoff=6.0,
         digest_size=8,
     ) -> None:
-        """
-        Initialize the DistanceClusteringGraphID generator.
+        """Initialize the DistanceClusteringGraphID generator.
 
         Parameters
         ----------
@@ -111,8 +110,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
             self.nn = nn
 
     def get_id(self, structure):
-        """
-        Generate a Graph ID using distance clustering.
+        """Generate a Graph ID using distance clustering.
 
         Parameters
         ----------
@@ -163,8 +161,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
-        """
-        Prepare the structure graph for a specific site and distance cluster.
+        """Prepare the structure graph for a specific site and distance cluster.
 
         Parameters
         ----------

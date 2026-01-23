@@ -1,5 +1,4 @@
-"""
-Analysis utilities for Graph ID computation.
+"""Analysis utilities for Graph ID computation.
 
 This module provides low-level classes for structure graph construction,
 compositional sequence computation, and neighbor detection.

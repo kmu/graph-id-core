@@ -1,5 +1,4 @@
-"""
-Core Graph ID generators.
+"""Core Graph ID generators.
 
 This module provides the main Graph ID generation classes.
 

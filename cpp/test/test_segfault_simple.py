@@ -1,4 +1,5 @@
-"""Simple test to check if find_near_neighbors causes segfault"""
+"""Simple test to check if find_near_neighbors causes segfault."""
+
 import graph_id_cpp
 import numpy as np
 from pymatgen.core import Lattice, Structure

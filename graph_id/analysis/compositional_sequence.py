@@ -16,8 +16,8 @@ def blake(s):
 
 
 class CompositionalSequence:
-    """
-    Compute the compositional sequence for a site in a structure graph.
+
+    """Compute the compositional sequence for a site in a structure graph.
 
     A compositional sequence is a fingerprint of the local chemical environment
     around an atom, computed by traversing the graph in shells and counting
@@ -79,8 +79,7 @@ class CompositionalSequence:
         self.first_element = starting_labels[focused_site_i]
 
     def __str__(self):
-        """
-        Return the string representation of the compositional sequence.
+        """Return the string representation of the compositional sequence.
 
         Returns
         -------
@@ -93,8 +92,7 @@ class CompositionalSequence:
         return f"{self.first_element}-{'-'.join(self.compositional_seq)}"  # type: ignore
 
     def get_current_starting_sites(self):
-        """
-        Get the sites to expand from for the next depth.
+        """Get the sites to expand from for the next depth.
 
         Returns
         -------
@@ -109,8 +107,7 @@ class CompositionalSequence:
         self,
         nsites: list[Neighbor],
     ) -> None:
-        """
-        Count the composition of neighboring sites.
+        """Count the composition of neighboring sites.
 
         Adds new neighbors to the frontier and counts their labels
         for the current depth.
@@ -135,8 +132,7 @@ class CompositionalSequence:
                     self.composition_counter[self.labels[neighbor.index]] += 1
 
     def finalize_this_depth(self):
-        """
-        Finalize counting for the current depth.
+        """Finalize counting for the current depth.
 
         Converts the composition counter to a formula string and
         either appends it to the sequence or hashes it incrementally.
@@ -150,8 +146,7 @@ class CompositionalSequence:
             self.compositional_seq.append("".join(formula))
 
     def get_sorted_composition_list_from(self, composition_counter: Counter) -> list[str]:
-        """
-        Convert a composition counter to a sorted formula list.
+        """Convert a composition counter to a sorted formula list.
 
         Parameters
         ----------

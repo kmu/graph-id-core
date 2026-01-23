@@ -115,18 +115,6 @@ from graph_id_cpp import (
 | `additional_depth` | `1` | Extra traversal depth |
 | `digest_size` | `8` | Hash output length |
 
-## Type Hints
-
-Graph ID uses type hints throughout. Key types:
-
-```python
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pymatgen.core.structure import Structure
-    from pymatgen.analysis.local_env import NearNeighbors
-```
-
 ## Detailed Documentation
 
 - [GraphIDMaker](maker.md) - High-level interface

@@ -26,8 +26,8 @@ def blake(s):
 
 
 class GraphIDGenerator:
-    """
-    Core Python implementation of Graph ID generation.
+
+    """Core Python implementation of Graph ID generation.
 
     GraphIDGenerator converts atomic structures into unique, deterministic identifiers
     by analyzing the topological and compositional properties of the structure graph.
@@ -67,8 +67,7 @@ class GraphIDGenerator:
         prepend_composition=True,
         prepend_dimensionality=True,
     ):
-        """
-        Initialize the GraphIDGenerator.
+        """Initialize the GraphIDGenerator.
 
         Parameters
         ----------
@@ -149,8 +148,7 @@ class GraphIDGenerator:
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def get_id(self, structure):
-        """
-        Generate a Graph ID for the given structure.
+        """Generate a Graph ID for the given structure.
 
         Parameters
         ----------
@@ -192,8 +190,7 @@ class GraphIDGenerator:
         return self.elaborate_comp_dim(sg, gid)
 
     def elaborate_comp_dim(self, sg, gid):
-        """
-        Add composition and dimensionality prefixes to a Graph ID.
+        """Add composition and dimensionality prefixes to a Graph ID.
 
         Parameters
         ----------
@@ -218,14 +215,11 @@ class GraphIDGenerator:
 
     @property
     def version(self):
-        """
-        str : The version of the GraphIDGenerator.
-        """
+        """Str : The version of the GraphIDGenerator."""
         return __version__
 
     def get_id_catch_error(self, structure):
-        """
-        Generate a Graph ID with error handling.
+        """Generate a Graph ID with error handling.
 
         Parameters
         ----------
@@ -248,8 +242,7 @@ class GraphIDGenerator:
             return ""
 
     def get_many_ids(self, structures, parallel=False):
-        """
-        Generate Graph IDs for multiple structures.
+        """Generate Graph IDs for multiple structures.
 
         Parameters
         ----------
@@ -282,8 +275,7 @@ class GraphIDGenerator:
         return [self.get_id(s) for s in structures]
 
     def get_component_ids(self, structure):
-        """
-        Get Graph IDs for each connected component in the structure.
+        """Get Graph IDs for each connected component in the structure.
 
         For structures with multiple disconnected fragments (e.g., molecular
         crystals), this returns a separate ID for each component.
@@ -324,8 +316,7 @@ class GraphIDGenerator:
         return cc_gid
 
     def are_same(self, structure1, structure2):
-        """
-        Check if two structures have the same Graph ID.
+        """Check if two structures have the same Graph ID.
 
         Parameters
         ----------
@@ -348,8 +339,7 @@ class GraphIDGenerator:
         return self.get_id(structure1) == self.get_id(structure2)
 
     def prepare_structure_graph(self, structure):
-        """
-        Build and prepare the structure graph with compositional sequences.
+        """Build and prepare the structure graph with compositional sequences.
 
         This method constructs a graph representation of the structure,
         computes compositional sequences for each site, and iteratively
@@ -415,8 +405,7 @@ class GraphIDGenerator:
             prev_num_uniq = num_unique_nodes
 
     def get_unique_structures(self, structures: list[Structure]) -> list[Structure]:
-        """
-        Filter a list of structures to keep only unique ones.
+        """Filter a list of structures to keep only unique ones.
 
         Removes duplicate structures based on their Graph IDs. When duplicates
         are found, only the first occurrence is kept.

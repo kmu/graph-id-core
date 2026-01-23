@@ -66,6 +66,8 @@ line-length = 119
 lint.ignore = [
   "D100",
   "RUF003", # Comment contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
+  "ANN101", # Missing type annotation for self in method
+  "ANN102", # Missing type annotation for `cls` in classmethod
   "ANN201", #  Missing return type annotation for public function
   "D101",   # Missing docstring in public class
   "D102",   # Missing docstring in public method
@@ -79,7 +81,6 @@ lint.ignore = [
   "S101", # assert is allowed
   "ANN001", # Missing type annotation for function
   "ANN205",
-  "D",
   "PLR2004", # magic value
   "FBT002",  # Boolean default value in function definition
   "FBT001", # Boolean positional arg in function definition

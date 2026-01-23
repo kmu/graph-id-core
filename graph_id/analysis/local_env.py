@@ -9,8 +9,7 @@ from sklearn.cluster import DBSCAN
 
 
 def _get_original_site(structure, site):
-    """
-    Find the original site index from a periodic neighbor site.
+    """Find the original site index from a periodic neighbor site.
 
     Parameters
     ----------
@@ -47,8 +46,8 @@ def _get_original_site(structure, site):
 
 
 class DistanceClusteringNN(NearNeighbors):
-    """
-    Neighbor detection using DBSCAN clustering on interatomic distances.
+
+    """Neighbor detection using DBSCAN clustering on interatomic distances.
 
     This class identifies neighbors by clustering the distribution of
     interatomic distances using the DBSCAN algorithm. This allows for
@@ -78,8 +77,7 @@ class DistanceClusteringNN(NearNeighbors):
 
     @property
     def structures_allowed(self) -> bool:
-        """
-        Check if this neighbor finder can be used with Structure objects.
+        """Check if this neighbor finder can be used with Structure objects.
 
         Returns
         -------
@@ -89,8 +87,7 @@ class DistanceClusteringNN(NearNeighbors):
         return True
 
     def get_nn_info(self, structure: Structure, n: int, rank_k: int, cutoff: float = 6.0) -> list[dict[str, Any]]:
-        """
-        Get neighbor information for a specific site and distance cluster.
+        """Get neighbor information for a specific site and distance cluster.
 
         Parameters
         ----------
@@ -115,7 +112,6 @@ class DistanceClusteringNN(NearNeighbors):
             - ``site_index``: Index of the neighbor in the structure
             - ``edge_properties``: Dict with ``cluster_idx`` key
         """
-
         site = structure[n]
         cutoff_cluster_list = self.get_cutoff_cluster(structure, n, cutoff)
         if len(cutoff_cluster_list) <= rank_k:
@@ -145,8 +141,7 @@ class DistanceClusteringNN(NearNeighbors):
         return siw
 
     def get_cutoff_cluster(self, structure: Structure, n: int, cutoff: float = 6.0) -> list:
-        """
-        Get distance cluster cutoffs using DBSCAN clustering.
+        """Get distance cluster cutoffs using DBSCAN clustering.
 
         Computes all interatomic distances from site n within the cutoff,
         then clusters them using DBSCAN. Returns the maximum distance in
@@ -172,7 +167,6 @@ class DistanceClusteringNN(NearNeighbors):
         Uses DBSCAN with eps=0.5 and min_samples=2 to cluster distances.
         Distances that don't fit into any cluster are ignored.
         """
-
         # # スーパーセルを作成し、6.0angまでの結合長を数え上げる
         # copy_structure = structure.copy()
         # supercell = copy_structure.make_supercell([3, 3, 3])

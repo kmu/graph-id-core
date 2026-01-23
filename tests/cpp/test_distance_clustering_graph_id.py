@@ -37,9 +37,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
                 self.assertEqual(aid, bid)
 
     def test_carbon_allotrope(self):
-        """
-        Assert that graphite and diamond have different IDs
-        """
+        """Assert that graphite and diamond have different IDs"""
         graphite = Structure.from_file(f"{test_file_dir}/graphite.cif")
         diamond = Structure.from_file(f"{test_file_dir}/diamond.cif")
 
@@ -59,8 +57,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
         self.assertEqual(diamond_aid, "0ff44c1761e1940e")
 
     def test_one_site_structure(self):
-        """
-        Structures with only one site
+        """Structures with only one site
         If there is no bond, all structures have the same ID
         """
         s1 = Structure.from_file(f"{test_file_dir}/mp-121.cif")
@@ -82,8 +79,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s2_aid, "be82ee60bfd614a3")
 
     def test_empty_compositional_sequence(self):
-        """
-        Structures with an empty CompositionalSequence
+        """Structures with an empty CompositionalSequence
         If there is no bond, all structures have the same ID
         """
         s_298 = Structure.from_file(f"{test_file_dir}/298 K.cif")
@@ -98,8 +94,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s_298_aid, "3f8e7842377ffa36")
 
     def test_sort_jstrs(self):
-        """
-        If the CompositionalSequence of each site is not sorted,
+        """If the CompositionalSequence of each site is not sorted,
         the ID will change.
         """
         s_1078 = Structure.from_file(f"{test_file_dir}/1078 K.cif")
@@ -114,8 +109,7 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s_1078_aid, "39b5c4ae1aa4aa4c")
 
     def test_break_edge(self):
-        """
-        If the reverse edge is not deleted when break_edge is called,
+        """If the reverse edge is not deleted when break_edge is called,
         the ID will change.
         """
         s_ca = Structure.from_file(f"{test_file_dir}/mp-1067285.cif")
@@ -130,11 +124,9 @@ class TestDistanceClusteringGraphIDGenerator(unittest.TestCase):
         self.assertEqual(s_ca_aid, "35d25fa388dfaed6")
 
     def test_no_supercell_structure(self):
-        """
-        If only a supercell is made,
+        """If only a supercell is made,
         all bonds up to 6.0 angstroms are not found.
         """
-
         s_si = Structure.from_file(f"{test_file_dir}/mp-1056579.cif")
 
         a = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)

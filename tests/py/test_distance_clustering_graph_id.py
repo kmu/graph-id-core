@@ -11,9 +11,7 @@ TEST_FILES = str(Path(__file__).resolve().parent / "test_files")
 
 class TestDistanceClusteringGraphID(TestCase):
     def test_small(self):
-        """
-        Single site structures test
-        """
+        """Single site structures test."""
         s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
 
         ldgid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0)

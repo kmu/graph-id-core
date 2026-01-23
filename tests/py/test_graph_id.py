@@ -57,9 +57,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_vsb_o_4(self):
-        """
-        MinimumDistanceNN does not work for this.
-        """
+        """MinimumDistanceNN does not work for this."""
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
         gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
@@ -112,8 +110,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertListEqual(ids, ids2)
 
     def test_simple_same_composition(self):
-        """
-        Graphs with diameter of 0.
+        """Graphs with diameter of 0.
         Compositions are identical.
         Structures are different.
         """
