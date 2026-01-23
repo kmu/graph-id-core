@@ -1,3 +1,6 @@
+# ruff: noqa: D101, D102
+"""Tests for Graph ID generator (Python implementation)."""
+
 from pathlib import Path
 from unittest import TestCase
 
@@ -57,9 +60,7 @@ class TestGraphIDGenerator(TestCase):
         self.assertNotEqual(id_1, id_2)
 
     def test_vsb_o_4(self):
-        """
-        MinimumDistanceNN does not work for this.
-        """
+        """MinimumDistanceNN does not work for this."""
         s1 = Structure.from_file(f"{TEST_FILES}/VSbO4.cif")
 
         gid = GraphIDGenerator(nn=CrystalNN(), diameter_factor=1)
@@ -112,10 +113,9 @@ class TestGraphIDGenerator(TestCase):
         self.assertListEqual(ids, ids2)
 
     def test_simple_same_composition(self):
-        """
-        Graphs with diameter of 0.
-        Compositions are identical.
-        Structures are different.
+        """Test graphs with diameter of 0.
+
+        Compositions are identical. Structures are different.
         """
         s1 = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
         s2 = Structure.from_file(f"{TEST_FILES}/mp-1008681.cif")

@@ -1,10 +1,12 @@
-"""Simple test to check if find_near_neighbors causes segfault"""
+"""Simple test to check if find_near_neighbors causes segfault."""
+
 import graph_id_cpp
 import numpy as np
 from pymatgen.core import Lattice, Structure
 
 
 def test_segfault_simple():
+    """Test that find_near_neighbors does not cause a segmentation fault."""
     s = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
     pbc = np.ascontiguousarray(s.lattice.pbc, dtype=int)
 

@@ -25,7 +25,7 @@ jobs:
           submodules: recursive
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.23.3
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_SKIP: "pp* *musllinux*"  # Skip musl Linux builds if spglib doesn't work well. pybind11 doesn't support PyPy. Therefore skip PyPy.
@@ -38,6 +38,8 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {project}/tests/py/ -v"
           # Test on a subset of Python versions to speed up CI
           CIBW_TEST_SKIP: "cp36-* cp37-* cp38-* cp39-*"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
 
         with:
           package-dir: .
