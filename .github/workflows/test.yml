@@ -57,7 +57,9 @@ jobs:
           ${{ runner.os }}-poetry-
 
     - name: Install dependencies
-      run: poetry install
+      run: |
+        poetry lock
+        poetry install
 
     - name: Build C++ extension with CMake
       run: |
