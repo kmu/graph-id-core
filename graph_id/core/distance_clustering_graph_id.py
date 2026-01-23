@@ -18,6 +18,33 @@ def blake(s):
 
 
 class DistanceClusteringGraphID(GraphIDGenerator):
+    """
+    Graph ID generator using DBSCAN distance clustering for neighbor detection.
+
+    This variant uses DBSCAN clustering on interatomic distances to identify
+    distinct bond length populations. This is useful for structures where
+    standard neighbor detection methods may fail, such as:
+
+    - Structures with unusual bonding patterns
+    - MOFs and zeolites with multiple bond length scales
+    - Systems where simple distance cutoffs are insufficient
+
+    The algorithm iterates over the first ``rank_k`` distance clusters,
+    computing separate compositional sequences for each, then combines
+    them into a final ID.
+
+    Examples
+    --------
+    >>> from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
+    >>> gen = DistanceClusteringGraphID(rank_k=3, cutoff=6.0)
+    >>> gen.get_id(complex_structure)
+
+    See Also
+    --------
+    GraphIDGenerator : Standard Graph ID generator
+    DistanceClusteringNN : The underlying neighbor detection class
+    """
+
     def __init__(  # noqa: PLR0913
         self,
         nn=None,
@@ -31,6 +58,38 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         cutoff=6.0,
         digest_size=8,
     ) -> None:
+        """
+        Initialize the DistanceClusteringGraphID generator.
+
+        Parameters
+        ----------
+        nn : NearNeighbors, optional
+            A neighbor-finding strategy. If None, defaults to DistanceClusteringNN().
+        wyckoff : bool, default False
+            If True, include Wyckoff position information in the ID.
+        diameter_factor : int, default 2
+            Multiplier for graph diameter to determine traversal depth.
+        additional_depth : int, default 1
+            Extra depth added to the calculated traversal depth.
+        symmetry_tol : float, default 0.1
+            Tolerance for symmetry operations (used with wyckoff=True).
+        topology_only : bool, default False
+            If True, generate topology-only IDs ignoring element types.
+        loop : bool, default False
+            If True, use loop-based identification algorithm.
+        rank_k : int, default 3
+            Number of distance clusters to consider. Higher values capture
+            more neighbor shells but increase computation time.
+        cutoff : float, default 6.0
+            Maximum distance cutoff in Angstroms for neighbor search.
+        digest_size : int, default 8
+            Size of the BLAKE2b hash digest in bytes.
+
+        Examples
+        --------
+        >>> gen = DistanceClusteringGraphID()  # Default settings
+        >>> gen = DistanceClusteringGraphID(rank_k=5, cutoff=8.0)  # More clusters
+        """
         super().__init__(
             nn,
             wyckoff,
@@ -52,6 +111,24 @@ class DistanceClusteringGraphID(GraphIDGenerator):
             self.nn = nn
 
     def get_id(self, structure):
+        """
+        Generate a Graph ID using distance clustering.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+
+        Returns
+        -------
+        str
+            The Graph ID hash (16 hexadecimal characters by default).
+
+        Notes
+        -----
+        Unlike the base class, this does not prepend composition or
+        dimensionality. The returned ID is the raw hash only.
+        """
         gid_list = []
         _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
         for cluster_idx in range(self.rank_k):
@@ -86,6 +163,26 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         return blake2b(long_gid.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def prepare_structure_graph(self, structure, _sg, n, rank_k):
+        """
+        Prepare the structure graph for a specific site and distance cluster.
+
+        Parameters
+        ----------
+        structure : Structure
+            The pymatgen Structure object.
+        _sg : StructureGraph
+            The base structure graph with bonds from previous processing.
+        n : int
+            The site index being processed.
+        rank_k : int
+            The current distance cluster index (0-based).
+
+        Returns
+        -------
+        StructureGraph
+            The prepared structure graph with compositional sequences
+            computed for the specified site and cluster.
+        """
         sg = StructureGraph.with_indivisual_state_comp_strategy(
             structure=structure,
             strategy=self.nn,

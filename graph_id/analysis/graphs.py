@@ -13,6 +13,22 @@ from graph_id.analysis.compositional_sequence import CompositionalSequence
 
 
 def standardize_loop(lst):
+    """
+    Standardize a loop to its canonical form.
+
+    Compares the loop with its reverse and returns the lexicographically
+    larger version to ensure consistent representation.
+
+    Parameters
+    ----------
+    lst : list
+        A list of element symbols representing a loop.
+
+    Returns
+    -------
+    list
+        The standardized loop.
+    """
     lst2 = list(reversed(lst))
     starting_point = lst2.pop(-1)
     lst2.insert(0, starting_point)
@@ -21,11 +37,55 @@ def standardize_loop(lst):
 
 
 class SiteOnlySpeciesString:
+    """
+    Lightweight wrapper containing only the species string of a site.
+
+    Used to reduce memory when only element information is needed.
+
+    Parameters
+    ----------
+    species_string : str
+        The species string (e.g., "Na", "Cl").
+    """
+
     def __init__(self, species_string):
         self.species_string = species_string
 
 
 class ConnectedSiteLight:
+    """
+    Lightweight representation of a connected site.
+
+    A memory-efficient alternative to pymatgen's ConnectedSite that stores
+    only essential information for compositional sequence computation.
+
+    Parameters
+    ----------
+    site : Site
+        The pymatgen Site object (only species_string is retained).
+    jimage : tuple
+        The periodic image indices (i, j, k).
+    index : int
+        The site index in the structure.
+    weight : float or None
+        The bond weight (if applicable).
+    dist : float or None
+        The distance to the connected site.
+
+    Attributes
+    ----------
+    site : SiteOnlySpeciesString
+        Lightweight site wrapper.
+    jimage : tuple
+        The periodic image.
+    index : int
+        The site index.
+    weight : float or None
+        The bond weight.
+    dist : float or None
+        The distance.
+    """
+
     def __init__(
         self,
         site,
@@ -42,25 +102,77 @@ class ConnectedSiteLight:
 
 
 class StructureGraph(PmgStructureGraph):  # type: ignore
+    """
+    Extended StructureGraph with methods for Graph ID computation.
+
+    This class extends pymatgen's StructureGraph with additional functionality
+    for computing compositional sequences and handling loops/rings in the
+    structure graph.
+
+    Attributes
+    ----------
+    starting_labels : list of str
+        Labels for each site used as starting points for compositional sequences.
+    cc_cs : list of dict
+        Compositional sequences for each connected component.
+        Each dict contains ``site_i`` (set of site indices) and ``cs_list``
+        (list of compositional sequence strings).
+
+    See Also
+    --------
+    pymatgen.analysis.graphs.StructureGraph : Base class
+    """
+
     @staticmethod
     def from_pymatgen_structure_graph(sg: PmgStructureGraph):
+        """
+        Create a StructureGraph from a pymatgen StructureGraph.
+
+        Parameters
+        ----------
+        sg : PmgStructureGraph
+            A pymatgen StructureGraph object.
+
+        Returns
+        -------
+        StructureGraph
+            A new StructureGraph instance.
+        """
         graph_data = sg.as_dict()["graphs"]
 
         return StructureGraph(sg.structure, graph_data)
 
-    # Copied from original pymatgen with modifications
     @staticmethod
     def with_local_env_strategy(structure, strategy, weights=False):
         """
-        Constructor for StructureGraph, using a strategy
-        from :Class: `pymatgen.analysis.local_env`.
+        Create a StructureGraph using a neighbor-finding strategy.
 
-        :param structure: Structure object
-        :param strategy: an instance of a
-            :Class: `pymatgen.analysis.local_env.NearNeighbors` object
-        :param weights: if True, use weights from local_env class
-            (consult relevant class for their meaning)
-        :return:
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+        strategy : NearNeighbors
+            A neighbor-finding strategy from pymatgen.analysis.local_env,
+            such as MinimumDistanceNN, CrystalNN, etc.
+        weights : bool, default False
+            If True, include bond weights from the strategy.
+
+        Returns
+        -------
+        StructureGraph
+            A new StructureGraph with edges representing bonds.
+
+        Raises
+        ------
+        ValueError
+            If the strategy does not support structures.
+
+        Examples
+        --------
+        >>> from pymatgen.analysis.local_env import MinimumDistanceNN
+        >>> sg = StructureGraph.with_local_env_strategy(
+        ...     structure, MinimumDistanceNN()
+        ... )
         """
 
         if not strategy.structures_allowed:
@@ -89,16 +201,37 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
     @staticmethod
     def with_indivisual_state_comp_strategy(structure, strategy, _sg, n, weights=False, rank_k=1, cutoff=6.0):
         """
-        Constructor for StructureGraph, using a StateCompNN strategy
-        from :Class: `chemsys.pymatgen.analysis.local_env`.
-        :param structure: Structure object
-        :param strategy: an instance of StateCompNN
-        :param n: (int) an index of focused site
-        :param weights: if True, use weights from local_env class
-            (consult relevant class for their meaning)
-        :rank_k: (int) cluster_idx
-        :cutoff: (float)
-        :return:
+        Add edges for a specific site using a distance clustering strategy.
+
+        This method is used by DistanceClusteringGraphID to add bonds
+        for a specific site and distance cluster.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+        strategy : DistanceClusteringNN
+            A distance clustering neighbor-finding strategy.
+        _sg : StructureGraph
+            An existing StructureGraph to modify.
+        n : int
+            The site index to add edges for.
+        weights : bool, default False
+            If True, include bond weights from the strategy.
+        rank_k : int, default 1
+            The distance cluster index (0-based).
+        cutoff : float, default 6.0
+            Maximum distance cutoff in Angstroms.
+
+        Returns
+        -------
+        StructureGraph
+            The modified StructureGraph with new edges.
+
+        Raises
+        ------
+        ValueError
+            If the strategy does not support structures.
         """
 
         if not strategy.structures_allowed:
@@ -126,12 +259,32 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         return _sg
 
     def set_elemental_labels(self):
+        """
+        Set element symbols as starting labels for compositional sequences.
+
+        This is the default labeling scheme where each site is labeled
+        by its element symbol (e.g., "Na", "Cl").
+        """
         self.starting_labels = [site.species_string for site in self.structure]
 
     def get_connected_sites_light(self, n, jimage=(0, 0, 0)):
         """
-        A light version of get_connected_sites.
-        periodic_site -> SiteOnlySpeciesString
+        Get connected sites with minimal memory footprint.
+
+        A lightweight version of get_connected_sites that returns
+        ConnectedSiteLight objects instead of full ConnectedSite objects.
+
+        Parameters
+        ----------
+        n : int
+            The site index to get neighbors for.
+        jimage : tuple, default (0, 0, 0)
+            The periodic image of the site.
+
+        Returns
+        -------
+        list of ConnectedSiteLight
+            List of connected sites with minimal information.
         """
 
         connected_sites = set()
@@ -164,6 +317,21 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         return list(connected_sites)
 
     def set_wyckoffs(self, symmetry_tol: float = 0.01) -> None:
+        """
+        Set Wyckoff position labels for each site.
+
+        Labels each site with its element, Wyckoff letter, and space group
+        number in the format ``"{element}_{wyckoff}_{spacegroup}"``.
+
+        Parameters
+        ----------
+        symmetry_tol : float, default 0.01
+            Tolerance for symmetry detection in Angstroms.
+
+        Notes
+        -----
+        If symmetry detection fails, falls back to elemental labels.
+        """
         siteless_strc = self.structure.copy()
 
         for site_i in range(len(self.structure)):
@@ -194,6 +362,34 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         diameter_factor: int = 2,
         use_previous_cs: bool = False,
     ) -> None:
+        """
+        Compute and set compositional sequences as node attributes.
+
+        This is the core method that computes the local environment
+        fingerprint for each site by traversing the graph and counting
+        neighbors at each depth.
+
+        Parameters
+        ----------
+        hash_cs : bool, default False
+            If True, hash the compositional sequence incrementally
+            during computation for memory efficiency.
+        wyckoff : bool, default False
+            If True, use Wyckoff labels in the computation.
+        additional_depth : int, default 0
+            Extra traversal depth to add.
+        diameter_factor : int, default 2
+            Multiplier for graph diameter to determine traversal depth.
+        use_previous_cs : bool, default False
+            If True, use previous compositional sequence as starting labels.
+
+        Notes
+        -----
+        After calling this method:
+
+        - Node attributes are set with key ``"compositional_sequence"``
+        - ``self.cc_cs`` contains compositional sequences per component
+        """
         node_attributes = {}
         self.cc_cs = []
         get_connected_sites_light = functools.lru_cache(maxsize=None)(self.get_connected_sites_light)
@@ -233,14 +429,31 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
     def get_loops(self, depth: int, index: int, shortest: bool = True):  # noqa: C901
         """
-        各原子を起点としてループを計算し、そのインデックス情報を返す。
+        Find all loops/rings starting from a given atom.
 
-        Parameters:
-            indices: ループの起点としたいインデックス
-            depth: ループの最大の大きさ
+        Traverses the graph to find closed loops that start and end at the
+        specified atom index.
 
-        Returns:
-            [[(index, image), ...], ...]
+        Parameters
+        ----------
+        depth : int
+            Maximum loop size to search for.
+        index : int
+            The starting atom index.
+        shortest : bool, default True
+            If True, stop searching when all theoretically possible shortest
+            loops are found.
+
+        Returns
+        -------
+        list of list of tuple
+            A list of loops, where each loop is a list of ``(index, image)``
+            tuples representing the path.
+
+        Notes
+        -----
+        Loops are found by breadth-first traversal and tracking when paths
+        return to their starting point.
         """
 
         get_connected_sites = functools.lru_cache(maxsize=None)(self.get_connected_sites)
@@ -321,6 +534,24 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         return list(ring_list)
 
     def set_loops(self, diameter_factor: int, additional_depth: int) -> None:
+        """
+        Set loop-based labels for each site.
+
+        Computes all loops for each site and creates a hashed label
+        representing the ring topology around that site.
+
+        Parameters
+        ----------
+        diameter_factor : int
+            Multiplier for graph diameter to determine search depth.
+        additional_depth : int
+            Extra depth to add to the search.
+
+        Notes
+        -----
+        Sets ``self.starting_labels`` to hashed loop representations.
+        Used when ``loop=True`` in GraphIDGenerator.
+        """
         self.starting_labels = []
 
         undirected_graph = self.graph.to_undirected()
@@ -365,6 +596,27 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         diameter_factor: int = 2,
         use_previous_cs: bool = False,
     ) -> None:
+        """
+        Compute compositional sequence for a single site.
+
+        Similar to set_compositional_sequence_node_attr, but only computes
+        the sequence for the specified site. Used by DistanceClusteringGraphID.
+
+        Parameters
+        ----------
+        n : int
+            The site index to compute the sequence for.
+        hash_cs : bool, default False
+            If True, hash the sequence incrementally.
+        wyckoff : bool, default False
+            If True, use Wyckoff labels.
+        additional_depth : int, default 0
+            Extra traversal depth.
+        diameter_factor : int, default 2
+            Multiplier for graph diameter.
+        use_previous_cs : bool, default False
+            If True, use previous sequence as starting labels.
+        """
         node_attributes = {}
         self.cc_cs = []
         get_connected_sites_light = functools.lru_cache(maxsize=None)(self.get_connected_sites_light)

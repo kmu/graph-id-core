@@ -26,6 +26,34 @@ def blake(s):
 
 
 class GraphIDGenerator:
+    """
+    Core Python implementation of Graph ID generation.
+
+    GraphIDGenerator converts atomic structures into unique, deterministic identifiers
+    by analyzing the topological and compositional properties of the structure graph.
+
+    The algorithm:
+
+    1. Constructs a graph where atoms are nodes and bonds are edges
+    2. Computes compositional sequences for each atom (local environment fingerprints)
+    3. Iteratively refines sequences until convergence
+    4. Hashes the sequences to produce the final ID
+
+    Examples
+    --------
+    >>> from pymatgen.core import Structure
+    >>> from graph_id.core.graph_id import GraphIDGenerator
+    >>> structure = Structure.from_file("NaCl.cif")
+    >>> gen = GraphIDGenerator()
+    >>> gen.get_id(structure)
+    'NaCl-3D-88c8e156db1b0fd9'
+
+    See Also
+    --------
+    GraphIDMaker : High-level interface with simpler API
+    DistanceClusteringGraphID : Variant using distance clustering
+    """
+
     def __init__(  # noqa: PLR0913
         self,
         nn=None,
@@ -40,28 +68,53 @@ class GraphIDGenerator:
         prepend_dimensionality=True,
     ):
         """
-        A generator for Graph ID.
-        By default, the depth to traverse the graph network is dynamically determined
-        by the graph diameter of the graph.
+        Initialize the GraphIDGenerator.
 
         Parameters
         ----------
-        nn: NearNeighbor
-            A NearNeighbor object to use for neighbor finding.
-        wyckoff: bool
-            Whether to use Wyckoff positions.
-        diameter_factor: int
-            The factor to multiply the diameter of the graph to determine the depth to traverse the graph network.
-        additional_depth: int
-            The additional depth to traverse the graph network.
-        symmetry_tol: float
-            The tolerance for symmetry operations.
-        topology_only: bool
-            Whether to only use topology information.
-        loop: bool
-            Whether to use loop information.
-        digest_size: int
-            The size of the digest to use for the hash function.
+        nn : NearNeighbors, optional
+            A neighbor-finding strategy from pymatgen.analysis.local_env.
+            If None, defaults to MinimumDistanceNN().
+        wyckoff : bool, default False
+            If True, include Wyckoff position information in the ID.
+            Cannot be used together with ``loop=True``.
+        diameter_factor : int, default 2
+            Multiplier for the graph diameter to determine traversal depth.
+            The total depth is ``diameter_factor * diameter + additional_depth``.
+        additional_depth : int, default 1
+            Extra depth added to the calculated traversal depth.
+        symmetry_tol : float, default 0.1
+            Tolerance for symmetry operations when detecting Wyckoff positions.
+            Only used when ``wyckoff=True``.
+        topology_only : bool, default False
+            If True, generate topology-only IDs that ignore element types.
+            Useful for finding isostructural materials.
+            Cannot be used together with ``loop=True``.
+        loop : bool, default False
+            If True, use loop/ring-based identification algorithm.
+            Cannot be used together with ``wyckoff=True`` or ``topology_only=True``.
+        digest_size : int, default 8
+            Size of the BLAKE2b hash digest in bytes.
+            The output will be ``2 * digest_size`` hexadecimal characters.
+        prepend_composition : bool, default True
+            If True, prepend the reduced chemical formula to the ID.
+        prepend_dimensionality : bool, default True
+            If True, prepend the dimensionality (0D, 1D, 2D, 3D) to the ID.
+
+        Raises
+        ------
+        ValueError
+            If incompatible options are specified:
+
+            - ``wyckoff=True`` and ``loop=True``
+            - ``loop=True`` and ``topology_only=True``
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()  # Default settings
+        >>> gen = GraphIDGenerator(topology_only=True)  # Topology-only
+        >>> gen = GraphIDGenerator(wyckoff=True, symmetry_tol=0.01)  # With Wyckoff
+        >>> gen = GraphIDGenerator(diameter_factor=3, additional_depth=2)  # Deeper traversal
         """
         if wyckoff and loop:
             msg = "wyckoff and loop cannot be True at the same time"
@@ -87,13 +140,43 @@ class GraphIDGenerator:
         self.prepend_dimensionality = prepend_dimensionality
 
     def _join_cs_list(self, cs_list):
+        """Join and hash a list of compositional sequences."""
         return blake("-".join(sorted(cs_list)))
 
     def _component_strings_to_whole_id(self, component_strings):
+        """Combine component hashes into a single ID."""
         long_str = ":".join(np.sort(component_strings))
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def get_id(self, structure):
+        """
+        Generate a Graph ID for the given structure.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object representing the crystal or molecule.
+
+        Returns
+        -------
+        str
+            The Graph ID. Format depends on configuration:
+
+            - Default: ``"{formula}-{dim}D-{hash}"``
+            - ``prepend_composition=False``: ``"{dim}D-{hash}"``
+            - ``prepend_dimensionality=False``: ``"{formula}-{hash}"``
+            - Both False: ``"{hash}"``
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> gen.get_id(nacl_structure)
+        'NaCl-3D-88c8e156db1b0fd9'
+
+        >>> gen = GraphIDGenerator(prepend_composition=False)
+        >>> gen.get_id(nacl_structure)
+        '3D-88c8e156db1b0fd9'
+        """
         sg = self.prepare_structure_graph(structure)
         n = len(sg.cc_cs)
         array = np.empty(
@@ -109,6 +192,21 @@ class GraphIDGenerator:
         return self.elaborate_comp_dim(sg, gid)
 
     def elaborate_comp_dim(self, sg, gid):
+        """
+        Add composition and dimensionality prefixes to a Graph ID.
+
+        Parameters
+        ----------
+        sg : StructureGraph
+            The prepared structure graph.
+        gid : str
+            The base Graph ID hash.
+
+        Returns
+        -------
+        str
+            The elaborated Graph ID with prefixes.
+        """
         if self.prepend_dimensionality:
             dim = get_dimensionality_larsen(sg)
             gid = f"{dim}D-{gid}"
@@ -120,15 +218,59 @@ class GraphIDGenerator:
 
     @property
     def version(self):
+        """
+        str : The version of the GraphIDGenerator.
+        """
         return __version__
 
     def get_id_catch_error(self, structure):
+        """
+        Generate a Graph ID with error handling.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+
+        Returns
+        -------
+        str
+            The Graph ID, or an empty string if an error occurs.
+
+        Notes
+        -----
+        This method catches all exceptions silently and returns an empty string.
+        Useful for batch processing where some structures may fail.
+        """
         try:
             return self.get_id(structure)
         except Exception:  # noqa: BLE001
             return ""
 
     def get_many_ids(self, structures, parallel=False):
+        """
+        Generate Graph IDs for multiple structures.
+
+        Parameters
+        ----------
+        structures : list of Structure
+            A list of pymatgen Structure objects.
+        parallel : bool, default False
+            If True, use parallel processing with all available CPU cores.
+            Shows a progress bar via tqdm.
+
+        Returns
+        -------
+        list of str
+            A list of Graph IDs corresponding to each input structure.
+            Failed structures will have empty string IDs.
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> structures = [Structure.from_file(f) for f in cif_files]
+        >>> ids = gen.get_many_ids(structures, parallel=True)
+        """
         if parallel:
             n_cores = multi.cpu_count()
 
@@ -140,6 +282,32 @@ class GraphIDGenerator:
         return [self.get_id(s) for s in structures]
 
     def get_component_ids(self, structure):
+        """
+        Get Graph IDs for each connected component in the structure.
+
+        For structures with multiple disconnected fragments (e.g., molecular
+        crystals), this returns a separate ID for each component.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of dictionaries, each containing:
+
+            - ``site_i``: Set of site indices in this component
+            - ``graph_id``: The Graph ID for this component
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> components = gen.get_component_ids(molecular_crystal)
+        >>> for comp in components:
+        ...     print(f"Sites {comp['site_i']}: {comp['graph_id']}")
+        """
         sg = self.prepare_structure_graph(structure)
         cc_gid = np.empty(
             [
@@ -156,9 +324,54 @@ class GraphIDGenerator:
         return cc_gid
 
     def are_same(self, structure1, structure2):
+        """
+        Check if two structures have the same Graph ID.
+
+        Parameters
+        ----------
+        structure1 : Structure
+            The first pymatgen Structure object.
+        structure2 : Structure
+            The second pymatgen Structure object.
+
+        Returns
+        -------
+        bool
+            True if both structures have identical Graph IDs, False otherwise.
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> if gen.are_same(struct1, struct2):
+        ...     print("Structures are topologically equivalent")
+        """
         return self.get_id(structure1) == self.get_id(structure2)
 
     def prepare_structure_graph(self, structure):
+        """
+        Build and prepare the structure graph with compositional sequences.
+
+        This method constructs a graph representation of the structure,
+        computes compositional sequences for each site, and iteratively
+        refines them until convergence.
+
+        Parameters
+        ----------
+        structure : Structure
+            A pymatgen Structure object.
+
+        Returns
+        -------
+        StructureGraph
+            The prepared structure graph with compositional sequence node
+            attributes. The graph also has a ``cc_cs`` attribute containing
+            the compositional sequences for each connected component.
+
+        Notes
+        -----
+        This is primarily an internal method, but can be useful for
+        advanced analysis of the structure graph.
+        """
         sg = StructureGraph.with_local_env_strategy(structure, self.nn)
         use_previous_cs = False
 
@@ -202,6 +415,29 @@ class GraphIDGenerator:
             prev_num_uniq = num_unique_nodes
 
     def get_unique_structures(self, structures: list[Structure]) -> list[Structure]:
+        """
+        Filter a list of structures to keep only unique ones.
+
+        Removes duplicate structures based on their Graph IDs. When duplicates
+        are found, only the first occurrence is kept.
+
+        Parameters
+        ----------
+        structures : list of Structure
+            A list of pymatgen Structure objects, possibly containing duplicates.
+
+        Returns
+        -------
+        list of Structure
+            A list containing only unique structures (first occurrence of each).
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> all_structures = load_many_cifs()
+        >>> unique = gen.get_unique_structures(all_structures)
+        >>> print(f"Reduced {len(all_structures)} to {len(unique)} unique")
+        """
         unique_structures = []
         graph_ids = set()
 
