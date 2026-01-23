@@ -59,7 +59,7 @@ class CMakeBuild(build_ext):
         # Using this requires trailing slash for auto-detection & inclusion of
         # auxiliary "native" libs
 
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        debug = int(os.environ.get("DEBUG", "0")) if self.debug is None else self.debug
         cfg = "Debug" if debug else "Release"
 
         # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
@@ -118,9 +118,8 @@ class CMakeBuild(build_ext):
         if not build_temp.exists():
             build_temp.mkdir(parents=True)
         env = {**os.environ}
-        if "PYTHONPATH" in env:
-            # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
-            del env["PYTHONPATH"]
+        # Google Colab など CMake が pip でインストールされている環境で、import cmake できなくなり build が失敗する
+        env.pop("PYTHONPATH", None)
         subprocess.run(
             ["cmake", ext.sourcedir, *cmake_args],  # noqa: S607
             cwd=build_temp,

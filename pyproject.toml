@@ -66,8 +66,8 @@ line-length = 119
 lint.ignore = [
   "D100",
   "RUF003", # Comment contains ambiguous `ノ` (KATAKANA LETTER NO). Did you mean `/` (SOLIDUS)?
-  "ANN101", # Missing type annotation for self in method
-  "ANN102", # Missing type annotation for `cls` in classmethod
+  "ANN101", # Missing type annotation for self in method (removed in newer ruff)
+  "ANN102", # Missing type annotation for cls in classmethod (removed in newer ruff)
   "ANN201", #  Missing return type annotation for public function
   "SLF001", # Private member accessed
   "ERA001", # commentouted code is allowed

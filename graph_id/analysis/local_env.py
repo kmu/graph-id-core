@@ -192,7 +192,7 @@ class DistanceClusteringNN(NearNeighbors):
         max_dist_list = [0 for _ in range(max(labels) + 1)]
         for label_number in range(max(labels) + 1):
             max_dist = 0
-            for label, distance in zip(labels, distance_list):
+            for label, distance in zip(labels, distance_list, strict=False):
                 if label == label_number:
                     max_dist = max(max_dist, distance[0])
 

@@ -108,10 +108,16 @@ class TestNNHelper(unittest.TestCase):
                     self.assert_result(a, b)
 
     def sort2(self, a, b, c, d):
-        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[2], x[3][0], x[3][1], x[3][2]))  # noqa: C414
+        return sorted(  # noqa: C414
+            list(zip(a, b, c, d, strict=False)),
+            key=lambda x: (x[2], x[3][0], x[3][1], x[3][2]),
+        )
 
     def sort(self, a, b, c, d):
-        return sorted(list(zip(a, b, c, d)), key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2]))  # noqa: C414
+        return sorted(  # noqa: C414
+            list(zip(a, b, c, d, strict=False)),
+            key=lambda x: (x[0], x[1], x[2][0], x[2][1], x[2][2]),
+        )
 
     def assert_result(self, a, b):
         sa = {(x[0], x[1], tuple(x[2])) for x in a}

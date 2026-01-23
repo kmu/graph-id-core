@@ -6,6 +6,7 @@ import os.path
 import timeit
 import unittest
 
+import numpy as np
 from pymatgen.analysis.local_env import (
     BrunnerNN_real,
     CrystalNN,
@@ -93,15 +94,9 @@ class TestBenchmark(unittest.TestCase):
 
             at = timeit.timeit("f(py)", number=10, globals=locals()) * 100
             bt = timeit.timeit("f(cpp)", number=10, globals=locals()) * 100
-            print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
-            )
+            msg = f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, "
+            msg += f"C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]"
+            print(msg)
 
     def test_graph_id(self):
         print("GraphIDGenerator.get_id:")
@@ -111,20 +106,12 @@ class TestBenchmark(unittest.TestCase):
             n = 1
             at = timeit.timeit("a.get_id(s)", number=n, globals=locals()) * 1000 / n
             bt = timeit.timeit("b.get_id(s)", number=n, globals=locals()) * 1000 / n
-            print(
-                "{: 3d} site. Python: {: 8.3f}ms, C++: {: 7.3f}ms, {: 4.1f} times faster [{}]".format(
-                    s.num_sites,
-                    at,
-                    bt,
-                    at / bt,
-                    name,
-                ),
-            )
+            msg = f"{s.num_sites: 3d} site. Python: {at: 8.3f}ms, "
+            msg += f"C++: {bt: 7.3f}ms, {at / bt: 4.1f} times faster [{name}]"
+            print(msg)
 
     def test_graph_id_cpp_only(self):
         print("GraphIDGenerator.get_id:")
-        import numpy as np
-
         g = graph_id_cpp.GraphIDGenerator()
         for name, s in small_test_structure(1000):
             n = 1000

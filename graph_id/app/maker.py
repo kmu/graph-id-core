@@ -216,7 +216,7 @@ class GraphIDMaker:
 
             for cc_idx, nodes in enumerate(cc_nodes):
                 cs_list = cc_cs[cc_idx]
-                for node_idx, cs_string in zip(nodes, cs_list):
+                for node_idx, cs_string in zip(nodes, cs_list, strict=False):
                     # Format: label + "_" + compositional_sequence
                     site_ids[node_idx] = f"{labels[node_idx]}_{cs_string}"
 
