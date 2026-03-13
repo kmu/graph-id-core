@@ -10,7 +10,7 @@ import numpy as np
 from ase import Atoms
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
-from pymatgen.core import Element, Molecule, Structure, Lattice
+from pymatgen.core import Element, Lattice, Molecule, Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 from tqdm import tqdm
 
@@ -360,7 +360,7 @@ class GraphIDGenerator:
             for i, component in enumerate(sg.cc_cs):
                 array[i] = self._join_cs_list(component["cs_list"])
             array_list.extend(array)
-        
+
         long_str = ":".join(np.sort(array_list))
 
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
