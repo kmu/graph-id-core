@@ -10,7 +10,7 @@ import numpy as np
 from ase import Atoms
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
-from pymatgen.core import Element, Molecule, Structure
+from pymatgen.core import Element, Molecule, Structure, Lattice
 from pymatgen.io.ase import AseAtomsAdaptor
 from tqdm import tqdm
 
@@ -352,7 +352,7 @@ class GraphIDGenerator:
             elif isinstance(material, Molecule):
                 structure = self._molecule_to_structure(material)
             elif isinstance(material, Atoms):
-                structure = AseAtomsAdaptor.get_structure(atoms)
+                structure = AseAtomsAdaptor.get_structure(material)
             else:
                 raise TypeError(f"Item of materials_list must be pymatgen.core.Strucuture or pymatgen.core.Molecule or ase.Atoms, got {type(material.__name__)}")
             
@@ -366,12 +366,11 @@ class GraphIDGenerator:
             )
             for i, component in enumerate(sg.cc_cs):
                 array[i] = self._join_cs_list(component["cs_list"])
-            array_list.append(*array)
+            array_list.extend(array)
         
         long_str = ":".join(np.sort(array_list))
 
-        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
-        return self.elaborate_comp_dim(sg, gid)
+        return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def are_same(self, structure1, structure2):
         """Check if two structures have the same Graph ID.
