@@ -16,10 +16,9 @@ from tqdm import tqdm
 
 from graph_id.analysis.graphs import StructureGraph
 
-
 if TYPE_CHECKING:
-    from pymatgen.core.structure import Structure, Molecule
     from ase import Atoms
+    from pymatgen.core.structure import Molecule, Structure
 
 
 __version__ = "0.1.0"
@@ -328,19 +327,11 @@ class GraphIDGenerator:
         max_c = coords.max(axis=0)
         lengths = max_c - min_c + 2 * vacuum
 
-        lattice = Lattice.from_parameters(
-            lengths[0], lengths[1], lengths[2],
-            90, 90, 90
-        )
+        lattice = Lattice.from_parameters(lengths[0], lengths[1], lengths[2], 90, 90, 90)
 
         shifted_coords = coords - min_c + vacuum
 
-        structure = Structure(
-            lattice,
-            species,
-            shifted_coords,
-            coords_are_cartesian=True
-        )
+        structure = Structure(lattice, species, shifted_coords, coords_are_cartesian=True)
 
         return structure
 
@@ -354,8 +345,10 @@ class GraphIDGenerator:
             elif isinstance(material, Atoms):
                 structure = AseAtomsAdaptor.get_structure(atoms)
             else:
-                raise TypeError(f"Item of materials_list must be pymatgen.core.Strucuture or pymatgen.core.Molecule or ase.Atoms, got {type(material.__name__)}")
-            
+                raise TypeError(
+                    f"Item of materials_list must be pymatgen.core.Strucuture or pymatgen.core.Molecule or ase.Atoms, got {type(material.__name__)}",
+                )
+
             sg = self.prepare_structure_graph(structure)
             n = len(sg.cc_cs)
             array = np.empty(
@@ -367,7 +360,7 @@ class GraphIDGenerator:
             for i, component in enumerate(sg.cc_cs):
                 array[i] = self._join_cs_list(component["cs_list"])
             array_list.append(*array)
-        
+
         long_str = ":".join(np.sort(array_list))
 
         gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
