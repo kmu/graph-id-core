@@ -7,15 +7,19 @@ from typing import TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
+from ase import Atoms
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
-from pymatgen.core import Element
+from pymatgen.core import Element, Molecule, Structure
+from pymatgen.io.ase import AseAtomsAdaptor
 from tqdm import tqdm
 
 from graph_id.analysis.graphs import StructureGraph
 
+
 if TYPE_CHECKING:
-    from pymatgen.core.structure import Structure
+    from pymatgen.core.structure import Structure, Molecule
+    from ase import Atoms
 
 
 __version__ = "0.1.0"
@@ -315,6 +319,59 @@ class GraphIDGenerator:
             cc_gid[i] = {"site_i": component["site_i"], "graph_id": gid}
 
         return cc_gid
+
+    def _molecule_to_structure(self, mol: Molecule, vacuum: float = 10.0) -> Structure:
+        coords = mol.cart_coords
+        species = mol.species
+
+        min_c = coords.min(axis=0)
+        max_c = coords.max(axis=0)
+        lengths = max_c - min_c + 2 * vacuum
+
+        lattice = Lattice.from_parameters(
+            lengths[0], lengths[1], lengths[2],
+            90, 90, 90
+        )
+
+        shifted_coords = coords - min_c + vacuum
+
+        structure = Structure(
+            lattice,
+            species,
+            shifted_coords,
+            coords_are_cartesian=True
+        )
+
+        return structure
+
+    def get_merged_id(self, materials_list: list[Structure, Molecule, Atoms]):
+        array_list = []
+        for material in materials_list:
+            if isinstance(material, Structure):
+                structure = material
+            elif isinstance(material, Molecule):
+                structure = self._molecule_to_structure(material)
+            elif isinstance(material, Atoms):
+                structure = AseAtomsAdaptor.get_structure(atoms)
+            else:
+                raise TypeError(f"Item of materials_list must be pymatgen.core.Strucuture or pymatgen.core.Molecule or ase.Atoms, got {type(material.__name__)}")
+            
+            sg = self.prepare_structure_graph(structure)
+            n = len(sg.cc_cs)
+            array = np.empty(
+                [
+                    n,
+                ],
+                dtype=object,
+            )
+            for i, component in enumerate(sg.cc_cs):
+                array[i] = self._join_cs_list(component["cs_list"])
+            array_list.append(*array)
+        
+        long_str = ":".join(np.sort(array_list))
+
+        gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
+        return self.elaborate_comp_dim(sg, gid)
 
     def are_same(self, structure1, structure2):
         """Check if two structures have the same Graph ID.
