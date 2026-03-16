@@ -390,7 +390,7 @@ class GraphIDGenerator:
             elif isinstance(material, Atoms):
                 structure = AseAtomsAdaptor.get_structure(material)
             else:
-                error_message = f"Item of materials_list must be pymatgen.core.Strucuture or pymatgen.core.Molecule \
+                error_message = f"Item of materials_list must be pymatgen.core.Structure or pymatgen.core.Molecule \
                 or ase.Atoms, got {type(material.__name__)}"
                 raise TypeError(error_message)
 
