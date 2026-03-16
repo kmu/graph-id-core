@@ -5,9 +5,9 @@ from pathlib import Path
 from unittest import TestCase
 
 import pytest
-from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
-from pymatgen.core import Element, Lattice, Structure, Molecule
 from ase.io import read
+from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
+from pymatgen.core import Element, Lattice, Molecule, Structure
 
 from graph_id.core.graph_id import GraphIDGenerator
 
@@ -176,5 +176,7 @@ class TestGraphIDGenerator(TestCase):
         h2o_molecule = Molecule.from_file(f"{TEST_FILES}/h2o.xyz")
         h2o_atoms = read(f"{TEST_FILES}/h2o.xyz")
         h2o_atoms.set_cell([20, 20, 20])
-        
-        self.assertEqual(GraphIDGenerator().get_merged_id([graphite_structure, h2o_molecule, h2o_atoms]), "e3ba6126e6d1e523")
+
+        self.assertEqual(
+            GraphIDGenerator().get_merged_id([graphite_structure, h2o_molecule, h2o_atoms]), "e3ba6126e6d1e523",
+        )
