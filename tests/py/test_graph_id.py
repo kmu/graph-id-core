@@ -178,5 +178,6 @@ class TestGraphIDGenerator(TestCase):
         h2o_atoms.set_cell([20, 20, 20])
 
         self.assertEqual(
-            GraphIDGenerator().get_merged_id([graphite_structure, h2o_molecule, h2o_atoms]), "e3ba6126e6d1e523",
+            GraphIDGenerator().get_merged_id([graphite_structure, h2o_molecule, h2o_atoms]),
+            "e3ba6126e6d1e523",
         )
