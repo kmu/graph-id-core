@@ -28,7 +28,7 @@ scikit-learn = ">=0.24.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
-pytest-cov = "^7.0.0"
+pytest-cov = "^7.1.0"
 ase = "^3.28.0"
 
 [tool.poetry.group.docs]
