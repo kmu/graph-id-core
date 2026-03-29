@@ -26,7 +26,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -48,7 +48,7 @@ jobs:
           package-dir: .
           output-dir: wheelhouse
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -57,12 +57,12 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -85,7 +85,7 @@ jobs:
       - name: Build sdist
         run: poetry build --format=sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -99,7 +99,7 @@ jobs:
     if: github.ref == 'refs/heads/release'
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
@@ -115,13 +115,13 @@ jobs:
     if: github.ref == 'refs/heads/release'
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -131,7 +131,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_ENV
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.version }}
           files: dist/*
@@ -154,7 +154,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
