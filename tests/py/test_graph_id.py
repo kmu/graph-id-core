@@ -7,7 +7,7 @@ from unittest import TestCase
 import pytest
 from ase.io import read
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
-from pymatgen.core import Element, Lattice, Molecule, Structure
+from pymatgen.core import Element, Lattice, Structure
 
 from graph_id.core.graph_id import GraphIDGenerator
 
