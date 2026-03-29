@@ -53,7 +53,7 @@ class GraphIDGenerator:
 
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__( # noqa: PLR0913
         self,
         nn=None,
         wyckoff=False,
@@ -334,7 +334,7 @@ class GraphIDGenerator:
 
         return Structure(lattice, species, shifted_coords, coords_are_cartesian=True)
 
-    def get_merged_id(self, materials_list: list[Structure, Molecule, Atoms]):
+    def get_merged_id(self, materials_list: list[Structure | Molecule | Atoms]):
         """Generate a merged Graph ID for multiple materials.
 
         This method computes Graph IDs for all connected components found in
@@ -390,8 +390,10 @@ class GraphIDGenerator:
             elif isinstance(material, Atoms):
                 structure = AseAtomsAdaptor.get_structure(material)
             else:
-                error_message = f"Item of materials_list must be pymatgen.core.Structure or pymatgen.core.Molecule \
-                or ase.Atoms, got {type(material.__name__)}"
+                error_message = (
+                    "Item of materials_list must be pymatgen.core.Structure, "
+                    f"pymatgen.core.Molecule, or ase.Atoms, got {type(material).__name__}"
+                )
                 raise TypeError(error_message)
 
             sg = self.prepare_structure_graph(structure)
