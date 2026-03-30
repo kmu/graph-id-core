@@ -3,20 +3,17 @@ from __future__ import annotations
 import multiprocessing as multi
 from hashlib import blake2b
 from multiprocessing import Pool
-from typing import TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
+from ase import Atoms
 from pymatgen.analysis.dimensionality import get_dimensionality_larsen
 from pymatgen.analysis.local_env import MinimumDistanceNN
-from pymatgen.core import Element
+from pymatgen.core import Element, Lattice, Molecule, Structure
+from pymatgen.io.ase import AseAtomsAdaptor
 from tqdm import tqdm
 
 from graph_id.analysis.graphs import StructureGraph
-
-if TYPE_CHECKING:
-    from pymatgen.core.structure import Structure
-
 
 __version__ = "0.1.0"
 
@@ -53,6 +50,7 @@ class GraphIDGenerator:
     --------
     GraphIDMaker : High-level interface with simpler API
     DistanceClusteringGraphID : Variant using distance clustering
+
     """
 
     def __init__(  # noqa: PLR0913
@@ -115,6 +113,7 @@ class GraphIDGenerator:
         >>> gen = GraphIDGenerator(topology_only=True)  # Topology-only
         >>> gen = GraphIDGenerator(wyckoff=True, symmetry_tol=0.01)  # With Wyckoff
         >>> gen = GraphIDGenerator(diameter_factor=3, additional_depth=2)  # Deeper traversal
+
         """
         if wyckoff and loop:
             msg = "wyckoff and loop cannot be True at the same time"
@@ -175,6 +174,7 @@ class GraphIDGenerator:
         >>> gen = GraphIDGenerator(prepend_composition=False)
         >>> gen.get_id(nacl_structure)
         '3D-88c8e156db1b0fd9'
+
         """
         sg = self.prepare_structure_graph(structure)
         n = len(sg.cc_cs)
@@ -204,6 +204,7 @@ class GraphIDGenerator:
         -------
         str
             The elaborated Graph ID with prefixes.
+
         """
         if self.prepend_dimensionality:
             dim = get_dimensionality_larsen(sg)
@@ -236,6 +237,7 @@ class GraphIDGenerator:
         -----
         This method catches all exceptions silently and returns an empty string.
         Useful for batch processing where some structures may fail.
+
         """
         try:
             return self.get_id(structure)
@@ -264,6 +266,7 @@ class GraphIDGenerator:
         >>> gen = GraphIDGenerator()
         >>> structures = [Structure.from_file(f) for f in cif_files]
         >>> ids = gen.get_many_ids(structures, parallel=True)
+
         """
         if parallel:
             n_cores = multi.cpu_count()
@@ -300,6 +303,7 @@ class GraphIDGenerator:
         >>> components = gen.get_component_ids(molecular_crystal)
         >>> for comp in components:
         ...     print(f"Sites {comp['site_i']}: {comp['graph_id']}")
+
         """
         sg = self.prepare_structure_graph(structure)
         cc_gid = np.empty(
@@ -315,6 +319,98 @@ class GraphIDGenerator:
             cc_gid[i] = {"site_i": component["site_i"], "graph_id": gid}
 
         return cc_gid
+
+    def _molecule_to_structure(self, mol: Molecule, vacuum: float = 10.0) -> Structure:
+        coords = mol.cart_coords
+        species = mol.species
+
+        min_c = coords.min(axis=0)
+        max_c = coords.max(axis=0)
+        lengths = max_c - min_c + 2 * vacuum
+
+        lattice = Lattice.from_parameters(lengths[0], lengths[1], lengths[2], 90, 90, 90)
+
+        shifted_coords = coords - min_c + vacuum
+
+        return Structure(lattice, species, shifted_coords, coords_are_cartesian=True)
+
+    def get_merged_id(self, materials_list: list[Structure | Molecule | Atoms]):
+        """Generate a merged Graph ID for multiple materials.
+
+        This method computes Graph IDs for all connected components found in
+        the input materials and merges them into a single identifier. The
+        connected components extracted from each material are converted into
+        canonical strings, sorted, concatenated with ``:`` separators, and
+        hashed using BLAKE2b to produce the final merged Graph ID.
+
+        The input materials may be provided as pymatgen ``Structure`` objects,
+        pymatgen ``Molecule`` objects, or ASE ``Atoms`` objects. Molecules and
+        ASE atoms are internally converted to ``Structure`` objects before
+        graph analysis.
+
+        Parameters
+        ----------
+        materials_list : list of Structure or Molecule or Atoms
+            A list of materials to be included in the merged Graph ID. Each
+            item must be one of the following types:
+
+            - ``pymatgen.core.Structure``
+            - ``pymatgen.core.Molecule``
+            - ``ase.Atoms``
+
+        Returns
+        -------
+        str
+            A hexadecimal string representing the merged Graph ID of all
+            connected components found in the input materials.
+
+        Raises
+        ------
+        TypeError
+            If an item in ``materials_list`` is not a supported material type.
+
+        Examples
+        --------
+        >>> gen = GraphIDGenerator()
+        >>> gid = gen.get_merged_id([structure1, structure2])
+        >>> print(gid)
+
+        The method can also accept mixed object types:
+
+        >>> gid = gen.get_merged_id([structure, molecule, ase_atoms])
+        >>> print(gid)
+
+        """
+        array_list = []
+        for material in materials_list:
+            if isinstance(material, Structure):
+                structure = material
+            elif isinstance(material, Molecule):
+                structure = self._molecule_to_structure(material)
+            elif isinstance(material, Atoms):
+                structure = AseAtomsAdaptor.get_structure(material)
+            else:
+                error_message = (
+                    "Item of materials_list must be pymatgen.core.Structure, "
+                    f"pymatgen.core.Molecule, or ase.Atoms, got {type(material).__name__}"
+                )
+                raise TypeError(error_message)
+
+            sg = self.prepare_structure_graph(structure)
+            n = len(sg.cc_cs)
+            array = np.empty(
+                [
+                    n,
+                ],
+                dtype=object,
+            )
+            for i, component in enumerate(sg.cc_cs):
+                array[i] = self._join_cs_list(component["cs_list"])
+            array_list.extend(array)
+
+        long_str = ":".join(np.sort(array_list))
+
+        return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def are_same(self, structure1, structure2):
         """Check if two structures have the same Graph ID.
@@ -336,6 +432,7 @@ class GraphIDGenerator:
         >>> gen = GraphIDGenerator()
         >>> if gen.are_same(struct1, struct2):
         ...     print("Structures are topologically equivalent")
+
         """
         return self.get_id(structure1) == self.get_id(structure2)
 
@@ -362,6 +459,7 @@ class GraphIDGenerator:
         -----
         This is primarily an internal method, but can be useful for
         advanced analysis of the structure graph.
+
         """
         sg = StructureGraph.with_local_env_strategy(structure, self.nn)
         use_previous_cs = False
@@ -427,6 +525,7 @@ class GraphIDGenerator:
         >>> all_structures = load_many_cifs()
         >>> unique = gen.get_unique_structures(all_structures)
         >>> print(f"Reduced {len(all_structures)} to {len(unique)} unique")
+
         """
         unique_structures = []
         graph_ids = set()
