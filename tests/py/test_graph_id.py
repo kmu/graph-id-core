@@ -7,7 +7,7 @@ from unittest import TestCase
 import pytest
 from ase.io import read
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
-from pymatgen.core import Element, Lattice, Structure
+from pymatgen.core import Element, Lattice, Structure, Molecule
 
 from graph_id.core.graph_id import GraphIDGenerator
 
@@ -173,11 +173,20 @@ class TestGraphIDGenerator(TestCase):
 
     def test_merged_id(self):
         graphite_structure = Structure.from_file(f"{TEST_FILES}/graphite.cif")
-        h_molecule = read(f"{TEST_FILES}/h.xyz")
-        h_molecule.set_cell([20, 20, 20])
+        h2_atoms = read(f"{TEST_FILES}/h.xyz")
+        h2_atoms.set_cell([20, 20, 20])
+        h2_molecule = Molecule.from_file(f"{TEST_FILES}/h.xyz")
+        h2_str = open(f"{TEST_FILES}/h.xyz", "r")
         graphite_h = Structure.from_file(f"{TEST_FILES}/graphite_h.cif")
-
+        
         self.assertEqual(
-            GraphIDGenerator().get_merged_id([graphite_structure, h_molecule]),
+            GraphIDGenerator().get_merged_id([graphite_structure, h2_atoms]),
             GraphIDGenerator().get_id(graphite_h).split("-")[-1],
         )
+        self.assertEqual(
+            GraphIDGenerator().get_merged_id([graphite_structure, h2_molecule]),
+            GraphIDGenerator().get_id(graphite_h).split("-")[-1],
+        )
+
+        with self.assertRaises(TypeError):
+            GraphIDGenerator().get_merged_id([graphite_structure, h2_str])
