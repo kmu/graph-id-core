@@ -176,7 +176,8 @@ class TestGraphIDGenerator(TestCase):
         h2_atoms = read(f"{TEST_FILES}/h.xyz")
         h2_atoms.set_cell([20, 20, 20])
         h2_molecule = Molecule.from_file(f"{TEST_FILES}/h.xyz")
-        h2_str = open(f"{TEST_FILES}/h.xyz")
+        with Path(f"{TEST_FILES}/h.xyz").open("r") as f:
+            h2_str = f.read()
         graphite_h = Structure.from_file(f"{TEST_FILES}/graphite_h.cif")
 
         self.assertEqual(
@@ -188,5 +189,5 @@ class TestGraphIDGenerator(TestCase):
             GraphIDGenerator().get_id(graphite_h).split("-")[-1],
         )
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(TypeError): #noqa: PT027
             GraphIDGenerator().get_merged_id([graphite_structure, h2_str])
