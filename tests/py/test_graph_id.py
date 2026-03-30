@@ -172,6 +172,8 @@ class TestGraphIDGenerator(TestCase):
             GraphIDGenerator(topology_only=True, loop=True)
 
     def test_merged_id(self):
+        gen = GraphIDGenerator(prepend_composition=False, prepend_dimensionality=False)
+
         graphite_structure = Structure.from_file(f"{TEST_FILES}/graphite.cif")
         h2_atoms = read(f"{TEST_FILES}/h.xyz")
         h2_atoms.set_cell([20, 20, 20])
@@ -181,13 +183,13 @@ class TestGraphIDGenerator(TestCase):
         graphite_h = Structure.from_file(f"{TEST_FILES}/graphite_h.cif")
 
         self.assertEqual(
-            GraphIDGenerator().get_merged_id([graphite_structure, h2_atoms]),
-            GraphIDGenerator().get_id(graphite_h).split("-")[-1],
+            gen.get_merged_id([graphite_structure, h2_atoms]),
+            gen.get_id(graphite_h),
         )
         self.assertEqual(
-            GraphIDGenerator().get_merged_id([graphite_structure, h2_molecule]),
-            GraphIDGenerator().get_id(graphite_h).split("-")[-1],
+            gen.get_merged_id([graphite_structure, h2_molecule]),
+            gen.get_id(graphite_h),
         )
 
         with self.assertRaises(TypeError): #noqa: PT027
-            GraphIDGenerator().get_merged_id([graphite_structure, h2_str])
+            gen.get_merged_id([graphite_structure, h2_str])
