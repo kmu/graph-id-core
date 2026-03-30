@@ -191,5 +191,5 @@ class TestGraphIDGenerator(TestCase):
             gen.get_id(graphite_h),
         )
 
-        with self.assertRaises(TypeError): #noqa: PT027
+        with self.assertRaises(TypeError):  # noqa: PT027
             gen.get_merged_id([graphite_structure, h2_str])
