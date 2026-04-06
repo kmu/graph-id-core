@@ -41,6 +41,7 @@ class CMakeExtension(Extension):
             The name of the extension module.
         sourcedir : str, optional
             The source directory containing CMakeLists.txt.
+
         """
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
@@ -141,6 +142,7 @@ def build(setup_kwargs):
     ----------
     setup_kwargs : dict
         The keyword arguments dictionary passed to setup().
+
     """
     ext_modules = [
         CMakeExtension("graph_id_cpp", sourcedir="."),

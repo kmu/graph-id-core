@@ -60,6 +60,7 @@ class CompositionalSequence:
     >>> # ... add neighbors at each depth ...
     >>> print(str(cs))
     'Na-Cl6-Na12...'
+
     """
 
     def __init__(self, focused_site_i, starting_labels, hash_cs=False, use_previous_cs=False):
@@ -86,6 +87,7 @@ class CompositionalSequence:
         -------
         str
             Format: ``"{first_element}-{depth1}-{depth2}-..."``
+
         """
         if self.hash_cs:
             return f"{self.first_element}-{self.cs_for_hashing}"  # type: ignore
@@ -99,6 +101,7 @@ class CompositionalSequence:
         -------
         list of tuple
             List of ``(site_index, jimage)`` tuples for the frontier sites.
+
         """
         new_sites = self.new_sites
         self.new_sites = []
@@ -117,6 +120,7 @@ class CompositionalSequence:
         ----------
         nsites : list of Neighbor
             The neighboring sites to count.
+
         """
         for neighbor in nsites:
             neighbor_info = (neighbor.index, neighbor.jimage)
@@ -158,6 +162,7 @@ class CompositionalSequence:
         -------
         list of str
             Sorted list of ``"{element}{count}"`` strings.
+
         """
         sorted_symbols = sorted(composition_counter.keys())
         return [s + str(formula_double_format(composition_counter[s], ignore_ones=False)) for s in sorted_symbols]

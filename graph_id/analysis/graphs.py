@@ -27,6 +27,7 @@ def standardize_loop(lst):
     -------
     list
         The standardized loop.
+
     """
     lst2 = list(reversed(lst))
     starting_point = lst2.pop(-1)
@@ -45,6 +46,7 @@ class SiteOnlySpeciesString:
     ----------
     species_string : str
         The species string (e.g., "Na", "Cl").
+
     """
 
     def __init__(self, species_string):
@@ -84,6 +86,7 @@ class ConnectedSiteLight:
         The bond weight.
     dist : float or None
         The distance.
+
     """
 
     def __init__(
@@ -122,6 +125,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
     See Also
     --------
     pymatgen.analysis.graphs.StructureGraph : Base class
+
     """
 
     @staticmethod
@@ -137,6 +141,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         -------
         StructureGraph
             A new StructureGraph instance.
+
         """
         graph_data = sg.as_dict()["graphs"]
 
@@ -172,6 +177,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         >>> sg = StructureGraph.with_local_env_strategy(
         ...     structure, MinimumDistanceNN()
         ... )
+
         """
         if not strategy.structures_allowed:
             msg = "Chosen strategy is not designed for use with structures! Please choose another strategy."
@@ -229,6 +235,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         ------
         ValueError
             If the strategy does not support structures.
+
         """
         if not strategy.structures_allowed:
             raise ValueError(  # noqa: TRY003
@@ -279,6 +286,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         -------
         list of ConnectedSiteLight
             List of connected sites with minimal information.
+
         """
         connected_sites = set()
         connected_site_images = set()
@@ -323,6 +331,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         Notes
         -----
         If symmetry detection fails, falls back to elemental labels.
+
         """
         siteless_strc = self.structure.copy()
 
@@ -380,6 +389,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
 
         - Node attributes are set with key ``"compositional_sequence"``
         - ``self.cc_cs`` contains compositional sequences per component
+
         """
         node_attributes = {}
         self.cc_cs = []
@@ -444,6 +454,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         -----
         Loops are found by breadth-first traversal and tracking when paths
         return to their starting point.
+
         """
         get_connected_sites = functools.lru_cache(maxsize=None)(self.get_connected_sites)
 
@@ -539,6 +550,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         -----
         Sets ``self.starting_labels`` to hashed loop representations.
         Used when ``loop=True`` in GraphIDGenerator.
+
         """
         self.starting_labels = []
 
@@ -547,8 +559,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         max_diameter = 0
         for cc in nx.connected_components(undirected_graph):
             d = diameter(undirected_graph.subgraph(cc))
-            if d > max_diameter:
-                max_diameter = d
+            max_diameter = max(max_diameter, d)
 
         depth = max_diameter * diameter_factor + additional_depth
 
@@ -603,6 +614,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
             Multiplier for graph diameter.
         use_previous_cs : bool, default False
             If True, use previous sequence as starting labels.
+
         """
         node_attributes = {}
         self.cc_cs = []
