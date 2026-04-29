@@ -25,7 +25,7 @@ jobs:
           submodules: recursive
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.4
+        uses: pypa/cibuildwheel@v3.4.1
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_SKIP: "pp* *musllinux*"  # Skip musl Linux builds if spglib doesn't work well. pybind11 doesn't support PyPy. Therefore skip PyPy.
