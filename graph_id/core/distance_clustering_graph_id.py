@@ -44,9 +44,10 @@ class DistanceClusteringGraphID(GraphIDGenerator):
     --------
     GraphIDGenerator : Standard Graph ID generator
     DistanceClusteringNN : The underlying neighbor detection class
+
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         nn=None,
         wyckoff=False,
@@ -89,6 +90,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         --------
         >>> gen = DistanceClusteringGraphID()  # Default settings
         >>> gen = DistanceClusteringGraphID(rank_k=5, cutoff=8.0)  # More clusters
+
         """
         super().__init__(
             nn,
@@ -127,6 +129,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         -----
         Unlike the base class, this does not prepend composition or
         dimensionality. The returned ID is the raw hash only.
+
         """
         gid_list = []
         _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
@@ -180,6 +183,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         StructureGraph
             The prepared structure graph with compositional sequences
             computed for the specified site and cluster.
+
         """
         sg = StructureGraph.with_indivisual_state_comp_strategy(
             structure=structure,

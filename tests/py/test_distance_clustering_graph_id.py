@@ -1,4 +1,4 @@
-# ruff: noqa: D101, D102
+# ruff: noqa: D101
 """Tests for distance clustering Graph ID (Python implementation)."""
 
 from pathlib import Path

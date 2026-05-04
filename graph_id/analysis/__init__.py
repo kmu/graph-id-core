@@ -17,4 +17,4 @@ from graph_id.analysis.compositional_sequence import CompositionalSequence
 from graph_id.analysis.graphs import StructureGraph
 from graph_id.analysis.local_env import DistanceClusteringNN
 
-__all__ = ["StructureGraph", "CompositionalSequence", "DistanceClusteringNN"]
+__all__ = ["CompositionalSequence", "DistanceClusteringNN", "StructureGraph"]

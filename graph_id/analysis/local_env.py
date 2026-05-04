@@ -27,6 +27,7 @@ def _get_original_site(structure, site):
     ------
     Exception
         If the site cannot be found in the structure.
+
     """
     if isinstance(structure, IStructure | Structure):
         site_fcoords = site.frac_coords
@@ -70,6 +71,7 @@ class DistanceClusteringNN(NearNeighbors):
     See Also
     --------
     DistanceClusteringGraphID : Graph ID generator using this class
+
     """
 
     def __init__(self) -> None:
@@ -83,6 +85,7 @@ class DistanceClusteringNN(NearNeighbors):
         -------
         bool
             Always True for this class.
+
         """
         return True
 
@@ -111,6 +114,7 @@ class DistanceClusteringNN(NearNeighbors):
             - ``weight``: The bond distance (rounded to 3 decimals)
             - ``site_index``: Index of the neighbor in the structure
             - ``edge_properties``: Dict with ``cluster_idx`` key
+
         """
         site = structure[n]
         cutoff_cluster_list = self.get_cutoff_cluster(structure, n, cutoff)
@@ -166,6 +170,7 @@ class DistanceClusteringNN(NearNeighbors):
         -----
         Uses DBSCAN with eps=0.5 and min_samples=2 to cluster distances.
         Distances that don't fit into any cluster are ignored.
+
         """
         # # スーパーセルを作成し、6.0angまでの結合長を数え上げる
         # copy_structure = structure.copy()
