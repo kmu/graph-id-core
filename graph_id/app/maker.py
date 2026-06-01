@@ -32,6 +32,7 @@ class GraphIDMaker:
     >>> maker = GraphIDMaker()
     >>> maker.get_id(structure)
     'NaCl-88c8e156db1b0fd9'
+
     """
 
     def __init__(
@@ -67,6 +68,7 @@ class GraphIDMaker:
         >>> maker = GraphIDMaker(engine="py")  # Python engine
         >>> maker = GraphIDMaker(depth=5)  # Fixed depth
         >>> maker = GraphIDMaker(reduce=True)  # Enable reduction
+
         """
         self.reduce = reduce
 
@@ -124,6 +126,7 @@ class GraphIDMaker:
         >>> maker = GraphIDMaker()
         >>> maker.get_id(structure)
         'NaCl-88c8e156db1b0fd9'
+
         """
         graph_id = self.get_id_reducing_site_sequences(structure) if self.reduce else self.generator.get_id(structure)
 
@@ -149,6 +152,7 @@ class GraphIDMaker:
         Notes
         -----
         This is an internal method called when ``reduce=True``.
+
         """
         sg = self.generator.prepare_structure_graph(structure)
 
@@ -203,6 +207,7 @@ class GraphIDMaker:
         -----
         For the C++ engine, constructs site IDs from ``cc_nodes`` and ``cc_cs``.
         For the Python engine, uses NetworkX node attributes directly.
+
         """
         sg = self.generator.prepare_structure_graph(structure)
 

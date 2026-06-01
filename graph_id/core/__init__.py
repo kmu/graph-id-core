@@ -13,4 +13,4 @@ DistanceClusteringGraphID
 from graph_id.core.distance_clustering_graph_id import DistanceClusteringGraphID
 from graph_id.core.graph_id import GraphIDGenerator
 
-__all__ = ["GraphIDGenerator", "DistanceClusteringGraphID"]
+__all__ = ["DistanceClusteringGraphID", "GraphIDGenerator"]
