@@ -51,7 +51,7 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+        key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
           ${{ runner.os }}-poetry-${{ matrix.python-version }}-
           ${{ runner.os }}-poetry-
@@ -64,7 +64,7 @@ jobs:
         mkdir -p build
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(python3 -m pybind11 --cmakedir)
-        cmake --build . --config Release
+        cmake --build . --config Release --parallel
 
     - name: Copy built extension to package
       run: |
@@ -78,7 +78,7 @@ jobs:
 
     - name: Run pytest
       run: |
-        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v
+        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'

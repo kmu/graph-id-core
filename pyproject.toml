@@ -23,7 +23,7 @@ generate-setup-file = true
 [tool.poetry.dependencies]
 pybind11 = "3.0.2"
 python = ">=3.11,<3.14"
-pymatgen = "^2025.10.7"
+pymatgen = "^2025.10.7,<2026.0.0"
 scikit-learn = ">=0.24.1"
 ase = "^3.27.0"
 
@@ -31,6 +31,7 @@ ase = "^3.27.0"
 pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 ase = "^3.28.0"
+pytest-xdist = "^3.8.0"
 
 [tool.poetry.group.docs]
 optional = true

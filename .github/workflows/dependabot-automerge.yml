@@ -1,6 +1,8 @@
 name: Dependabot Auto-merge
 
-on: pull_request
+# Temporarily disabled until CI is fixed and branch protection is configured
+# To re-enable: change "on: workflow_dispatch" to "on: pull_request_target" and remove "if: false"
+on: workflow_dispatch
 
 permissions:
   contents: write
@@ -9,7 +11,8 @@ permissions:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    if: false  # Temporarily disabled
+    # if: github.actor == 'dependabot[bot]'
     steps:
       - name: Dependabot metadata
         id: metadata
@@ -19,6 +22,12 @@ jobs:
 
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve PR
+        run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
