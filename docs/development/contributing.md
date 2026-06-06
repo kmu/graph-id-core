@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Graph ID!
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - C++ compiler (for building the extension)
 - Git
 

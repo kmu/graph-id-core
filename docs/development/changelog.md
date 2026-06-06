@@ -2,7 +2,11 @@
 
 All notable changes to Graph ID will be documented here.
 
-## [0.1.17] - Latest
+## [0.1.19]
+
+- Support for Python 3.11-3.13
+
+## [0.1.17]
 
 ### Current Version
 
