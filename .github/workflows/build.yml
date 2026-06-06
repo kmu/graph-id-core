@@ -27,7 +27,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.4
         env:
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.11"
           CIBW_SKIP: "pp* *musllinux*"  # Skip musl Linux builds if spglib doesn't work well. pybind11 doesn't support PyPy. Therefore skip PyPy.
           CIBW_ARCHS: "auto64"
           CIBW_BEFORE_BUILD_LINUX: "rm -rf {project}/build"
