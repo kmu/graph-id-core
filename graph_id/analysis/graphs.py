@@ -32,7 +32,7 @@ def standardize_loop(lst):
     starting_point = lst2.pop(-1)
     lst2.insert(0, starting_point)
 
-    return sorted([lst, lst2], key=lambda x: "".join(x))[-1]
+    return sorted([lst, lst2], key="".join)[-1]
 
 
 class SiteOnlySpeciesString:
