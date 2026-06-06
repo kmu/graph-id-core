@@ -408,11 +408,7 @@ class GraphIDGenerator:
                 array[i] = self._join_cs_list(component["cs_list"])
             array_list.extend(array)
 
-<<<<<<< HEAD
         long_str = ":".join(np.sort(array_list))
-=======
-        long_str = ":".join(np.sort(array_list, kind="mergesort"))
->>>>>>> refs/remotes/origin/drop-py310
 
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
