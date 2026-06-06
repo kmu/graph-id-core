@@ -150,10 +150,10 @@ class DistanceClusteringGraphID(GraphIDGenerator):
                 for i, component in enumerate(sg.cc_cs):
                     array[i] = blake("-".join(sorted(component["cs_list"])))
 
-                long_str_tmp = ":".join(np.sort(array, kind='mergesort'))
+                long_str_tmp = ":".join(np.sort(array, kind="mergesort"))
 
                 long_str_list.append(long_str_tmp)
-            long_str = ":".join(np.sort(long_str_list, kind='mergesort'))
+            long_str = ":".join(np.sort(long_str_list, kind="mergesort"))
             gid = blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
             gid_list.append(gid)
 

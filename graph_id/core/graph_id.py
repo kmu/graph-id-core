@@ -144,7 +144,7 @@ class GraphIDGenerator:
 
     def _component_strings_to_whole_id(self, component_strings):
         """Combine component hashes into a single ID."""
-        long_str = ":".join(np.sort(component_strings, kind='mergesort'))
+        long_str = ":".join(np.sort(component_strings, kind="mergesort"))
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
     def get_id(self, structure):
@@ -408,7 +408,7 @@ class GraphIDGenerator:
                 array[i] = self._join_cs_list(component["cs_list"])
             array_list.extend(array)
 
-        long_str = ":".join(np.sort(array_list, kind='mergesort'))
+        long_str = ":".join(np.sort(array_list, kind="mergesort"))
 
         return blake2b(long_str.encode("ascii"), digest_size=self.digest_size).hexdigest()
 
