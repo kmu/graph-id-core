@@ -56,9 +56,6 @@ jobs:
           ${{ runner.os }}-poetry-${{ matrix.python-version }}-
           ${{ runner.os }}-poetry-
 
-    - name: Ensure lock file is up to date
-      run: poetry lock
-
     - name: Install dependencies
       run: poetry install
 
