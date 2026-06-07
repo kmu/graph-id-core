@@ -5,8 +5,9 @@ from pathlib import Path
 from unittest import TestCase
 
 import pytest
+from ase.io import read
 from pymatgen.analysis.local_env import CrystalNN, MinimumDistanceNN
-from pymatgen.core import Element, Lattice, Structure
+from pymatgen.core import Element, Lattice, Molecule, Structure
 
 from graph_id.core.graph_id import GraphIDGenerator
 
@@ -169,3 +170,26 @@ class TestGraphIDGenerator(TestCase):
             GraphIDGenerator(wyckoff=True, loop=True)
         with pytest.raises(ValueError):  # noqa: PT011
             GraphIDGenerator(topology_only=True, loop=True)
+
+    def test_merged_id(self):
+        gen = GraphIDGenerator(prepend_composition=False, prepend_dimensionality=False)
+
+        graphite_structure = Structure.from_file(f"{TEST_FILES}/graphite.cif")
+        h2_atoms = read(f"{TEST_FILES}/h.xyz")
+        h2_atoms.set_cell([20, 20, 20])
+        h2_molecule = Molecule.from_file(f"{TEST_FILES}/h.xyz")
+        with Path(f"{TEST_FILES}/h.xyz").open("r") as f:
+            h2_str = f.read()
+        graphite_h = Structure.from_file(f"{TEST_FILES}/graphite_h.cif")
+
+        self.assertEqual(
+            gen.get_merged_id([graphite_structure, h2_atoms]),
+            gen.get_id(graphite_h),
+        )
+        self.assertEqual(
+            gen.get_merged_id([graphite_structure, h2_molecule]),
+            gen.get_id(graphite_h),
+        )
+
+        with self.assertRaises(TypeError):  # noqa: PT027
+            gen.get_merged_id([graphite_structure, h2_str])

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.18"
+version = "0.1.19"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
@@ -21,15 +21,17 @@ script = "build.py"
 generate-setup-file = true
 
 [tool.poetry.dependencies]
-pybind11 = "3.0.1"
-python = ">=3.10,<3.14"
-pymatgen = "^2025.10.7"
+pybind11 = "3.0.2"
+python = ">=3.11,<3.14"
+pymatgen = "^2025.10.7,<2026.0.0"
 scikit-learn = ">=0.24.1"
+ase = "^3.27.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
-ase = "^3.27.0"
+ase = "^3.28.0"
+pytest-xdist = "^3.8.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -37,14 +39,14 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.0"
 mkdocs-material = "^9.5.0"
-mkdocstrings = {extras = ["python"], version = "^0.26.0"}
+mkdocstrings = {extras = ["python"], version = "^1.0.4"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "graph_id"]
 norecursedirs = ["library", "build", "dist", ".git", ".venv", "__pycache__"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "pybind11~=2.11.1", "setuptools"]
+requires = ["poetry-core>=1.0.0", "pybind11~=3.0.2", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 
