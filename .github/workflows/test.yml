@@ -49,7 +49,7 @@ jobs:
       run: poetry config virtualenvs.in-project true
 
     - name: Cache Poetry dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: .venv
         # Key on the full resolved Python version (e.g. 3.12.10) so a venv built
