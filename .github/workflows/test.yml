@@ -15,10 +15,10 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest, macos-latest]
-        python-version: [ '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [ '3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v6
@@ -42,15 +42,15 @@ jobs:
         brew install cmake
 
     - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-      shell: bash
+      run: pipx install poetry
+
+    - name: Configure Poetry to use in-project virtualenv
+      run: poetry config virtualenvs.in-project true
 
     - name: Cache Poetry dependencies
       uses: actions/cache@v5
       with:
-        path: ~/.cache/pypoetry/virtualenvs
+        path: .venv
         key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
           ${{ runner.os }}-poetry-${{ matrix.python-version }}-
@@ -60,20 +60,22 @@ jobs:
       run: poetry install
 
     - name: Build C++ extension with CMake
+      shell: bash
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(python3 -m pybind11 --cmakedir)
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(poetry run python -m pybind11 --cmakedir)"
         cmake --build . --config Release --parallel
 
     - name: Copy built extension to package
+      shell: bash
       run: |
-        find build -name "graph_id_cpp*.so" -exec cp {} graph_id/ \;
+        find build \( -name "graph_id_cpp*.so" -o -name "graph_id_cpp*.pyd" \) -exec cp {} graph_id/ \;
 
     - name: Check built files
+      shell: bash
       run: |
         find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
-        ls -la src/graph_id/ || echo "src/graph_id directory not found"
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
