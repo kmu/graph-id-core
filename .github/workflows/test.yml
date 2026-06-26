@@ -57,28 +57,39 @@ jobs:
           ${{ runner.os }}-poetry-
 
     - name: Install dependencies
-      run: poetry install
+      run: poetry install --no-root
 
     - name: Build C++ extension with CMake
       shell: bash
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(poetry run python -m pybind11 --cmakedir)"
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         cmake --build . --config Release --parallel
 
-    - name: Copy built extension to package
+    - name: Copy built extension into importable locations
       shell: bash
       run: |
-        find build \( -name "graph_id_cpp*.so" -o -name "graph_id_cpp*.pyd" \) -exec cp {} graph_id/ \;
+        # On MSVC the extension is emitted under build/Release; on Unix Makefiles
+        # it lands directly in build/. Place it at the repo root (top-level
+        # `import graph_id_cpp`) and in build/ (tests/cpp/imports.py adds build/).
+        exts=$(find build -name "graph_id_cpp*.so" -o -name "graph_id_cpp*.pyd")
+        echo "Built extension(s):"
+        echo "$exts"
+        for f in $exts; do
+          cp -f "$f" .
+          cp -f "$f" build/ 2>/dev/null || true
+        done
 
     - name: Check built files
       shell: bash
       run: |
-        find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
+        find . build -maxdepth 2 -name "graph_id_cpp*" 2>/dev/null || true
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
     - name: Run pytest
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
 
