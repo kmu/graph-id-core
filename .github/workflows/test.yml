@@ -89,6 +89,13 @@ jobs:
           cp -f "$f" .
           cp -f "$f" build/ 2>/dev/null || true
         done
+        # Add the repo root to the venv's sys.path via a .pth file so the project
+        # package and graph_id_cpp resolve in every venv process, including pytest-
+        # xdist worker subprocesses. This avoids PYTHONPATH (which breaks Poetry on
+        # Windows) and relying on the CWD being on sys.path (flaky under xdist).
+        site=$(poetry run python -c "import sysconfig; print(sysconfig.get_path('platlib'))")
+        echo "site-packages: $site"
+        printf '%s\n' "$GITHUB_WORKSPACE" > "$site/graph_id_repo.pth"
 
     - name: Check built files
       shell: bash
