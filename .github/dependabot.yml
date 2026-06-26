@@ -1,0 +1,17 @@
+# Dependabot handles Python dependency updates (pyproject.toml / poetry.lock).
+# Everything else (GitHub Actions, git submodules) is managed by Renovate.
+# See: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
