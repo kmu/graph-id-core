@@ -4,9 +4,6 @@
     "config:recommended",
     ":dependencyDashboard"
   ],
-  "schedule": [
-    "before 9am on monday"
-  ],
   "timezone": "Asia/Tokyo",
   "prConcurrentLimit": 10,
   "labels": [
