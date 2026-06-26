@@ -6,16 +6,10 @@ import numpy as np
 from pymatgen.analysis.local_env import MinimumDistanceNN
 from pymatgen.core import Element
 
+from graph_id.analysis.compositional_sequence import blake
 from graph_id.analysis.graphs import StructureGraph
 from graph_id.analysis.local_env import DistanceClusteringNN
 from graph_id.core.graph_id import GraphIDGenerator
-
-__version__ = "0.1.0"
-
-
-def blake(s):
-    """Hash a string using BLAKE2b."""
-    return blake2b(s.encode()).hexdigest()
 
 
 class DistanceClusteringGraphID(GraphIDGenerator):
