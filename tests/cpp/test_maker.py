@@ -45,6 +45,17 @@ def test_maker():
     assert site_ids[7] == cl_site_id
 
 
+def test_python_engine_site_ids():
+    """The Python engine returns per-site IDs from the graph node attributes."""
+    nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
+
+    pymaker = GraphIDMaker(engine="py")
+    site_ids = pymaker.get_site_ids(nacl)
+
+    assert len(site_ids) == len(nacl)
+    assert all(isinstance(v, str) and v for v in site_ids.values())
+
+
 def test_reduce():
     """Test the reduce functionality of GraphIDMaker."""
     ase_structure_primitive = bulk("NaCl", "rocksalt", a=5.692)
