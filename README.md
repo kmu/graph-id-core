@@ -199,4 +199,4 @@ If you have made changes to the C++ code, run `poetry run pip install -e --force
 ### Releasing
 
 - Bump version in `pyproject.toml`.
-- Create a new PR from `main` branch to `release` branch.
+- Merge automatically created PR to merge `main` branch to `release` branch.
