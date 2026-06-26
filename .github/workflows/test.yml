@@ -94,6 +94,11 @@ jobs:
       run: |
         find . build -maxdepth 2 -name "graph_id_cpp*" 2>/dev/null || true
         poetry run python -c "import sys; print('Python path:', sys.path)"
+        echo "--- diagnostics ---"
+        poetry run python -c "import setuptools, sys; print('setuptools', setuptools.__version__, 'at', setuptools.__file__)" || echo "setuptools import FAILED"
+        poetry run python -c "import pkg_resources; print('pkg_resources OK')" || echo "pkg_resources import FAILED"
+        poetry run python -m pytest --version || echo "pytest --version FAILED"
+        poetry run python -m pytest --co -q -p no:cacheprovider 2>&1 | head -25 || true
 
     - name: Run pytest
       env:
