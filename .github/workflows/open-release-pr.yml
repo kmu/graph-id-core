@@ -1,0 +1,68 @@
+name: Open release PR
+
+# After the full test matrix passes on main, open (or refresh) a PR that
+# promotes main -> release. Merging that PR pushes to the release branch,
+# which triggers Build and Release (PyPI publish + GitHub release).
+on:
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  open-release-pr:
+    # Only when the Test run that finished was for main and succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Open or update release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin main release
+
+          # Nothing to release if release already contains everything on main.
+          ahead=$(git rev-list --count origin/release..origin/main)
+          if [ "$ahead" -eq 0 ]; then
+            echo "release is already up to date with main; nothing to do."
+            exit 0
+          fi
+
+          version=$(sed -nE 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' pyproject.toml)
+          title="Release v${version}"
+          body=$(cat <<EOF
+          Automated release PR: promotes \`main\` to \`release\`.
+
+          Merging this PR pushes to the \`release\` branch and triggers
+          **Build and Release** (PyPI publish + GitHub release \`v${version}\`).
+
+          - Version (from \`pyproject.toml\`): \`${version}\`
+          - Commits ahead of \`release\`: ${ahead}
+
+          Created automatically after the test matrix passed on \`main\`.
+          EOF
+          )
+
+          existing=$(gh pr list --base release --head main --state open \
+            --json number --jq '.[0].number')
+
+          if [ -n "$existing" ]; then
+            echo "Updating existing release PR #${existing}."
+            gh pr edit "$existing" --title "$title" --body "$body"
+          else
+            echo "Creating new release PR."
+            gh pr create --base release --head main --title "$title" --body "$body"
+          fi
