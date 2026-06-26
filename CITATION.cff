@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Muraoka"
+  given-names: "Koki"
+  orcid: "https://orcid.org/0000-0003-1830-7978"
+- family-names: "Tanimoto"
+  given-names: "Taku"
+- family-names: "Munekata"
+  given-names: "Tsubasa"
+- family-names: "Nakayama"
+  given-names: "Akira"
+  orcid: "https://orcid.org/0000-0002-7330-0317"
+title: "graph-id-core"
+version: 0.1.19
+doi: 10.1038/s41467-026-74536-5
+date-released: 2026-06-25
+url: "https://github.com/kmu/graph-id-core"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Muraoka"
+    given-names: "Koki"
+    orcid: "https://orcid.org/0000-0003-1830-7978"
+  - family-names: "Tanimoto"
+    given-names: "Taku"
+  - family-names: "Munekata"
+    given-names: "Tsubasa"
+  - family-names: "Nakayama"
+    given-names: "Akira"
+    orcid: "https://orcid.org/0000-0002-7330-0317"
+  doi: "10.1038/s41467-026-74536-5"
+  journal: "Nature Communications"
+  month: 6
+  start: 5409 # Article number
+  title: "Universal graph-based identifiers of chemical structures for linking large material databases"
+  issue: 1
+  volume: 17
+  year: 2026
