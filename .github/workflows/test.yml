@@ -96,21 +96,6 @@ jobs:
         find . build -maxdepth 2 -name "graph_id_cpp*" 2>/dev/null || true
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
-    - name: pytest diagnostics (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        set +e
-        echo "=== import coverage WITHOUT PYTHONPATH ==="
-        poetry run python -c "import coverage; print('coverage', coverage.__version__)"
-        echo "=== import coverage WITH PYTHONPATH=repo root ==="
-        PYTHONPATH="$GITHUB_WORKSPACE" poetry run python -c "import coverage; print('coverage', coverage.__version__)"
-        echo "=== sys.path WITH PYTHONPATH ==="
-        PYTHONPATH="$GITHUB_WORKSPACE" poetry run python -c "import sys; [print(repr(p)) for p in sys.path]"
-        echo "=== ls repo root for stray modules ==="
-        ls -a "$GITHUB_WORKSPACE" | grep -iE "sitecustomize|usercustomize|setuptools|\.pth|distutils" || echo "(none)"
-        true
-
     - name: Run pytest
       run: |
         poetry run python -m pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
