@@ -22,10 +22,6 @@ class TestGraphIDGenerator(TestCase):
 
         assert not gid.are_same(si, sr)
 
-    def test_version(self):
-        gid = GraphIDGenerator()
-        self.assertTrue(gid.version > "0.0.0")
-
     def test_nacl(self):
         nacl = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
         cscl = nacl.copy()

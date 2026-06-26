@@ -155,13 +155,14 @@ void StructureGraph::break_edge(
     // 辺が存在する場合はそのまま取り除く
     if (auto iter = graph_map.find(std::make_tuple(from, to, image)); iter != graph_map.end()) {
         // graph[from].erase(graph[from].begin() + iter);
+        const int removed_index = iter->second;
         auto begin_it = graph[from].begin();
-        std::advance(begin_it, iter->second);
+        std::advance(begin_it, removed_index);
         graph[from].erase(begin_it);
         graph_map.erase(std::make_tuple(from, to, image));
         // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
         for (const auto& [key, value] : graph_map){
-            if (value > iter->second && std::get<0>(key) == from){
+            if (value > removed_index && std::get<0>(key) == from){
                 graph_map[key] = value - 1;
             }
         }
@@ -173,13 +174,14 @@ void StructureGraph::break_edge(
             for (int i = 0; i < 3; i++) jimage[i] = -image[i];
             // if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != this->graph_map.end()){
             if(auto iter = graph_map.find(std::make_tuple(to, from, jimage)); iter != graph_map.end()){
+                const int removed_index = iter->second;
                 auto begin_it = graph[to].begin();
-                std::advance(begin_it, iter->second);
+                std::advance(begin_it, removed_index);
                 graph[to].erase(begin_it);
                 graph_map.erase(std::make_tuple(to, from, jimage));
                 // graph_mapでgraphの要素を削除したのでiterより値が大きいvalueを1減らす
                 for (const auto& [key, value] : graph_map){
-                    if (value > iter->second && std::get<0>(key) == to){
+                    if (value > removed_index && std::get<0>(key) == to){
                         graph_map[key] = value - 1;
                     }
                 }

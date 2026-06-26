@@ -139,6 +139,25 @@ Graph ID is particularly useful for:
 
 You can search materials using Graph ID at [matfinder.net](https://matfinder.net).
 
+## Citation
+
+If you use Graph ID in your research, please cite:
+
+> Muraoka, K., Tanimoto, T., Munekata, T. & Nakayama, A. Universal graph-based identifiers of chemical structures for linking large material databases. *Nature Communications* **17**, 5409 (2026). https://doi.org/10.1038/s41467-026-74536-5
+
+```bibtex
+@article{muraoka2026graphid,
+  title   = {Universal graph-based identifiers of chemical structures for linking large material databases},
+  author  = {Muraoka, Koki and Tanimoto, Taku and Munekata, Tsubasa and Nakayama, Akira},
+  journal = {Nature Communications},
+  volume  = {17},
+  number  = {1},
+  pages   = {5409},
+  year    = {2026},
+  doi     = {10.1038/s41467-026-74536-5}
+}
+```
+
 ## Developer's notes
 
 This repo is managed by `poetry`.
@@ -171,6 +190,7 @@ pre-commit install
 ### Testing
 
 ```
+poetry install
 poetry run pytest
 ```
 

@@ -4,7 +4,7 @@ This guide covers different ways to install Graph ID on your system.
 
 ## Requirements
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - A C++ compiler (for building from source)
 
 ## Install from PyPI

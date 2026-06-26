@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.19"
+version = "0.1.20"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
@@ -28,7 +28,7 @@ scikit-learn = ">=0.24.1"
 ase = "^3.27.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.0.2"
+pytest = "^9.1.1"
 pytest-cov = "^7.0.0"
 ase = "^3.28.0"
 pytest-xdist = "^3.8.0"

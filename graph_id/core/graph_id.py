@@ -13,14 +13,8 @@ from pymatgen.core import Element, Lattice, Molecule, Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 from tqdm import tqdm
 
+from graph_id.analysis.compositional_sequence import blake
 from graph_id.analysis.graphs import StructureGraph
-
-__version__ = "0.1.0"
-
-
-def blake(s):
-    """Hash a string using BLAKE2b."""
-    return blake2b(s.encode()).hexdigest()
 
 
 class GraphIDGenerator:
@@ -214,11 +208,6 @@ class GraphIDGenerator:
             gid = f"{sg.structure.composition.reduced_formula}-{gid}"
 
         return gid
-
-    @property
-    def version(self):
-        """Str : The version of the GraphIDGenerator."""
-        return __version__
 
     def get_id_catch_error(self, structure):
         """Generate a Graph ID with error handling.
