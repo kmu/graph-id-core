@@ -15,15 +15,5 @@
   ],
   "git-submodules": {
     "enabled": true
-  },
-  "packageRules": [
-    {
-      "description": "Group GitHub Actions and pre-commit hook updates into a single PR",
-      "matchManagers": [
-        "github-actions",
-        "pre-commit"
-      ],
-      "groupName": "github-actions"
-    }
-  ]
+  }
 }
