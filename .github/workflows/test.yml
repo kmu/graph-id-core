@@ -99,7 +99,7 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
-        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
+        poetry run python -m pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
