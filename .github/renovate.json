@@ -16,4 +16,11 @@
   "git-submodules": {
     "enabled": true
   }
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ],
+  "platformAutomerge": true
 }
