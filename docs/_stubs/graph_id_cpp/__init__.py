@@ -40,7 +40,7 @@ class StructureGraph:
     """C++ implementation of StructureGraph."""
 
     @staticmethod
-    def with_local_env_strategy(structure, strategy):
+    def from_local_env_strategy(structure, strategy):
         """Create a structure graph with the given local environment strategy."""
 
     def to_py(self):

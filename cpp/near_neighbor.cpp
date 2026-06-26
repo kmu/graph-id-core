@@ -1508,10 +1508,10 @@ void init_near_neighbor(pybind11::module &m) {
         if (pbc_np.ndim() != 1)
             throw std::runtime_error("pbc must be 1-D array of length 3");
 
-        ssize_t all_n = all_coords_np.shape(0);
-        ssize_t all_m = all_coords_np.shape(1);
-        ssize_t cen_n = center_coords_np.shape(0);
-        ssize_t cen_m = center_coords_np.shape(1);
+        py::ssize_t all_n = all_coords_np.shape(0);
+        py::ssize_t all_m = all_coords_np.shape(1);
+        py::ssize_t cen_n = center_coords_np.shape(0);
+        py::ssize_t cen_m = center_coords_np.shape(1);
 
         if (all_m != 3 || cen_m != 3)
             throw std::runtime_error("coordinate arrays must have shape (N, 3)");
