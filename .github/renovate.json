@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "schedule": [
+    "before 9am on monday"
+  ],
+  "timezone": "Asia/Tokyo",
+  "prConcurrentLimit": 10,
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 9am on monday"
+    ]
+  },
+  "git-submodules": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Group Poetry dev/docs tooling into a single PR",
+      "matchManagers": [
+        "poetry"
+      ],
+      "matchDepTypes": [
+        "dev",
+        "docs"
+      ],
+      "groupName": "python dev dependencies"
+    },
+    {
+      "description": "Group GitHub Actions updates into a single PR",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Keep major updates separate and labelled (e.g. pymatgen yearly bumps)",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "major-update"
+      ]
+    }
+  ]
+}
