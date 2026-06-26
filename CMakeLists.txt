@@ -30,10 +30,7 @@ target_compile_options(graph_id_cpp  PRIVATE
 # リリースビルド時に最適化を有効にする
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     target_compile_options(graph_id_cpp PRIVATE
-            # MSVC's /fp:fast and /arch:AVX2 (FMA contraction) change floating-point
-            # results enough to break geometry predicates (Voronoi/near-neighbor) on
-            # Windows, diverging from the pymatgen reference. Keep IEEE semantics here.
-            $<$<CXX_COMPILER_ID:MSVC>:/O2 /Ob2 /Oi /Ot /Oy /GL /Gw /GF /GS- /Gy>
+            $<$<CXX_COMPILER_ID:MSVC>:/O2 /Ob2 /Oi /Ot /Oy /GL /Gw /GF /GS- /Gy /fp:fast /arch:AVX2>
             $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3 -ffast-math>
     )
 endif ()
