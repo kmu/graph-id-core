@@ -123,10 +123,10 @@ class DistanceClusteringGraphID(GraphIDGenerator):
         dimensionality. The returned ID is the raw hash only.
         """
         gid_list = []
-        _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
+        _sg = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
         for cluster_idx in range(self.rank_k):
             long_str_list = []
-            # _sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
+            # _sg = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
             for idx in range(len(structure)):
                 copied_sg = deepcopy(_sg)
                 # まず原子idxが含まれる結合を削除する

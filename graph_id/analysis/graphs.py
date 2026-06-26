@@ -143,7 +143,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         return StructureGraph(sg.structure, graph_data)
 
     @staticmethod
-    def with_local_env_strategy(structure, strategy, weights=False):
+    def from_local_env_strategy(structure, strategy, weights=False):
         """Create a StructureGraph using a neighbor-finding strategy.
 
         Parameters
@@ -169,7 +169,7 @@ class StructureGraph(PmgStructureGraph):  # type: ignore
         Examples
         --------
         >>> from pymatgen.analysis.local_env import MinimumDistanceNN
-        >>> sg = StructureGraph.with_local_env_strategy(
+        >>> sg = StructureGraph.from_local_env_strategy(
         ...     structure, MinimumDistanceNN()
         ... )
         """

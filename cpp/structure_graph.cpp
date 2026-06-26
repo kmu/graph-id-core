@@ -15,7 +15,7 @@ std::string blake2b(const std::string &s, int digest_size) {
             "hexdigest")().cast<std::string>();
 }
 
-StructureGraph StructureGraph::with_local_env_strategy(
+StructureGraph StructureGraph::from_local_env_strategy(
         const std::shared_ptr<const Structure> &structure,
         const NearNeighbor &strategy
 ) {
@@ -93,7 +93,7 @@ StructureGraph StructureGraph::from_py(py::object py_sg) {
             to_jimage_array[i] = to_jimage[i].cast<int>();
         }
 
-        // 双方向のエッジを追加（with_local_env_strategyと同じ方法）
+        // 双方向のエッジを追加（from_local_env_strategyと同じ方法）
         sg.add_edge(std::get<0>(e), {0, 0, 0}, std::get<1>(e), to_jimage_array, std::get<2>(e));
 
         // 逆向きのimageを計算
@@ -608,8 +608,8 @@ std::vector<std::string> CompositionalSequence::get_sorted_composition_list_form
 
 void init_structure_graph(pybind11::module &m) {
     py::class_<StructureGraph>(m, "StructureGraph")
-            .def_static("with_local_env_strategy", [](PymatgenStructure &s, NearNeighbor &nn) {
-                return StructureGraph::with_local_env_strategy(std::make_shared<Structure>(s), nn);
+            .def_static("from_local_env_strategy", [](PymatgenStructure &s, NearNeighbor &nn) {
+                return StructureGraph::from_local_env_strategy(std::make_shared<Structure>(s), nn);
             })
             .def_static("from_empty_graph", [](PymatgenStructure &s) {
                 return StructureGraph::from_empty_graph(std::make_shared<Structure>(s));

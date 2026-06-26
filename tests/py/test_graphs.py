@@ -9,4 +9,4 @@ def test_disallowed_strategy():
     """Test that disallowed strategies raise ValueError."""
     s = Structure.from_spacegroup("Fm-3m", Lattice.cubic(5.692), ["Na", "Cl"], [[0, 0, 0], [0.5, 0.5, 0.5]])
     with pytest.raises(ValueError):  # noqa: PT011
-        StructureGraph.with_local_env_strategy(s, CovalentBondNN())
+        StructureGraph.from_local_env_strategy(s, CovalentBondNN())
