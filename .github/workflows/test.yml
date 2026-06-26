@@ -99,27 +99,21 @@ jobs:
     - name: pytest diagnostics (Windows)
       if: matrix.os == 'windows-latest'
       shell: bash
-      env:
-        PYTHONPATH: ${{ github.workspace }}
       run: |
         set +e
-        echo "=== import coverage / pytest_cov ==="
-        poetry run python -c "import coverage, pytest_cov; print('coverage', coverage.__version__); print('pytest_cov', pytest_cov.__version__)"
-        echo "=== plain collect (no cov) ==="
-        poetry run python -m pytest --co -q 2>&1 | tail -8
-        echo "=== with --cov collect ==="
-        poetry run python -m pytest --cov --co -q 2>&1 | tail -40
-        echo "=== full --cov run (tracebacks) ==="
-        poetry run python -m pytest --cov -q -p no:cacheprovider 2>&1 | tail -40
+        echo "=== import coverage WITHOUT PYTHONPATH ==="
+        poetry run python -c "import coverage; print('coverage', coverage.__version__)"
+        echo "=== import coverage WITH PYTHONPATH=repo root ==="
+        PYTHONPATH="$GITHUB_WORKSPACE" poetry run python -c "import coverage; print('coverage', coverage.__version__)"
+        echo "=== sys.path WITH PYTHONPATH ==="
+        PYTHONPATH="$GITHUB_WORKSPACE" poetry run python -c "import sys; [print(repr(p)) for p in sys.path]"
+        echo "=== ls repo root for stray modules ==="
+        ls -a "$GITHUB_WORKSPACE" | grep -iE "sitecustomize|usercustomize|setuptools|\.pth|distutils" || echo "(none)"
         true
 
     - name: Run pytest
-      env:
-        PYTHONPATH: ${{ github.workspace }}
-      # pytest-xdist worker subprocesses fail to import the venv's setuptools on
-      # Windows, so disable distribution there (-n 0); keep it elsewhere (-n auto).
       run: |
-        poetry run python -m pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n ${{ matrix.os == 'windows-latest' && '0' || 'auto' }}
+        poetry run python -m pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
