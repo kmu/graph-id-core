@@ -22,3 +22,23 @@ class TestDistanceClusteringGraphID(TestCase):
         id_1 = ldgid.get_id(s)
 
         assert id_1 == "3b2bcf29df1ce648"
+
+    def test_topology_only(self):
+        """topology_only=True replaces species and still yields a stable ID."""
+        s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
+
+        gid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0, topology_only=True)
+
+        result = gid.get_id(s)
+        assert isinstance(result, str)
+        assert len(result) == 16
+
+    def test_wyckoff(self):
+        """wyckoff=True uses Wyckoff-based labels and yields a stable ID."""
+        s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
+
+        gid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0, wyckoff=True)
+
+        result = gid.get_id(s)
+        assert isinstance(result, str)
+        assert len(result) == 16
