@@ -190,6 +190,7 @@ pre-commit install
 ### Testing
 
 ```
+poetry install
 poetry run pytest
 ```
 
