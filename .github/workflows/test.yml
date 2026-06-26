@@ -15,10 +15,10 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest, macos-latest]
-        python-version: [ '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [ '3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v6
@@ -26,6 +26,7 @@ jobs:
         submodules: recursive
 
     - name: Set up Python ${{ matrix.python-version }}
+      id: setup-python
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -42,43 +43,91 @@ jobs:
         brew install cmake
 
     - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-      shell: bash
+      run: pipx install poetry
+
+    - name: Configure Poetry to use in-project virtualenv
+      run: poetry config virtualenvs.in-project true
 
     - name: Cache Poetry dependencies
       uses: actions/cache@v5
       with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-poetry-${{ matrix.python-version }}-
-          ${{ runner.os }}-poetry-
+        path: .venv
+        # Key on the full resolved Python version (e.g. 3.12.10) so a venv built
+        # for one Python is never restored into a job for another. No cross-version
+        # fallback restore-key, which previously let a 3.11 .venv leak into 3.12.
+        key: ${{ runner.os }}-poetry-py${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Pin Poetry's virtualenv to the matrix Python
+      shell: bash
+      run: |
+        # Force the .venv to use the exact interpreter set up by setup-python.
+        # Otherwise Poetry may reuse a cached/system Python of a different version,
+        # producing a venv whose ABI does not match the extension built below.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          poetry env use "$pythonLocation/python.exe"
+        else
+          poetry env use "$pythonLocation/bin/python"
+        fi
 
     - name: Install dependencies
-      run: poetry install
+      run: |
+        # Build the C++ extension manually below, so skip building the project here.
+        poetry install --no-root
+        # setuptools is no longer bundled in Python 3.12+ venvs but is imported at
+        # pytest startup on Windows (and is used by build.py).
+        poetry run pip install setuptools
 
     - name: Build C++ extension with CMake
+      shell: bash
       run: |
+        # VERSION_INFO must be non-empty: TO_LITERAL(VERSION_INFO) stringifies it,
+        # and MSVC rejects the empty function-like macro invocation an empty value
+        # produces (GCC/Clang tolerate it).
+        version=$(poetry version -s)
+        # Build against the SAME interpreter that runs pytest (the Poetry venv),
+        # so the extension's ABI tag (e.g. cpython-312) always matches. Building
+        # against a different Python makes `import graph_id_cpp` silently fail.
+        py=$(poetry run python -c "import sys; print(sys.executable)")
+        echo "Building extension for: $py"
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(python3 -m pybind11 --cmakedir)
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DVERSION_INFO="$version" \
+          -DPython_EXECUTABLE="$py" -DPython3_EXECUTABLE="$py" -DPYTHON_EXECUTABLE="$py"
         cmake --build . --config Release --parallel
 
-    - name: Copy built extension to package
+    - name: Copy built extension into importable locations
+      shell: bash
       run: |
-        find build -name "graph_id_cpp*.so" -exec cp {} graph_id/ \;
+        # MSVC emits the extension under build/Release; Unix Makefiles put it in
+        # build/. Place it at the repo root (top-level `import graph_id_cpp`) and
+        # in build/ (tests/cpp/imports.py adds build/ to sys.path).
+        exts=$(find build -name "graph_id_cpp*.so" -o -name "graph_id_cpp*.pyd")
+        echo "Built extension(s):"
+        echo "$exts"
+        for f in $exts; do
+          cp -f "$f" .
+          cp -f "$f" build/ 2>/dev/null || true
+        done
+        # Add the repo root to the venv's sys.path via a .pth file so the project
+        # package and graph_id_cpp resolve in every venv process, including pytest-
+        # xdist worker subprocesses. This avoids PYTHONPATH (which breaks Poetry on
+        # Windows) and relying on the CWD being on sys.path (flaky under xdist).
+        site=$(poetry run python -c "import sysconfig; print(sysconfig.get_path('platlib'))")
+        echo "site-packages: $site"
+        printf '%s\n' "$GITHUB_WORKSPACE" > "$site/graph_id_repo.pth"
 
     - name: Check built files
+      shell: bash
       run: |
-        find . -name "*.so" -o -name "*.pyd" -o -name "graph_id_cpp*" | head -20
-        ls -la src/graph_id/ || echo "src/graph_id directory not found"
-        poetry run python -c "import sys; print('Python path:', sys.path)"
+        find . build -maxdepth 2 -name "graph_id_cpp*" 2>/dev/null || true
+        poetry run python -c "import sys; print('Test interpreter:', sys.version)"
+        # Fail fast (with a clear message) if the ABI of the built extension does
+        # not match the interpreter that will run the tests.
+        poetry run python -c "import graph_id_cpp; print('graph_id_cpp import OK:', graph_id_cpp.__file__)"
 
     - name: Run pytest
       run: |
-        poetry run pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
+        poetry run python -m pytest --cov --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy -v -n auto
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'

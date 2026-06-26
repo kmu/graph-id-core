@@ -138,7 +138,7 @@ std::string GraphIDGenerator::_component_strings_to_whole_id(const std::vector<s
 }
 
 StructureGraph GraphIDGenerator::prepare_structure_graph(std::shared_ptr<const Structure> &structure) const {
-    auto sg = StructureGraph::with_local_env_strategy(structure, *this->nn);
+    auto sg = StructureGraph::from_local_env_strategy(structure, *this->nn);
     bool use_previous_cs = false;
 
     auto labels = structure->species_strings;
@@ -219,7 +219,7 @@ StructureGraph GraphIDGenerator::prepare_structure_graph_from_existing(std::shar
 
 // TODO Merge into one class or use inheritance
 StructureGraph GraphIDGenerator::prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const {
-    auto sg = StructureGraph::with_local_env_strategy(structure, MinimumDistanceNN());
+    auto sg = StructureGraph::from_local_env_strategy(structure, MinimumDistanceNN());
     bool use_previous_cs = false;
 
     auto labels = structure->species_strings;

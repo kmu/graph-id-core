@@ -95,7 +95,7 @@ class GraphIDMaker:
             )
 
         elif engine == "c++":
-            self.generator = CppGraphIDGenerator(
+            self.generator = CppGraphIDGenerator(  # type: ignore[assignment]
                 nn=nn,
                 diameter_factor=diameter_factor,
                 additional_depth=additional_depth,

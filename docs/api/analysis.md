@@ -8,7 +8,7 @@ The analysis module provides low-level utilities for structure graph constructio
     options:
       show_root_heading: false
       members:
-        - with_local_env_strategy
+        - from_local_env_strategy
         - with_indivisual_state_comp_strategy
         - set_elemental_labels
         - set_wyckoffs
@@ -26,11 +26,11 @@ from graph_id.analysis.graphs import StructureGraph
 
 ### Class Methods
 
-#### with_local_env_strategy
+#### from_local_env_strategy
 
 ```python
 @staticmethod
-def with_local_env_strategy(structure, strategy, weights=False)
+def from_local_env_strategy(structure, strategy, weights=False)
 ```
 
 Constructor for StructureGraph using a neighbor detection strategy.
@@ -51,7 +51,7 @@ Constructor for StructureGraph using a neighbor detection strategy.
 from graph_id.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import MinimumDistanceNN
 
-sg = StructureGraph.with_local_env_strategy(structure, MinimumDistanceNN())
+sg = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
 ```
 
 ### Instance Methods

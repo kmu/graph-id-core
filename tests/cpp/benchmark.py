@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 from pymatgen.analysis.local_env import (
-    BrunnerNN_real,
+    BrunnerNNReal,
     CrystalNN,
     CutOffDictNN,
     EconNN,
@@ -30,7 +30,7 @@ def small_test_structure(max_sites=30):
     """Load test structures with at most max_sites atoms."""
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-        name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
+        name = os.path.basename(p).replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
         if s.num_sites <= max_sites:
             res.append((name, s))
@@ -72,8 +72,8 @@ class TestBenchmark(unittest.TestCase):
         )
 
     def test_brunner(self):
-        print("BrunnerNN_real:")
-        run_benchmark(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real())
+        print("BrunnerNNReal:")
+        run_benchmark(BrunnerNNReal(), graph_id_cpp.BrunnerNNReal())
 
     def test_econ(self):
         print("EconNN:")
@@ -87,7 +87,7 @@ class TestBenchmark(unittest.TestCase):
             nn = graph_id_cpp.MinimumDistanceNN()
 
             def f(cls):
-                sg = cls.with_local_env_strategy(s, nn)  # noqa: B023
+                sg = cls.from_local_env_strategy(s, nn)  # noqa: B023
                 sg.set_elemental_labels()
                 sg.set_compositional_sequence_node_attr(hash_cs=True)
                 sg.set_compositional_sequence_node_attr(use_previous_cs=True, hash_cs=True)

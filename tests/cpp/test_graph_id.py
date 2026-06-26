@@ -20,7 +20,7 @@ def small_test_structure(max_sites=30):
     """Load test structures with at most max_sites atoms."""
     res = []
     for p in glob.glob(os.path.join(test_file_dir, "*.cif")):
-        name = p.split("/")[-1].replace(".cif", "").replace("-", "_")
+        name = os.path.basename(p).replace(".cif", "").replace("-", "_")
         s = Structure.from_file(p)
         if s.num_sites <= max_sites and name != "VSbO4":
             res.append((name, s))
@@ -58,14 +58,14 @@ class TestGraphIDGenerator(unittest.TestCase):
         gid_gen_cpp = graph_id_cpp.GraphIDGenerator()  # default: digest_size=8
         gid_gen_py = graph_id.GraphIDGenerator()
         sg_py_cutoff = StructureGraph.from_local_env_strategy(structure, CutOffDictNN({("Si", "O"): 2}))
-        sg_cpp_cutoff = graph_id_cpp.StructureGraph.with_local_env_strategy(
+        sg_cpp_cutoff = graph_id_cpp.StructureGraph.from_local_env_strategy(
             structure,
             graph_id_cpp.CutOffDictNN({("Si", "O"): 2}),
         ).to_py()
         sg_py_cn = StructureGraph.from_local_env_strategy(structure, CrystalNN())
-        sg_cpp_cn = graph_id_cpp.StructureGraph.with_local_env_strategy(structure, graph_id_cpp.CrystalNN()).to_py()
+        sg_cpp_cn = graph_id_cpp.StructureGraph.from_local_env_strategy(structure, graph_id_cpp.CrystalNN()).to_py()
         sg_py_mdn = StructureGraph.from_local_env_strategy(structure, MinimumDistanceNN())
-        sg_cpp_mdn = graph_id_cpp.StructureGraph.with_local_env_strategy(
+        sg_cpp_mdn = graph_id_cpp.StructureGraph.from_local_env_strategy(
             structure,
             graph_id_cpp.MinimumDistanceNN(),
         ).to_py()

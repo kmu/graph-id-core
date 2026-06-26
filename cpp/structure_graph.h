@@ -32,7 +32,7 @@ public:
 
     ~StructureGraph() = default;
 
-    static StructureGraph with_local_env_strategy(
+    static StructureGraph from_local_env_strategy(
             const std::shared_ptr<const Structure> &structure,
             const NearNeighbor &strategy);
 
