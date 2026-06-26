@@ -1,0 +1,53 @@
+name: Create Release PR
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: create-release-pr
+  cancel-in-progress: true
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create or update release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if ! git ls-remote --exit-code --heads origin release >/dev/null 2>&1; then
+            echo "release branch does not exist; nothing to do."
+            exit 0
+          fi
+
+          git fetch --quiet origin main release
+          ahead=$(git rev-list --count origin/release..origin/main)
+          if [ "$ahead" -eq 0 ]; then
+            echo "main has no new commits relative to release; skipping."
+            exit 0
+          fi
+
+          existing=$(gh pr list --base release --head main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Release PR #$existing already open; it will update automatically with the new commits."
+            exit 0
+          fi
+
+          gh pr create \
+            --base release \
+            --head main \
+            --title "Release: promote main to release" \
+            --body "Automated PR to promote \`main\` into \`release\`. Merging this PR triggers the Build and Release workflow (build wheels, build sdist, publish to PyPI, and create the GitHub release)."
