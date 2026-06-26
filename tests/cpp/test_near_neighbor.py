@@ -8,9 +8,9 @@ import unittest
 import numpy as np
 import pytest
 from pymatgen.analysis.local_env import (
-    BrunnerNN_real,
-    BrunnerNN_reciprocal,
-    BrunnerNN_relative,
+    BrunnerNNReal,
+    BrunnerNNReciprocal,
+    BrunnerNNRelative,
     CrystalNN,
     CutOffDictNN,
     EconNN,
@@ -328,39 +328,39 @@ class TestCutoffDictNN(TestNN):
 
 class TestBrunnerNNReciprocal(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_reciprocal().structures_allowed)
+        self.assertTrue(graph_id_cpp.BrunnerNNReciprocal().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_reciprocal().molecules_allowed)
+        self.assertFalse(graph_id_cpp.BrunnerNNReciprocal().molecules_allowed)
 
     def test_structures(self):
         self.run_for_small_structures(
-            BrunnerNN_reciprocal(),
-            graph_id_cpp.BrunnerNN_reciprocal(),
+            BrunnerNNReciprocal(),
+            graph_id_cpp.BrunnerNNReciprocal(),
             skip_names=["VSbO4"],
         )
 
 
 class TestBrunnerNNRelative(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_relative().structures_allowed)
+        self.assertTrue(graph_id_cpp.BrunnerNNRelative().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_relative().molecules_allowed)
+        self.assertFalse(graph_id_cpp.BrunnerNNRelative().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(BrunnerNN_relative(), graph_id_cpp.BrunnerNN_relative(), skip_names=["VSbO4"])
+        self.run_for_small_structures(BrunnerNNRelative(), graph_id_cpp.BrunnerNNRelative(), skip_names=["VSbO4"])
 
 
 class TestBrunnerNNReal(TestNN):
     def test_structure_allowed(self):
-        self.assertTrue(graph_id_cpp.BrunnerNN_real().structures_allowed)
+        self.assertTrue(graph_id_cpp.BrunnerNNReal().structures_allowed)
 
     def test_molecule_allowed(self):
-        self.assertFalse(graph_id_cpp.BrunnerNN_real().molecules_allowed)
+        self.assertFalse(graph_id_cpp.BrunnerNNReal().molecules_allowed)
 
     def test_structures(self):
-        self.run_for_small_structures(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real(), skip_names=["VSbO4"])
+        self.run_for_small_structures(BrunnerNNReal(), graph_id_cpp.BrunnerNNReal(), skip_names=["VSbO4"])
 
 
 class TestEconNN(TestNN):

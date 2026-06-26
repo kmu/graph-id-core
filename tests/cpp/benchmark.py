@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 from pymatgen.analysis.local_env import (
-    BrunnerNN_real,
+    BrunnerNNReal,
     CrystalNN,
     CutOffDictNN,
     EconNN,
@@ -72,8 +72,8 @@ class TestBenchmark(unittest.TestCase):
         )
 
     def test_brunner(self):
-        print("BrunnerNN_real:")
-        run_benchmark(BrunnerNN_real(), graph_id_cpp.BrunnerNN_real())
+        print("BrunnerNNReal:")
+        run_benchmark(BrunnerNNReal(), graph_id_cpp.BrunnerNNReal())
 
     def test_econ(self):
         print("EconNN:")
