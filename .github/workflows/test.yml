@@ -62,9 +62,13 @@ jobs:
     - name: Build C++ extension with CMake
       shell: bash
       run: |
+        # VERSION_INFO must be non-empty: TO_LITERAL(VERSION_INFO) stringifies it,
+        # and MSVC rejects the empty function-like macro invocation that an empty
+        # value produces (GCC/Clang tolerate it).
+        version=$(poetry version -s)
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DVERSION_INFO="$version"
         cmake --build . --config Release --parallel
 
     - name: Copy built extension into importable locations
