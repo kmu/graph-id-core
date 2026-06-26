@@ -96,6 +96,23 @@ jobs:
         find . build -maxdepth 2 -name "graph_id_cpp*" 2>/dev/null || true
         poetry run python -c "import sys; print('Python path:', sys.path)"
 
+    - name: pytest diagnostics (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        set +e
+        echo "=== import coverage / pytest_cov ==="
+        poetry run python -c "import coverage, pytest_cov; print('coverage', coverage.__version__); print('pytest_cov', pytest_cov.__version__)"
+        echo "=== plain collect (no cov) ==="
+        poetry run python -m pytest --co -q 2>&1 | tail -8
+        echo "=== with --cov collect ==="
+        poetry run python -m pytest --cov --co -q 2>&1 | tail -40
+        echo "=== full --cov run (tracebacks) ==="
+        poetry run python -m pytest --cov -q -p no:cacheprovider 2>&1 | tail -40
+        true
+
     - name: Run pytest
       env:
         PYTHONPATH: ${{ github.workspace }}
