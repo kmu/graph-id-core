@@ -434,12 +434,12 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
-class BrunnerNN_reciprocal : public NearNeighbor {
+class BrunnerNNReciprocal : public NearNeighbor {
 private:
     double tol;
     double cutoff;
 public:
-    explicit BrunnerNN_reciprocal(double tol = 1e-4, double cutoff = 8.0) {
+    explicit BrunnerNNReciprocal(double tol = 1e-4, double cutoff = 8.0) {
         this->tol = tol;
         this->cutoff = cutoff;
     };
@@ -451,12 +451,12 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
-class BrunnerNN_relative : public NearNeighbor {
+class BrunnerNNRelative : public NearNeighbor {
 private:
     double tol;
     double cutoff;
 public:
-    explicit BrunnerNN_relative(double tol = 1e-4, double cutoff = 8.0) {
+    explicit BrunnerNNRelative(double tol = 1e-4, double cutoff = 8.0) {
         this->tol = tol;
         this->cutoff = cutoff;
     };
@@ -468,12 +468,12 @@ public:
     std::vector<std::vector<NearNeighborInfo>> get_all_nn_info_cpp(const Structure &structure) const override;
 };
 
-class BrunnerNN_real : public NearNeighbor {
+class BrunnerNNReal : public NearNeighbor {
 private:
     double tol;
     double cutoff;
 public:
-    explicit BrunnerNN_real(double tol = 1e-4, double cutoff = 8.0) {
+    explicit BrunnerNNReal(double tol = 1e-4, double cutoff = 8.0) {
         this->tol = tol;
         this->cutoff = cutoff;
     };

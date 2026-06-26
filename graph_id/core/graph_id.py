@@ -450,7 +450,7 @@ class GraphIDGenerator:
         advanced analysis of the structure graph.
 
         """
-        sg = StructureGraph.with_local_env_strategy(structure, self.nn)
+        sg = StructureGraph.from_local_env_strategy(structure, self.nn)
         use_previous_cs = False
 
         compound = sg.structure

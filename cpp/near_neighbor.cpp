@@ -833,7 +833,7 @@ std::vector<std::vector<NearNeighborInfo>> CutOffDictNN::get_all_nn_info_cpp(con
     return result;
 }
 
-std::vector<std::vector<NearNeighborInfo>> BrunnerNN_reciprocal::get_all_nn_info_cpp(const Structure &structure) const {
+std::vector<std::vector<NearNeighborInfo>> BrunnerNNReciprocal::get_all_nn_info_cpp(const Structure &structure) const {
     auto all_nn = find_near_neighbors(structure, this->cutoff);
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
 
@@ -870,7 +870,7 @@ std::vector<std::vector<NearNeighborInfo>> BrunnerNN_reciprocal::get_all_nn_info
     return result;
 }
 
-std::vector<std::vector<NearNeighborInfo>> BrunnerNN_relative::get_all_nn_info_cpp(const Structure &structure) const {
+std::vector<std::vector<NearNeighborInfo>> BrunnerNNRelative::get_all_nn_info_cpp(const Structure &structure) const {
     auto all_nn = find_near_neighbors(structure, this->cutoff);
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
 
@@ -907,7 +907,7 @@ std::vector<std::vector<NearNeighborInfo>> BrunnerNN_relative::get_all_nn_info_c
     return result;
 }
 
-std::vector<std::vector<NearNeighborInfo>> BrunnerNN_real::get_all_nn_info_cpp(const Structure &structure) const {
+std::vector<std::vector<NearNeighborInfo>> BrunnerNNReal::get_all_nn_info_cpp(const Structure &structure) const {
     auto all_nn = find_near_neighbors(structure, this->cutoff);
     std::vector<std::vector<NearNeighborInfo>> result(structure.count);
 
@@ -1468,17 +1468,17 @@ void init_near_neighbor(pybind11::module &m) {
                  py::arg("cut_off_dict") = py::none())
             .def_static("from_preset", CutOffDictNN::from_preset);
 
-    py::class_<BrunnerNN_reciprocal, std::shared_ptr<BrunnerNN_reciprocal>, NearNeighbor>(m, "BrunnerNN_reciprocal")
+    py::class_<BrunnerNNReciprocal, std::shared_ptr<BrunnerNNReciprocal>, NearNeighbor>(m, "BrunnerNNReciprocal")
             .def(py::init<double, double>(),
                  py::arg("tol") = 1e-4,
                  py::arg("cutoff") = 8.0);
 
-    py::class_<BrunnerNN_relative, std::shared_ptr<BrunnerNN_relative>, NearNeighbor>(m, "BrunnerNN_relative")
+    py::class_<BrunnerNNRelative, std::shared_ptr<BrunnerNNRelative>, NearNeighbor>(m, "BrunnerNNRelative")
             .def(py::init<double, double>(),
                  py::arg("tol") = 1e-4,
                  py::arg("cutoff") = 8.0);
 
-    py::class_<BrunnerNN_real, std::shared_ptr<BrunnerNN_real>, NearNeighbor>(m, "BrunnerNN_real")
+    py::class_<BrunnerNNReal, std::shared_ptr<BrunnerNNReal>, NearNeighbor>(m, "BrunnerNNReal")
             .def(py::init<double, double>(),
                  py::arg("tol") = 1e-4,
                  py::arg("cutoff") = 8.0);
