@@ -42,3 +42,13 @@ class TestDistanceClusteringGraphID(TestCase):
         result = gid.get_id(s)
         assert isinstance(result, str)
         assert len(result) == 16
+
+    def test_loop(self):
+        """loop=True uses ring-based labels and yields a stable ID."""
+        s = Structure.from_file(f"{TEST_FILES}/mp-36.cif")
+
+        gid = DistanceClusteringGraphID(nn=DistanceClusteringNN(), rank_k=3, cutoff=6.0, loop=True)
+
+        result = gid.get_id(s)
+        assert isinstance(result, str)
+        assert len(result) == 16

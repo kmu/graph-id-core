@@ -198,7 +198,7 @@ class DistanceClusteringGraphID(GraphIDGenerator):
             prev_num_uniq = len(list(set(nx.get_node_attributes(sg.graph, "compositional_sequence").values())))
 
         elif self.loop:
-            sg.set_loops_as_starting_labels(
+            sg.set_loops(
                 diameter_factor=self.diameter_factor,
                 additional_depth=self.additional_depth,
             )
