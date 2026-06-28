@@ -18,7 +18,6 @@
   },
   "packageRules": [
     {
-      "matchUpdateTypes": ["patch"],
       "automerge": true
     }
   ],
