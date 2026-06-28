@@ -15,7 +15,7 @@
   ],
   "git-submodules": {
     "enabled": true
-  }
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
