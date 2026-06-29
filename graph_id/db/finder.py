@@ -11,23 +11,21 @@ DB_PATH = Path(__file__).parent.parent / "raw/id_jsons"
 
 class Finder:
 
-    """Finder to find chemical structures from databases using Graph ID."""
+    """Finder to find chemical structures from databases using Graph ID.
 
-    def find(self, graph_id: str, is_fast: bool = False) -> list[dict[str, str]]:
+    Currently supports AFLOW, OQMD, and PCOD.
+    If you want to find a structure in IZA and the Materials Project,
+    you currently need to use the graph-id-db package.
+    """
+
+    def find(self, graph_id: str) -> list[dict[str, str]]:
         """Find chemical structures from databases using Graph ID.
 
         Args:
         ----
             graph_id(str): GraphID calculated using graph-id-core
-            is_fast(bool): If True, find only on-memory entries (from IZA and Materials Project)
         """
-        if is_fast:
-            return self.find_fast(graph_id)
-
         ret_dict = []
-        fast_graph_ids = self.find_fast(graph_id)
-        if fast_graph_ids:
-            ret_dict += fast_graph_ids
 
         aflow_graph_ids = self.find_aflow_entries(graph_id)
         if aflow_graph_ids:
@@ -40,22 +38,6 @@ class Finder:
         pcod_graph_ids = self.find_pcod_entries(graph_id)
         if pcod_graph_ids:
             ret_dict += pcod_graph_ids
-
-        return ret_dict
-
-    def find_fast(self, graph_id: str) -> list[dict[str, str]]:
-        """Find only on-memory entries."""
-        ret_dict = []
-
-        dir_name = graph_id[:2]
-        file_name = graph_id[:4]
-
-        db_path = Path(DB_PATH) / dir_name / f"{file_name}.json"
-        if db_path.exists():
-            with db_path.open() as f:
-                docs = orjson.loads(f.read())
-                if docs.get(graph_id):
-                    ret_dict = docs.get(graph_id)
 
         return ret_dict
 
