@@ -76,7 +76,7 @@ class CompositionalSequence:
         self.seen_sites = set(self.new_sites)
         self.use_previous_cs = use_previous_cs
         self.labels = starting_labels
-        self.composition_counter: Counter = Counter()
+        self.composition_counter: Counter[str] = Counter()
         self.first_element = starting_labels[focused_site_i]
 
     def __str__(self):

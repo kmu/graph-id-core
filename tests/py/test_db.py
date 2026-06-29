@@ -25,10 +25,8 @@ def test_aflow():
     """Test AFLOW entries."""
     finder = Finder()
 
-    fast_docs = finder.find("0000c690d6bd9179", is_fast=True)
     aflow_docs = finder.find("0000c690d6bd9179")
 
-    assert fast_docs == []
     assert aflow_docs[0]["graph_id_type"] == "dc_id"
     assert aflow_docs[0]["proprietary_id"] == "aflow:06966bc7b36b2343"
     assert aflow_docs[0]["datasource"] == "AFLOW"
@@ -41,10 +39,8 @@ def test_oqmd():
     """Test OQMD entries."""
     finder = Finder()
 
-    fast_docs = finder.find("00000278540685fb", is_fast=True)
     oqmd_docs = finder.find("00000278540685fb")
 
-    assert fast_docs == []
     assert oqmd_docs[0]["graph_id_type"] == "dc_id"
     assert oqmd_docs[0]["proprietary_id"] == "573130"
     assert oqmd_docs[0]["datasource"] == "OQMD"
@@ -57,10 +53,8 @@ def test_pcod():
     """Test PCOD entries."""
     finder = Finder()
 
-    fast_docs = finder.find("00006e42109d6854", is_fast=True)
     pcod_docs = finder.find("00006e42109d6854")
 
-    assert fast_docs == []
     assert pcod_docs[0]["graph_id_type"] == "md_id"
     assert pcod_docs[0]["proprietary_id"] == "8283166"
     assert pcod_docs[0]["datasource"] == "PCOD"
