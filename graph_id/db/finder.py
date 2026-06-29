@@ -10,8 +10,13 @@ DB_PATH = Path(__file__).parent.parent / "raw/id_jsons"
 
 
 class Finder:
+
+    """Finder to find chemical structures from databases using Graph ID."""
+
     def find(self, graph_id: str, is_fast: bool = False) -> list[dict[str, str]]:
-        """Args:
+        """Find chemical structures from databases using Graph ID.
+
+        Args:
         ----
             graph_id(str): GraphID calculated using graph-id-core
             is_fast(bool): If True, find only on-memory entries (from IZA and Materials Project)
@@ -19,25 +24,24 @@ class Finder:
         if is_fast:
             return self.find_fast(graph_id)
 
-        else:
-            ret_dict = []
-            fast_graph_ids = self.find_fast(graph_id)
-            if fast_graph_ids:
-                ret_dict += fast_graph_ids
+        ret_dict = []
+        fast_graph_ids = self.find_fast(graph_id)
+        if fast_graph_ids:
+            ret_dict += fast_graph_ids
 
-            aflow_graph_ids = self.find_aflow_entries(graph_id)
-            if aflow_graph_ids:
-                ret_dict += aflow_graph_ids
+        aflow_graph_ids = self.find_aflow_entries(graph_id)
+        if aflow_graph_ids:
+            ret_dict += aflow_graph_ids
 
-            oqmd_graph_ids = self.find_oqmd_entries(graph_id)
-            if oqmd_graph_ids:
-                ret_dict += oqmd_graph_ids
+        oqmd_graph_ids = self.find_oqmd_entries(graph_id)
+        if oqmd_graph_ids:
+            ret_dict += oqmd_graph_ids
 
-            pcod_graph_ids = self.find_pcod_entries(graph_id)
-            if pcod_graph_ids:
-                ret_dict += pcod_graph_ids
+        pcod_graph_ids = self.find_pcod_entries(graph_id)
+        if pcod_graph_ids:
+            ret_dict += pcod_graph_ids
 
-            return ret_dict
+        return ret_dict
 
     def find_fast(self, graph_id: str) -> list[dict[str, str]]:
         """Find only on-memory entries."""
@@ -46,9 +50,9 @@ class Finder:
         dir_name = graph_id[:2]
         file_name = graph_id[:4]
 
-        db_path = DB_PATH / dir_name / f"{file_name}.json"
+        db_path = Path(DB_PATH) / dir_name / f"{file_name}.json"
         if db_path.exists():
-            with open(db_path) as f:
+            with db_path.open() as f:
                 docs = orjson.loads(f.read())
                 if docs.get(graph_id):
                     ret_dict = docs.get(graph_id)
@@ -69,14 +73,15 @@ class Finder:
                 repo_type="dataset",
             )
 
-            with open(local_path) as f:
+            with Path(local_path).open() as f:
                 docs = orjson.loads(f.read())
                 if docs.get(graph_id):
                     ret_dict = docs.get(graph_id)
 
-            return ret_dict
         except EntryNotFoundError:
             return []
+
+        return ret_dict
 
     def find_oqmd_entries(self, graph_id: str) -> list[dict[str, str]]:
         """Find only OQMD entries."""
@@ -92,14 +97,15 @@ class Finder:
                 repo_type="dataset",
             )
 
-            with open(local_path) as f:
+            with Path(local_path).open() as f:
                 docs = orjson.loads(f.read())
                 if docs.get(graph_id):
                     ret_dict = docs.get(graph_id)
 
-            return ret_dict
         except EntryNotFoundError:
             return []
+
+        return ret_dict
 
     def find_pcod_entries(self, graph_id: str) -> list[dict[str, str]]:
         """Find only PCOD entries."""
@@ -115,11 +121,12 @@ class Finder:
                 repo_type="dataset",
             )
 
-            with open(local_path) as f:
+            with Path(local_path).open() as f:
                 docs = orjson.loads(f.read())
                 if docs.get(graph_id):
                     ret_dict = docs.get(graph_id)
 
-            return ret_dict
         except EntryNotFoundError:
             return []
+
+        return ret_dict
