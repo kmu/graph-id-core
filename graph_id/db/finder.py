@@ -8,11 +8,9 @@ DB_PATH = Path(__file__).parent.parent / "raw/id_jsons"
 
 
 class Finder:
-    def find(
-        self, graph_id: str, is_fast: bool = False
-    ) -> list[dict[str, str]]:
-        """
-        Args:
+    def find(self, graph_id: str, is_fast: bool = False) -> list[dict[str, str]]:
+        """Args:
+        ----
             graph_id(str): GraphID calculated using graph-id-core
             is_fast(bool): If True, find only on-memory entries (from IZA and Materials Project)
         """
@@ -40,9 +38,7 @@ class Finder:
             return ret_dict
 
     def find_fast(self, graph_id: str) -> list[dict[str, str]]:
-        """
-        Find only on-memory entries.
-        """
+        """Find only on-memory entries."""
         ret_dict = []
 
         dir_name = graph_id[:2]
@@ -58,9 +54,7 @@ class Finder:
         return ret_dict
 
     def find_aflow_entries(self, graph_id: str) -> list[dict[str, str]]:
-        """
-        Find only AFLOW entries.
-        """
+        """Find only AFLOW entries."""
         ret_dict = []
 
         dir_name = graph_id[:2]
@@ -83,9 +77,7 @@ class Finder:
             return []
 
     def find_oqmd_entries(self, graph_id: str) -> list[dict[str, str]]:
-        """
-        Find only OQMD entries.
-        """
+        """Find only OQMD entries."""
         ret_dict = []
 
         dir_name = graph_id[:2]
@@ -108,9 +100,7 @@ class Finder:
             return []
 
     def find_pcod_entries(self, graph_id: str) -> list[dict[str, str]]:
-        """
-        Find only PCOD entries.
-        """
+        """Find only PCOD entries."""
         ret_dict = []
 
         dir_name = graph_id[:2]
