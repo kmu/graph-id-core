@@ -1,8 +1,6 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
+# Dependabot handles Python dependency updates (pyproject.toml / poetry.lock).
+# Everything else (GitHub Actions, git submodules) is managed by Renovate.
+# See: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 version: 2
 updates:
   - package-ecosystem: "pip"
@@ -10,3 +8,13 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # Only refresh poetry.lock; never edit the version constraints in
+    # pyproject.toml, so published dependency ranges stay broad for consumers.
+    versioning-strategy: lockfile-only
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"

@@ -21,7 +21,7 @@ jobs:
         python-version: [ '3.11', '3.12', '3.13']
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -49,7 +49,7 @@ jobs:
       run: poetry config virtualenvs.in-project true
 
     - name: Cache Poetry dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: .venv
         # Key on the full resolved Python version (e.g. 3.12.10) so a venv built
@@ -131,7 +131,7 @@ jobs:
 
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: kmu/graph-id-core

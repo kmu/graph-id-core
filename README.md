@@ -5,6 +5,7 @@
 # Graph ID
 
 Graph ID is a universal identifier system for atomistic structures including crystals and molecules. It generates unique, deterministic identifiers based on the topological and compositional properties of atomic structures, enabling efficient structure comparison, database indexing, and materials discovery.
+For more information, refer our [docs](https://kmu.github.io/graph-id-core/).
 
 ## Overview
 
