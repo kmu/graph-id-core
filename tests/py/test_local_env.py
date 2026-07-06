@@ -1,4 +1,4 @@
-# ruff: noqa: D103, PT011, B017
+# ruff: noqa: PT011, B017
 """Tests for graph_id.analysis.local_env helpers."""
 
 import pytest
