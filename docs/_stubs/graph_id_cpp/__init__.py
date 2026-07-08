@@ -1,4 +1,4 @@
-# ruff: noqa: ANN101, ANN003, ANN001, ANN201, ANN401, ARG002, D107
+# ruff: noqa: ANN003, ARG002, D107
 """Stub module for graph_id_cpp to allow documentation generation."""
 
 
