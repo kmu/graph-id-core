@@ -29,7 +29,6 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-
     """A CMake extension for building C++ code with setuptools."""
 
     def __init__(self, name: str, sourcedir: str = "") -> None:
@@ -48,7 +47,6 @@ class CMakeExtension(Extension):
 
 
 class CMakeBuild(build_ext):
-
     """Custom build_ext command that uses CMake to build C++ extensions."""
 
     def build_extension(self, ext: CMakeExtension) -> None:  # noqa: C901,PLR0912

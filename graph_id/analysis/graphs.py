@@ -37,7 +37,6 @@ def standardize_loop(lst):
 
 
 class SiteOnlySpeciesString:
-
     """Lightweight wrapper containing only the species string of a site.
 
     Used to reduce memory when only element information is needed.
@@ -55,7 +54,6 @@ class SiteOnlySpeciesString:
 
 
 class ConnectedSiteLight:
-
     """Lightweight representation of a connected site.
 
     A memory-efficient alternative to pymatgen's ConnectedSite that stores
@@ -106,7 +104,6 @@ class ConnectedSiteLight:
 
 
 class StructureGraph(PmgStructureGraph):  # type: ignore
-
     """Extended StructureGraph with methods for Graph ID computation.
 
     This class extends pymatgen's StructureGraph with additional functionality

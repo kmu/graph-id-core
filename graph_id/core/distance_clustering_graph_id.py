@@ -13,7 +13,6 @@ from graph_id.core.graph_id import GraphIDGenerator
 
 
 class DistanceClusteringGraphID(GraphIDGenerator):
-
     """Graph ID generator using DBSCAN distance clustering for neighbor detection.
 
     This variant uses DBSCAN clustering on interatomic distances to identify
