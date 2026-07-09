@@ -57,7 +57,6 @@ feat_names = featurizer.feature_labels()
 
 
 class CifToStructure(ConversionFeaturizer):  # type: ignore
-
     """Convert CIF strings to pymatgen Structure objects."""
 
     def __init__(self, target_col_id="cif", overwrite_data=False) -> None:

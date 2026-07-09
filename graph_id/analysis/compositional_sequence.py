@@ -16,7 +16,6 @@ def blake(s):
 
 
 class CompositionalSequence:
-
     """Compute the compositional sequence for a site in a structure graph.
 
     A compositional sequence is a fingerprint of the local chemical environment

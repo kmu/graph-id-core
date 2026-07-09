@@ -47,7 +47,6 @@ def _get_original_site(structure, site):
 
 
 class DistanceClusteringNN(NearNeighbors):
-
     """Neighbor detection using DBSCAN clustering on interatomic distances.
 
     This class identifies neighbors by clustering the distribution of

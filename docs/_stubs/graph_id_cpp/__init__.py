@@ -3,7 +3,6 @@
 
 
 class GraphIDGenerator:
-
     """C++ implementation of Graph ID generator."""
 
     def __init__(self, **kwargs):
@@ -18,17 +17,14 @@ class GraphIDGenerator:
 
 
 class MinimumDistanceNN:
-
     """C++ implementation of MinimumDistanceNN."""
 
 
 class CrystalNN:
-
     """C++ implementation of CrystalNN."""
 
 
 class CutOffDictNN:
-
     """C++ implementation of CutOffDictNN."""
 
     def __init__(self, cutoff_dict):
@@ -36,7 +32,6 @@ class CutOffDictNN:
 
 
 class StructureGraph:
-
     """C++ implementation of StructureGraph."""
 
     @staticmethod

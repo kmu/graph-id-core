@@ -14,7 +14,6 @@ from graph_id.core.graph_id import GraphIDGenerator as PyGraphIDGenerator
 
 
 class GraphIDMaker:
-
     """A simple, high-level interface for generating Graph IDs.
 
     GraphIDMaker provides an easy-to-use API for generating unique identifiers
