@@ -1,9 +1,8 @@
-# ruff: noqa: ANN101, ANN003, ANN001, ANN201, ANN401, ARG002, D107
+# ruff: noqa: ANN003, ARG002, D107
 """Stub module for graph_id_cpp to allow documentation generation."""
 
 
 class GraphIDGenerator:
-
     """C++ implementation of Graph ID generator."""
 
     def __init__(self, **kwargs):
@@ -18,17 +17,14 @@ class GraphIDGenerator:
 
 
 class MinimumDistanceNN:
-
     """C++ implementation of MinimumDistanceNN."""
 
 
 class CrystalNN:
-
     """C++ implementation of CrystalNN."""
 
 
 class CutOffDictNN:
-
     """C++ implementation of CutOffDictNN."""
 
     def __init__(self, cutoff_dict):
@@ -36,7 +32,6 @@ class CutOffDictNN:
 
 
 class StructureGraph:
-
     """C++ implementation of StructureGraph."""
 
     @staticmethod

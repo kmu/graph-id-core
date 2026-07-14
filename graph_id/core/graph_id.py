@@ -18,7 +18,6 @@ from graph_id.analysis.graphs import StructureGraph
 
 
 class GraphIDGenerator:
-
     """Core Python implementation of Graph ID generation.
 
     GraphIDGenerator converts atomic structures into unique, deterministic identifiers
@@ -47,7 +46,7 @@ class GraphIDGenerator:
 
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         nn=None,
         wyckoff=False,

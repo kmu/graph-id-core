@@ -29,7 +29,6 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-
     """A CMake extension for building C++ code with setuptools."""
 
     def __init__(self, name: str, sourcedir: str = "") -> None:
@@ -41,13 +40,13 @@ class CMakeExtension(Extension):
             The name of the extension module.
         sourcedir : str, optional
             The source directory containing CMakeLists.txt.
+
         """
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
 
 class CMakeBuild(build_ext):
-
     """Custom build_ext command that uses CMake to build C++ extensions."""
 
     def build_extension(self, ext: CMakeExtension) -> None:  # noqa: C901,PLR0912
@@ -141,6 +140,7 @@ def build(setup_kwargs):
     ----------
     setup_kwargs : dict
         The keyword arguments dictionary passed to setup().
+
     """
     ext_modules = [
         CMakeExtension("graph_id_cpp", sourcedir="."),

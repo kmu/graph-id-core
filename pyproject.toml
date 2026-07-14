@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graph-id-core"
-version = "0.1.23"
+version = "0.1.24"
 description = ""
 authors = ["Koki Muraoka <muraok_k@chemsys.t.u-tokyo.ac.jp>"]
 readme = "README.md"
@@ -73,7 +73,7 @@ lint.ignore = [
   "ANN201", #  Missing return type annotation for public function
   "SLF001", # Private member accessed
   "ERA001", # commentouted code is allowed
-  "D211",
+  "D203",
   "D213",
   "PGH003",
   "ANN202",
