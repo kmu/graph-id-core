@@ -120,6 +120,67 @@ std::vector<std::string> GraphIDGenerator::get_component_ids(const Structure &st
     return std::vector<std::string>(structure.count);
 }
 
+py::object GraphIDGenerator::_molecule_to_structure(const py::object &mol) const {
+    constexpr double vacuum = 10.0;
+
+    py::object coords = mol.attr("cart_coords");
+    py::object species = mol.attr("species");
+
+    py::object min_c = coords.attr("min")(py::arg("axis") = 0);
+    py::object max_c = coords.attr("max")(py::arg("axis") = 0);
+    py::object lengths = max_c - min_c + py::float_(2 * vacuum);
+
+    auto length_at = [](const py::object &arr, int i) {
+        return arr.attr("__getitem__")(i).cast<double>();
+    };
+
+    py::object pymatgen_core = py::module_::import("pymatgen.core");
+    py::object lattice = pymatgen_core.attr("Lattice").attr("from_parameters")(
+            length_at(lengths, 0), length_at(lengths, 1), length_at(lengths, 2), 90.0, 90.0, 90.0);
+
+    py::object shifted_coords = coords - min_c + py::float_(vacuum);
+
+    return pymatgen_core.attr("Structure")(
+            lattice, species, shifted_coords, py::arg("coords_are_cartesian") = true);
+}
+
+std::string GraphIDGenerator::get_merged_id(const py::list &materials_list) const {
+    py::object pymatgen_core = py::module_::import("pymatgen.core");
+    py::object structure_cls = pymatgen_core.attr("Structure");
+    py::object molecule_cls = pymatgen_core.attr("Molecule");
+    py::object atoms_cls = py::module_::import("ase").attr("Atoms");
+    py::object ase_adaptor_cls = py::module_::import("pymatgen.io.ase").attr("AseAtomsAdaptor");
+
+    std::vector<std::string> array_list;
+
+    for (const auto &material: materials_list) {
+        py::object structure_py;
+
+        if (py::isinstance(material, structure_cls)) {
+            structure_py = py::reinterpret_borrow<py::object>(material);
+        } else if (py::isinstance(material, molecule_cls)) {
+            structure_py = _molecule_to_structure(py::reinterpret_borrow<py::object>(material));
+        } else if (py::isinstance(material, atoms_cls)) {
+            structure_py = ase_adaptor_cls.attr("get_structure")(material);
+        } else {
+            std::string type_name = py::str(material.attr("__class__").attr("__name__")).cast<std::string>();
+            throw py::type_error(
+                    "Item of materials_list must be pymatgen.core.Structure, "
+                    "pymatgen.core.Molecule, or ase.Atoms, got " + type_name);
+        }
+
+        auto s = structure_py.cast<PymatgenStructure>();
+        auto s_ptr = std::make_shared<const Structure>(s);
+        const auto sg = prepare_structure_graph(s_ptr);
+
+        for (const auto &cs_list: sg.cc_cs) {
+            array_list.push_back(_join_cs_list(cs_list));
+        }
+    }
+
+    return _component_strings_to_whole_id(array_list);
+}
+
 bool GraphIDGenerator::are_same(const Structure &structure1, const Structure &structure2) const {
     return this->get_id(structure1) == this->get_id(structure2);
 }
@@ -342,6 +403,7 @@ void init_graph_id(pybind11::module &m) {
                 auto s = structure.cast<PymatgenStructure>();
                 return gig.get_component_ids(Structure(s));
             })
+            .def("get_merged_id", &GraphIDGenerator::get_merged_id)
             .def("are_same", [](const GraphIDGenerator &gig, py::object &structure1, py::object &structure2) {
                 auto s1 = structure1.cast<PymatgenStructure>();
                 auto s2 = structure2.cast<PymatgenStructure>();
