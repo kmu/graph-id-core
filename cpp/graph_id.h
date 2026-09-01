@@ -48,6 +48,8 @@ public:
 
     std::vector<std::string> get_component_ids(const Structure &structure) const;
 
+    std::string get_merged_id(const py::list &materials_list) const;
+
     std::string elaborate_comp_dim(const StructureGraph &sg, const std::string &gid) const;
 
     bool are_same(const Structure &structure1, const Structure &structure2) const;
@@ -58,6 +60,8 @@ public:
     StructureGraph prepare_structure_graph(std::shared_ptr<const Structure> &structure) const;
 
 private:
+    py::object _molecule_to_structure(const py::object &mol) const;
+
     StructureGraph prepare_structure_graph_from_existing(std::shared_ptr<const Structure> &structure, const StructureGraph &sg) const;
     StructureGraph prepare_minimum_distance_structure_graph(std::shared_ptr<const Structure> &structure) const;
     StructureGraph prepare_disctance_clustering_structure_graph(int n, std::shared_ptr<const Structure> &structure, std::shared_ptr<StructureGraph> &_sg, int rank_k, double cutoff) const;
