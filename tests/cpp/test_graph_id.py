@@ -5,15 +5,17 @@ import glob
 import os
 import unittest
 
+from ase.io import read
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import CrystalNN, CutOffDictNN, MinimumDistanceNN
-from pymatgen.core import Structure
+from pymatgen.core import Molecule, Structure
 
 import graph_id
 
 from .imports import graph_id_cpp
 
 test_file_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../graph_id/tests/test_files"))
+PY_TEST_FILES = os.path.normpath(os.path.join(os.path.dirname(__file__), "../py/test_files"))
 
 
 def small_test_structure(max_sites=30):
@@ -78,6 +80,37 @@ class TestGraphIDGenerator(unittest.TestCase):
         assert gid_gen_cpp.get_id_with_structure_graph(sg_py_mdn) == gid_gen_cpp.get_id_with_structure_graph(
             sg_cpp_mdn,
         )
+
+    def test_merged_id(self):
+        a = graph_id.GraphIDGenerator(prepend_composition=False, prepend_dimensionality=False)
+        b = graph_id_cpp.GraphIDGenerator()
+
+        graphite_structure = Structure.from_file(os.path.join(PY_TEST_FILES, "graphite.cif"))
+        h2_atoms = read(os.path.join(PY_TEST_FILES, "h.xyz"))
+        h2_atoms.set_cell([20, 20, 20])
+        h2_molecule = Molecule.from_file(os.path.join(PY_TEST_FILES, "h.xyz"))
+        graphite_h = Structure.from_file(os.path.join(PY_TEST_FILES, "graphite_h.cif"))
+
+        expected = a.get_merged_id([graphite_structure, h2_atoms])
+
+        self.assertEqual(b.get_merged_id([graphite_structure, h2_atoms]), expected)
+        self.assertEqual(b.get_merged_id([graphite_structure, h2_molecule]), expected)
+        self.assertEqual(b.get_merged_id([graphite_structure, h2_atoms]), b.get_id(graphite_h))
+
+    def test_merged_id_type_error(self):
+        b = graph_id_cpp.GraphIDGenerator()
+        graphite_structure = Structure.from_file(os.path.join(PY_TEST_FILES, "graphite.cif"))
+
+        with self.assertRaises(TypeError):
+            b.get_merged_id([graphite_structure, "not a structure"])
+
+    def test_merged_id_digest_size(self):
+        b = graph_id_cpp.GraphIDGenerator(digest_size=4)
+        graphite_structure = Structure.from_file(os.path.join(PY_TEST_FILES, "graphite.cif"))
+
+        merged_id = b.get_merged_id([graphite_structure])
+        self.assertEqual(len(merged_id), 8)
+        self.assertEqual(merged_id, b.get_id(graphite_structure))
 
 
 if __name__ == "__main__":
